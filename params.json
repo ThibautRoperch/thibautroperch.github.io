@@ -1,6 +1,6 @@
 {
   "name": "Mon site web",
   "tagline": "C'est Moi",
-  "body": "My name is Thibaut Roperch",
+  "body": "Mon nom est Thibaut Roperch\r\n\r\n### Mon projet avec mon binôme préféré : [Preuve de Hoare](https://pierregranier.github.io/StageL3Info/)",
   "note": "Don't delete this file! It's used internally to help with page regeneration."
 }
