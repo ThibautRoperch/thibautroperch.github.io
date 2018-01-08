@@ -1,0 +1,88 @@
+
+# Opérateur d'affection sur deux instances de classe
+
+En C++, le constructeur par recopie est automatique appellé lorsqu'une instance est affectée à une variable du même type.
+
+Test a();
+Test b = a;		// a et b sont différents, ont des adresses mémoire différentes
+
+Mais en Java, les objets sont instanciés avec new et les pointeurs ne sont pas typés. L'opérateur par recopie n'est ainsi donc pas appelé.
+
+Test a = new Test();
+Test b = a;		// a et b sont des pointeurs sur la même instance
+
+Si on veut reproduire ce mécanisme en C++, ça donne ça :
+
+Test *a = new Test();
+Test *b = a;	// équivalent en C++
+
+========
+preuve (C++)
+========
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Test {
+    private:
+        int e;
+    
+    public:
+        Test(int e) : e(e) { }
+        int get() { return this->e; }
+        void set(int e) { this->e = e; }
+};
+
+int main()
+{
+    Test a(5);          // a est instancié à partir de 5, a vaut 5
+    Test b = a;         // b est copié de a, b vaut 5
+    cout << "a vaut " << a.get() << endl;    // a vaut 5
+    cout << "b vaut " << b.get() << endl;    // b vaut 5
+    
+    a.set(10);          // a est mis à 10, a vaut 10
+    cout << "a vaut " << a.get() << endl;    // a vaut 10
+    cout << "b vaut " << b.get() << endl;    // b vaut 5
+    
+    return EXIT_SUCCESS;
+}
+=======
+fin preuve
+=======
+
+# Java Swing et les "java.lang.ArrayIndexOutOfBoundsException: 0"
+
+Cette bibliothèque graphique instable pour Java (ou plutôt, cette bibliothèque graphique pour Java, le langage de programmation instable) regorge de surprises.
+
+Un objet, non déclaré auparavant, instancié à partir d'un autre directement dans la méthode d'ajout d'un onglet sur un objet JTabbedPane, donne graphiquement l'effet voulu. Cependant, une fois sur deux, une exception sera levée à cause d'une coordonnée hors de la limite 0. Exception n'empêchant pas le bon déroulement de la suite du programme, ni la dispostion des éléments composant l'interface graphique. Ou comment perdre 30 minutes à rechercher la source d'un problème qui n'en est pas un...
+
+public class Test extends JFrame {
+	public Test() {
+		// Eléments graphiques
+		JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane.setPreferredSize(new Dimension(100, 100);
+		JTextArea textArea = new JTextArea("Hello Java :-)");
+		
+		// Problème
+		tabbedPane.addTab("Onglet", new JScrollPane(textArea));
+		
+		// Solution
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		tabbedPane.addTab("Onglet", server_name, scrollPane);
+		
+		// Affichage
+		this.add(BorderLayout.CENTER, tabbedPane);
+		this.pack();
+		this.setVisible(true);
+	}
+}
+
+Problème aperçu lors de la réalisation de l'interface graphique pour le projet de réseaux (serveurs communicants multithreads et clients légers, classe ServersInterface dans le package gui)
+
+# Port max
+
+Le numéro de port maximum qu'on peut ouvrir avec un socket de serveur est 65535.
+Si > 65535 : java.lang.IllegalArgumentException: Port value out of range: 65536
+
+

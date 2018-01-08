@@ -1,0 +1,31 @@
+
+body {
+	display: flex;
+	flex-direction: column;
+	background: #e9e9e9;
+}
+
+body>nav, body>header, body>footer {
+	background: #0099ff;
+	color: white;
+}
+
+body>header {
+	margin-bottom: 35px;
+}
+
+body>nav>div, body>header>div, body>section>div, body>footer>div {
+	min-width: 850px;
+	width: 55%;
+	margin: auto;
+}
+
+body>nav>div, body>header>div {
+	text-align: center;
+}
+
+body>section>div article>div.p {
+	margin-bottom: 50px;
+	padding: 30px;
+	background: white;
+}

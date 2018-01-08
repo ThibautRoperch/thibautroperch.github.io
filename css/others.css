@@ -1,0 +1,195 @@
+
+/* titres et paragraphes */
+
+h1, h2 {
+	margin: 25px 0;
+	text-transform: uppercase;
+	font-weight: normal;
+	font-size: 34px;
+	font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+	font-weight: bold;
+	color: rgba(0, 0, 0, 0.4);
+	text-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+h2 {
+	margin-top: 10px;
+	font-size: 24px;
+	color: #0099ff;
+}
+
+header h1 {
+	color: white;
+}
+
+h3 {
+	padding: 10px;
+	color: rgba(0, 0, 0, 0.6);
+	background: white;
+	box-shadow: 0 3px 2px rgba(0, 0, 0, 0.2);
+}
+
+p {
+	line-height: 25px;
+}
+
+hr {
+	height: 1px;
+}
+
+/* liens */
+
+a {
+	text-decoration: none;
+	color: inherit;
+}
+
+article div.p:hover p a {
+	color: #0099ff;
+}
+
+article div.p p a:hover {
+	text-decoration: underline;
+}
+
+projet description:hover a {
+	text-decoration: underline;
+}
+
+/* images */
+
+img.photo_profil {
+	width: 130px;
+	margin: 10px 0;
+	border: 5px solid white;
+	border-radius: 500px;
+	box-shadow: 0 0 5px 0px rgba(0, 0, 0, 0.5);
+	transition: all 0.2s cubic-bezier(0.49, 0, 0.36, 1);
+}	
+
+img.photo_profil:hover {
+	transform: scale(1.07, 1.07);
+	box-shadow: 0 0 15px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* div spéciales */
+
+div.cols-2 {
+	display: flex;
+}
+
+div.cols-2>div {
+	text-align: left;
+	margin: 0 10px;
+	padding: 5px 10px;
+	background: beige;
+	width: 50%;
+}
+
+div.ligne {
+	display: flex;
+	flex-direction: row;
+}
+
+div.ligne>div {
+	flex: 1;
+}
+
+/* projets */
+
+div.projets {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+div.projets projet {
+	flex: 1;
+	display: flex;
+	height: 200px;
+	min-width: 30%;
+	margin-right: 40px;
+	margin-bottom: 40px;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid silver;
+	box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+	transition: all .2s ease;
+}
+
+div.projets projet:nth-child(3n+3) {
+	margin-right: 0;
+}
+
+div.projets projet.cpp {
+	background: #2E9E60;
+}
+
+div.projets projet.php {
+	background: #A73FA7;
+}
+
+div.projets projet.js {
+	background: #226AAD;
+}
+
+div.projets projet:hover {
+	box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.0);
+}
+
+div.projets projet langage {
+	position: absolute;
+	padding-top: 155px;
+	padding-left: 15px;
+	font: bold 30px arial, sans-serif;
+	color: rgba(0, 0, 0, 0.3);
+}
+
+div.projets projet description {
+	flex: 1;
+	display: block;
+	height: 100%;
+	padding: 20px;
+	background: rgba(255, 255, 255, 0.2);
+	text-align: justify;
+	z-index: 0;
+}
+
+div.projets projet description date {
+	display: block;
+	margin-top: 10px;
+	font-size: 14px;
+	text-align: right;
+	opacity: 0.5;
+}
+
+div.projets projet liens {
+	display: flex;
+	height: 0;
+	flex-direction: row;
+	text-align: center;
+	background: rgba(0, 0, 0, 0.4);
+	transition: all .13s ease;
+}
+
+div.projets projet:hover liens {
+	height: 50px;
+	z-index: 100;
+}
+
+div.projets projet:hover date {
+	display: none;
+}
+
+div.projets projet liens a {
+	flex: 1;
+	font-size: 14px;
+	line-height: 240%;
+	text-align: center;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+div.projets projet liens a:hover {
+	color: rgba(0, 0, 0, 0.8);
+	background: rgba(255, 255, 255, 0.6);
+}

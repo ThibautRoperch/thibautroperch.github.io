@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Trucs</title>
+
+	<script type="text/javascript" src="js/load_includes.js"></script>	
+</head>
+
+<body onload="load_includes()">
+	
+	<header>
+		<h1>Trucs à savoir ?</h1>
+	</header>
+	
+	<section>
+	
+		<h2>Articles trouvés sur le net</h2>
+		
+		<article>
+			<h3>Using FizzBuzz to Find Developers who Grok Coding January 24, 2007</h3>
+
+			<a href="https://imranontech.com/2007/01/24/using-fizzbuzz-to-find-developers-who-grok-coding/">FizzBuzz</a>
+
+			<blockquote>
+				<q>Write a program that prints the numbers from 1 to 100. But for multiples of three print “Fizz” instead of the number and for the multiples of five print “Buzz”.
+				For numbers which are multiples of both three and five print “FizzBuzz”.</q>
+				
+				<p>
+					Most good programmers should be able to write out on paper a program which does this in a under a couple of minutes.<br>
+					Want to know something scary ? – the majority of comp sci graduates can’t. I’ve also seen self-proclaimed senior programmers take more than 10-15 minutes to write a solution.<br>
+					I’m not saying these people can’t write good code, but to do so they’ll take a lot longer to ship it. And in a business environment that’s exactly what you don’t want.<br>
+					This sort of question won’t identify great programmers, but it will identify the weak ones. And that’s definitely a step in the right direction.
+				</p>
+			</blockquote>
+			
+			<button onclick="FizzBuzz(this)">Lancer le programme</button><div class="output"></div>
+		</article>
+		
+		<article>
+			<h3>HTML5</h3>
+			Mettre les images (deux) en rapport avec l'HTML5
+		</article>
+		
+		<article>
+			<h3>Rudiments du web design</h3>
+			<ul>
+				<li><a href="http://carohardy.com/comment-devenir-webdesigner/">Devenir web designer</a></li>
+				<li><a href="http://blog.lunaweb.fr/ux-ui-experience-utilisateur-interface/">UX et UI c'est pas pareil, c'est... différent</a></li>
+				<li><a href="http://paletton.com/#uid=1000u0kllllaFw0g0qFqFg0w0aF">Color Scheme Designer like : pour une charte graphique</a></li>
+			</ul>
+		</article>
+	</section>
+	
+	<section>
+	
+		<h2>Trouvailles</h2>
+		
+		<article>
+			# Opérateur de recopie
+
+			En C++ comme en Java, l'opérateur par recopie est automatique appellé lorsqu'une instance est affectée à une variable du même type.
+
+			Test a();
+			Test b = a;		// a et b sont différents, ont des adresses mémoire différentes
+
+			Mais en Java, les objets sont instanciés avec new et les pointeurs ne sont pas typés. L'opérateur par recopie n'est ainsi donc pas appelé.
+
+			Test a = new Test();
+			Test b = a;		// a et b sont des pointeurs sur la même instance
+
+			Test *a = new Test();
+			Test *b = a;	// équivalent en C++
+		</article>
+		
+		
+	</section>
+	
+	
+</body>
+
+</html>
+
+<style>
+div.output {
+	display: none;
+	background: beige;
+	color: gray;
+	padding: 5px;
+	font-family: Consolas;
+}
+</style>
+
+<script>
+
+function FizzBuzz(button) {
+	// J'ai mis deux minutes
+	
+	var output = GetOutput(button);
+	
+	for (i = 1; i <= 100; ++i) {
+		aff = "";
+		if (i % 3 == 0) aff += "Fizz";
+		if (i % 5 == 0) aff += "Buzz";
+		aff = (aff == "") ? i : aff;
+		output.innerHTML += aff + " ";
+	}
+}
+
+function GetOutput(button) {
+	var output = button.nextSibling;
+	output.style.display = "block";
+	output.innerHTML = "";
+	return output;
+}
+
+</script>
+

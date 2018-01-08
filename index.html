@@ -1,72 +1,155 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=640">
+<head>
+	<meta charset="utf-8" />
+	<title>Thibaut Roperch</title>
+	
+	<link rel="stylesheet" type="text/css" href="css/all.css" />
+	<link rel="stylesheet" type="text/css" href="css/structure.css" />
+	<link rel="stylesheet" type="text/css" href="css/nav.css" />
+	<link rel="stylesheet" type="text/css" href="css/others.css" />
+	 
+	<script type="text/javascript" src="js/load_includes.js"></script>
+</head>
 
-    <link rel="stylesheet" href="stylesheets/core.css" media="screen">
-    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)">
-    <link rel="stylesheet" href="stylesheets/github-light.css">
+<body onload="load_includes()">
 
-    <script type="text/javascript" src="javascripts/modernizr.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
-    <script type="text/javascript">
-      $(document).ready(function () {
-        $('#main_content').headsmart()
-      })
-    </script>
-    <!--<title>Mon site web by ThibautRoperch</title>-->
-    <title>En cours de contruction</title>
-  </head>
+	<nav>
+	</nav>
 
-  <body>
-    <a id="forkme_banner" href="https://github.com/ThibautRoperch">View on GitHub</a>
-    <div class="shell">
+	<header>
+	</header>
 
-      <!--<header>
-        <span class="ribbon-outer">
-          <span class="ribbon-inner">
-            <h1>Mon site web</h1>
-            <h2>C&#39;est Moi</h2>
-          </span>
-          <span class="left-tail"></span>
-          <span class="right-tail"></span>
-        </span>
-      </header>
+	<section>
+		<div>
 
-      <div id="no-downloads">
-        <span class="inner">
-        </span>
-      </div>
+			<article class="invisible">
+				<h1>présentation</h1>
+
+				<div class="p">
+					<p>Je suis actuellement étudiant en deuxième année de <a href="http://www.info.univ-angers.fr/index.php" title="Département informatique de l'université d'Angers">Master informatique</a> à l'université d'Angers.
+				</div>
+			</article>
+
+			<article>
+				<h1>réalisations</h1>
+
+				<div class="projets">
+
+					<projet class="js">
+						<h3>Framework d'animation</h3>
+
+						<langage>
+							JS/XML
+						</langage>
+
+						<description>
+							Framework d’animation basé sur la bibliothèque graphique <a target="_blank" href="https://p5js.org/">p5.js</a>. Représentation d'une animation en XML. Réalisé en trinôme.
+							<date>oct. 2017 - janv. 2018</date>
+						</description>
+
+						<liens>
+							<a href="https://github.com/ThibautRoperch/FrameworkAnimationJS">Sources</a>
+						</liens>
+					</projet>
+
+					<projet class="cpp">
+						<h3>Solveur propositionnel</h3>
+
+						<langage>
+							C++
+						</langage>
+
+						<description>
+							Application au problème des pigeons et des pigeonniers. Parallélisation avec <a target="_blank" href="http://www.openmp.org/">OpenMP</a> et <a target="_blank" href="https://fr.wikipedia.org/wiki/Message_Passing_Interface">MPI</a>. Réalisé en quadrinôme.
+							<date>oct. 2017 - janv. 2018</date>
+						</description>
+
+						<liens>
+							<a href="https://github.com/ThibautRoperch/ResolutionPropositionnelle">Sources</a>
+						</liens>
+					</projet>
+
+					<projet class="php">
+						<h3>TERTIS 2000</h3>
+
+						<langage>
+							PHP/JS
+						</langage>
+
+						<description>
+							Tetris multijoueur en ligne basé sur le jeu <a target="_blank" href="http://blockbattle.net">BLOCKBATTLE.NET</a>, développé en HTML5/CSS3, PHP et JS.
+							<date>octobre 2017</date>
+						</description>
+
+						<liens>
+							<a href="http://tetris.toile-libre.org/">Version en ligne</a>
+							<a href="https://github.com/ThibautRoperch/Tetris">Sources</a>
+						</liens>
+					</projet>
+					
+					<projet class="cpp">
+						<h3>Improvisation musicale</h3>
+						
+						<langage>
+							C++
+						</langage>
+
+						<description>
+							Improvisation musicale à partir de mélodies via générateur aléatoire sous contraintes et modèle de Markov. Réalisé en binôme.
+							<date>avril - juin 2017</date>
+						</description>
+
+						<liens>
+							<a href="https://github.com/ThibautRoperch/ImproMusicale">Sources</a>
+						</liens>
+					</projet>
+					
+					<projet class="js">
+						<h3>Solveur de Juniper Green</h3>
+
+						<langage>
+							JS/HTML5
+						</langage>
+
+						<description>
+							Solveur du jeu Juniper Green (algorithme <em>brute force</em> en JS avec interface en HTML5).
+							<date>été 2016</date>
+						</description>
+					</projet>
+
+					<projet class="cpp">
+						<h3>Vérificateur de preuves (Hoare)</h3>
+
+						<langage>
+							C++
+						</langage>
+
+						<description>
+							Vérificateur de preuves écrites en logique de Hoare. Interface en C++, analyseur syntaxique en flex/bison. Réalisé en binôme.
+							<date>avril - juin 2016</date>
+						</description>
+
+						<liens>
+							<a href="https://github.com/PierreGranier/StageL3Info">Sources</a>
+						</liens>
+					</projet>
+
+					<!-- <projet class="fantome">
+					</projet> -->
+
+					<!-- <projet class="fantome">
+					</projet> -->
+						
+				</div>
+			</article>
+			
+		</div>
+	</section>
 
 
-      <span class="banner-fix"></span>
+	<footer>
+	</footer>
 
-
-      <section id="main_content">
-        <p>Mon nom est Thibaut Roperch</p>
-
-<h3>
-<a id="mon-projet-avec-mon-binôme-préféré--preuve-de-hoare" class="anchor" href="#mon-projet-avec-mon-bin%C3%B4me-pr%C3%A9f%C3%A9r%C3%A9--preuve-de-hoare" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Mon projet avec mon binôme préféré : <a href="https://pierregranier.github.io/StageL3Info/">Preuve de Hoare</a>
-</h3>
-      </section>-->
-
-      <footer>
-        <span class="ribbon-outer">
-          <span class="ribbon-inner">
-            <p>Projects by <a href="https://github.com/ThibautRoperch">ThibautRoperch</a> can be found on <a href="https://github.com/ThibautRoperch">GitHub</a></p>
-          </span>
-          <span class="left-tail"></span>
-          <span class="right-tail"></span>
-        </span>
-        <p>Generated with <a href="https://pages.github.com">GitHub Pages</a> using Merlot</p>
-        <span class="octocat"></span>
-      </footer>
-
-    </div>
-
-    
-  </body>
+</body>
 </html>
