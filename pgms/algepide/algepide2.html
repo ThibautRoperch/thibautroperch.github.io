@@ -1,0 +1,250 @@
+<all>
+	<panneau>
+		<infos><u>Informations</u></infos>
+		<etapes><u>Etapes</u>
+			<br>Frame = <span id="frame">-1</span>
+			<br>lancerEpidemie = <span id="launch">0</span> (<span id="launcher">NaId</span>)
+			<br>etapePropagation = <span id="step">0</span>
+		</etapes>
+		<stats><u>Statistiques</u>
+			<br>Pixels sains = <span id="sains"></span>
+			<br>Pixels contaminés = <span id="contamines"></span>
+			<br>Population contaminée = <span id="pourcentage"></span>%
+		</stats>
+		<options><u>Options</u>
+			<br><input id="resistants" type="checkbox"/><label for="resistants">Résistants</label>
+			<br><input id="remedes" type="checkbox"/><label for="remedes">Remèdes</label>
+		</options>	
+	</panneau>
+	
+	<ecran>
+	</ecran>
+	
+	<panneau>
+		- L'épidémie se propage de pixels en pixels de la façon suivante : un pixel sain est contaminé si un de ses voisin proche est contaminé.
+		<br>- Dans une population composée de pixels résistants, un pixel est contaminé avec une probabilité de 0.666.
+		<br>- Dans une population incluant des remèdes, autant de pixels sont guéris (s'ils étaient contaminé) que de pixels sont contaminés à la fin de la vérification des pixels.
+		<br>----<br>
+		L'épidémie évolue en fonction de chaque pixel.
+		A chaque étape de l'épidémie, tous les pixels sont vérifiés à la suite.
+		Un pixel sera à contaminer à la fin de l'étape si un de ses voisin est contaminé.
+		A la fin de l'étape de vérification des pixels, des pixels sont guéris si l'option "Remèdes" est activée. Le nombre de pixels guéris (si contaminés) est égal au nombre de pixels contaminés à la fin de l'étape.
+		<br>----<br>
+		Epidémie progressive par contamination individuelle
+	</panneau>
+</all>
+
+<table>
+<tr><th>Frame</th><th>Pop contaminée</th></tr>
+</table>
+
+
+<style>
+* {
+	margin: 0;
+	padding: 0;
+}
+
+all {
+	display: flex;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+ecran {
+	border: 1px solid black;
+	align-self: center;
+	background: silver;
+}
+
+pixel {
+	display: inline-block;
+	height: 6px;
+	width: 6px;
+	background-color: black;
+	color: white;
+}
+
+panneau {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 20%;
+	padding: 13px;
+	border: 1px solid black;
+	font-family: Consolas;
+	text-align: justify;
+}
+
+panneau * {
+	flex-grow: 1;
+}
+
+input {
+	display: inline-block;
+	margin-right: 10px;
+	vertical-align: baseline;
+}
+
+resultats {
+	display: table;
+}
+</style>
+
+
+<script>
+var pixelSize = 6;
+var ecranWidth = 75;
+var ecranHeight = 60;
+
+// Blocs de contenu
+var ecran = document.getElementsByTagName("ecran")[0];
+var infos = document.getElementsByTagName("infos")[0];
+var stats = document.getElementsByTagName("stats")[0];
+var resultats = document.getElementsByTagName("table")[0];
+// Etapes (compteurs)
+var frame = document.getElementById("frame");
+var launch = document.getElementById("launch");
+var step = document.getElementById("step");
+var launcher = document.getElementById("launcher");
+// Stastiques
+var sains = document.getElementById("sains");
+sains.innerHTML = ecranWidth * ecranHeight;
+var contamines = document.getElementById("contamines");
+contamines.innerHTML = 0;
+var pourcentage = document.getElementById("pourcentage");
+pourcentage.innerHTML = 0;
+// Options (checkboxes)
+var resistants = document.getElementById("resistants");
+var remedes = document.getElementById("remedes");
+
+ecran.style.width = pixelSize * ecranWidth + "px";
+ecran.style.height = pixelSize * ecranHeight + "px";
+
+var aContaminer = [];
+
+afficherInformations();
+remplirEcranDePixels();
+
+function afficherInformations() {
+	infos.innerHTML += "<br>Taille d'un pixel = " + pixelSize + " px";
+	infos.innerHTML += "<br>Largeur de la zone = " + ecranWidth + " pixels";
+	infos.innerHTML += "<br>Hauteur de la zone = " + ecranHeight + " pixels";
+	infos.innerHTML += "<br>Total = " + ecranWidth * ecranHeight + " pixels";
+}
+
+function remplirEcranDePixels(nombreDeLignesRemplies = 0) { // rempli l'écran ligne par ligne de pixels
+	if(nombreDeLignesRemplies < ecranHeight) {
+		ligneDePixels(nombreDeLignesRemplies);
+	}
+}
+
+function ligneDePixels(nombreDeLignesRemplies) { // une ligne de pixels
+	for(colonne=0; colonne < ecranWidth; colonne++) {
+		pix = document.createElement("pixel");
+		pix.id = nombreDeLignesRemplies * ecranWidth + colonne;
+		// pix.innerHTML = nombreDeLignesRemplies * ecranWidth + colonne;
+		pix.onclick = function() { lancerEpidemie(this); };
+		ecran.appendChild(pix);
+	}
+	setTimeout(function() {
+		remplirEcranDePixels(nombreDeLignesRemplies + 1);
+	}, 0);
+}
+
+function lancerEpidemie(pix) {
+	frame.innerHTML = parseInt(frame.innerHTML) + 1;
+	launch.innerHTML = parseInt(launch.innerHTML) + 1;
+	launcher.innerHTML = pix.id;
+	
+	aContaminer[aContaminer.length] = pix.id;
+	contaminer();
+	aContaminer = [];
+	
+	etapePropagation();
+}
+
+function etapePropagation() {
+	frame.innerHTML = parseInt(frame.innerHTML) + 1;
+	step.innerHTML = parseInt(step.innerHTML) + 1;
+	
+	resultats.innerHTML += "<tr><td>" + frame.innerHTML + "</td><td>" + pourcentage.innerHTML + "</td></tr>";
+	
+	for(i=0; i<ecranWidth * ecranHeight; i++) {
+		pix = document.getElementById(i);
+		if(pix.style.backgroundColor != "white") {
+			if(parseInt(pix.id) - ecranWidth >= 0)
+				if(document.getElementById(parseInt(pix.id) - ecranWidth).style.backgroundColor == "white")
+					aContaminer[aContaminer.length] = pix.id;
+			if((parseInt(pix.id) + 1) % ecranWidth != 0)
+				if(document.getElementById(parseInt(pix.id) + 1).style.backgroundColor == "white")
+					aContaminer[aContaminer.length] = pix.id;
+			if(parseInt(pix.id) + ecranWidth < ecranWidth * ecranHeight)
+				if(document.getElementById(parseInt(pix.id) + ecranWidth).style.backgroundColor == "white")
+					aContaminer[aContaminer.length] = pix.id;
+			if(parseInt(pix.id) % ecranWidth != 0)
+				if(document.getElementById(parseInt(pix.id) - 1).style.backgroundColor == "white")
+					aContaminer[aContaminer.length] = pix.id;
+		}
+		// I) 1 pixel guéri (si contaminé) à chaque pixel vérifié
+		/*if(remedes.checked) {
+			pif = Math.round(Math.random() * (ecranWidth * ecranHeight - 1));
+			guerir(document.getElementById(pif));
+		}*/
+	}
+	
+	contaminer();
+	aContaminer = [];
+	
+	// II) Autant de pixels guéris (si contaminés) que de pixels contaminés à la fin de la vérification des pixels
+	if(remedes.checked) {
+		for(i=0; i<parseInt(contamines.innerHTML)*1; i++) {
+			pif = Math.round(Math.random() * (ecranWidth * ecranHeight - 1));
+			guerir(document.getElementById(pif));
+		}
+	}
+	
+	if(parseInt(sains.innerHTML) > 0) {
+		setTimeout(function() {
+			etapePropagation();
+		}, 0);
+	}
+}
+
+function contaminer() {
+	for(i=0; i<aContaminer.length; i++) {
+		pix = document.getElementById(aContaminer[i]);
+		if(pix.style.backgroundColor != "white") {
+			if(resistants.checked) {
+				pif = Math.round(Math.random() * 100);
+				if(pif < 66.6) {
+					sains.innerHTML = parseInt(sains.innerHTML) - 1;
+					contamines.innerHTML = parseInt(contamines.innerHTML) + 1;
+					
+					pix.style.backgroundColor = "white";
+					pix.style.color = "black";
+				}
+			}
+			else {
+				sains.innerHTML = parseInt(sains.innerHTML) - 1;
+				contamines.innerHTML = parseInt(contamines.innerHTML) + 1;
+				pourcentage.innerHTML = Math.round(parseInt(contamines.innerHTML) * 100 / (ecranWidth * ecranHeight));
+				
+				pix.style.backgroundColor = "white";
+				pix.style.color = "black";
+			}
+		}
+	}
+}
+
+function guerir(pix) {
+	if(pix.style.backgroundColor == "white") {
+		sains.innerHTML = parseInt(sains.innerHTML) + 1;
+		contamines.innerHTML = parseInt(contamines.innerHTML) - 1;
+		pourcentage.innerHTML = Math.round(parseInt(contamines.innerHTML) * 100 / (ecranWidth * ecranHeight));
+		
+		pix.style.backgroundColor = "black";
+		pix.style.color = "white";
+	}
+}
+</script>

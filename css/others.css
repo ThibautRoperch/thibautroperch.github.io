@@ -173,7 +173,7 @@ div.projets projet liens {
 }
 
 div.projets projet:hover liens {
-	height: 50px;
+	height: 35px;
 	z-index: 100;
 }
 

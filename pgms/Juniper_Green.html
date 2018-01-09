@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<title>Juniper Green - Jeu mathématiques (collège Lou)</title>
+</head>
+
+<body>
+
+	<header>
+		<h2>Juniper Green</h2>
+	</header>
+
+	<wrapper>
+
+		<section>
+
+			<h3>Résolution du jeu - Génère toutes les suites</h3>
+
+			<article>
+				Plateau allant de <input id="min" onchange="initialiser_tableau()" type="number" value="1"/> à <input id="max" onchange="initialiser_tableau()" type="number" value="10"/>
+				<br><br><button onclick="initialiser_tableau()">Nettoyer le plateau</button>
+			</article>
+
+			<article id="nombres">
+			</article>
+
+			<article>
+				<button onclick="initialiser_suites()">Chercher les plus grandes suites de nombres</button>
+			</article>
+
+		</section>
+
+
+		<section>
+
+			<h3>Résultats obtenus en trichant<button class="info" onclick="afficher_calculs(true)">?</button><button class="info" onclick="afficher_plus_resultats(true)">+</button></h3>
+
+			<article id="resultats">
+			</article>
+
+			<article></article>
+
+		</section>
+		
+		<section>
+
+			<h3>Résultats obtenus à la main (pour un plateau de 1 à 30)</h3>
+
+			<article>
+				<a href="http://www.acamus.net/index.php?option=com_content&view=article&id=32:le-jeu-de-juniper-green&catid=41&Itemid=219">http://www.acamus.net/index.php?option=com_content&view=article&id=32:le-jeu-de-juniper-green&catid=41&Itemid=219</a><br>
+				<br>
+				== 20 nombres ==<br>
+				<br>
+				30-5-10-20-4-28-7-21-3-9-18-6-12-2-24-8-16-1-11-22<br>
+				ou 13-26 pour les deux derniers<br>
+				<br>
+				16-8-24-3-9-18-6-30-5-25-1-21-7-14-28-2-10-20-4-12<br>
+				<br>
+				== 22 nombres ==<br>
+				<br>
+				25-5-15-30-10-20-1-28-14-7-21-3-24-8-16-4-12-2-6-18-9-27<br>
+				<br>
+				== 23 nombres ==<br>
+				<br>
+				29-1-28-14-7-21-3-27-9-18-6-24-12-4-8-16-2-20-10-30-15-5-25<br>
+				<br>
+				== 26 nombres ==<br>
+				<br>
+				29-1-13-26-2-28-14-7-21-3-27-9-18-6-12-24-8-16-4-20-10-30-15-5-25<br>
+				ou 11-22 à la place de 13-26<br>
+			</article>
+
+		</section>
+
+	</wrapper>
+
+	<footer>
+		<ul>
+			<li>Le nombre totale de suites justes varie (exponentiellement ?) en fonction de la taille du plateau.</li>
+			<li>Il semblerait qu'il y ait toujours plusieurs suites de taille maximum, quelque soit le plateau de départ.</li>
+			<li>A bas niveau (plateau de 1 à 6), les suites de taille maximum (les plus grandes) incluent tous les nombres du plateau.
+				Plateau de 7 à 10 : les suites de taille maximum (les plus grandes) incluent tous les nombres du plateau -1.
+				Plateau de 11 à ?? : les suites de taille maximum (les plus grandes) incluent tous les nombres du plateau -2.</li>
+			<li>Note : On remarque que les suites les plus grandes commencent par un nombre > 2 ; les suites commençant par 1 ou 2 sont-elles vouées à l'echec ? Si oui, on peut les exclure  de la liste de suites de départ ce qui aura pour effet de réduire le temps de calcul des suites (but recherché).</li>
+		</ul>
+	</footer>
+
+	<aside id="aside_calculs" class="ferme">
+		<h3>Calculs (tableau pour tableur)<button class="info" onclick="afficher_calculs(false)">X</button></h3>
+
+		<table id="calculs">
+		</table>
+		<table id="analyse">
+			<tr><th>Taille du plateau (nombre de nombres)</th><th>Taille des plus grandes série (nombre de nombres)</th></tr>
+		</table>
+	</aside>
+
+	<aside id="aside_plus_resultats" class="ferme">
+		<h3>Plus de résultats (nombres de suites de taille Y commençant par X)<button class="info" onclick="afficher_plus_resultats(false)">X</button></h3>
+
+		<table id="plus_resultats">
+		</table>
+	</aside>
+
+	<wrapper>
+		<section>
+
+			<h3>Construction d'une suite - Choix du plus isolé</h3>
+
+			<article>Recherche dans le plateau précédent</article>
+
+			<article>
+				<button onclick="suite_gagnante()">Trouver une suite construite par choix de nombres les plus isolés</button>
+			</article>
+
+		</section>
+
+		<section>
+
+			<h3>Résultat : une suite gagnante ?</h3>
+
+			<article id="suite_gagnante">
+			</article>
+
+			<article></article>
+		</section>
+	</wrapper>
+	
+	<footer>
+		<ul>
+			<li>L'ensemble de départ contient chaque nombre du plateau associé aux nombres pouvant le suivre (dans un tableau).</li>
+			<li>L'algo parcourt ces tableaux en choisisant le nombre suivant selon le critère suivant : le plus isolé (celui qui possède le moins de nombres suivants, mais au moins 1).</li>
+			<li>Le choix du premier ou dernier nombre du tableau ne s'est pas révélé très efficace.</li>
+		</ul>
+	</footer>
+
+</body>
+
+</html>
+
+
+
+
+<script>
+var NOMBRES = [];
+var SUITES_DE_NOMBRES = [];
+var NOMBRE_MIN;
+var NOMBRE_MAX;
+var NO_MORE_SEQUENCE;
+var PLUS_RESULTATS = []; // Contient des tableaux d'entiers ; un tableau contient le nombres de suites pour chaque nombre du plateau ; un tableau par taille de suite ; [[1,1,1,1],[3,2,1,2],...]
+
+initialiser_tableau();
+
+// Affichage du tableau (40 est la largeur d'une cell et 2 la taille des deux bordures cumulées)
+function initialiser_tableau() {
+	NOMBRE_MIN = parseInt(document.getElementById("min").value);
+	NOMBRE_MAX = parseInt(document.getElementById("max").value);
+	var nombres = document.getElementById("nombres");
+	var pas = 10;
+
+	NOMBRES = [];
+	nombres.innerHTML = "";
+
+	for(i = NOMBRE_MIN; i <= NOMBRE_MAX; i++) {
+		NOMBRES.push(i);
+		nombres.innerHTML += "<cell onclick=\"activer_cell(this)\">" + i + "</cell>";
+	}
+
+	nombres.style.width = pas * (40) + "px";
+
+	var resultats = document.getElementById("resultats");
+	while(resultats.innerHTML.indexOf("<span class=\"activer\">") > -1) {
+		resultats.innerHTML = resultats.innerHTML.replace("<span class=\"activer\">", "");
+		resultats.innerHTML = resultats.innerHTML.replace("</span>", "");
+	}
+}
+
+function activer_cell(cell) {
+	cell.className = "clicked";
+
+	var resultats = document.getElementById("resultats");
+	while(resultats.innerHTML.indexOf("-" + cell.innerHTML) > -1 || resultats.innerHTML.indexOf(cell.innerHTML + "-") > -1) {
+		resultats.innerHTML = resultats.innerHTML.replace("-" + cell.innerHTML, "-<span class=\"activer\">" + cell.innerHTML + "</span>");
+		resultats.innerHTML = resultats.innerHTML.replace(cell.innerHTML + "-", "<span class=\"activer\">" + cell.innerHTML + "</span>-");
+	}
+}
+
+function afficher_calculs(valeur) {
+	if(valeur == true)
+		document.getElementById("aside_calculs").className = "ouvert";
+	else
+		document.getElementById("aside_calculs").className = "ferme";
+}
+
+function afficher_plus_resultats(valeur) {
+	if(valeur == true)
+		document.getElementById("aside_plus_resultats").className = "ouvert";
+	else
+		document.getElementById("aside_plus_resultats").className = "ferme";
+}
+
+// X suites composées d'un premier élémént sont ajoutées au tableau des suites, X étant le nombre de débuts de suite possibles (ajoutera par exemple [1], [2], etc...)
+function initialiser_suites() {
+	SUITES_DE_NOMBRES = [];
+	NO_MORE_SEQUENCE = false;
+	PLUS_RESULTATS = [[]];
+	
+	document.getElementById("resultats").innerHTML = "Génération des suites en cours...";
+	document.getElementById("calculs").innerHTML = "<tr><th colspan=\"2\">Plateau de " + NOMBRES.length + " nombre(s)</th></tr><tr><th>Taille des séries</th><th>Nombre de séries</th></tr>";
+
+	for(i = 0; i < NOMBRES.length; i++) {
+		var suite = [NOMBRES[i]];
+		SUITES_DE_NOMBRES.push(suite);
+		PLUS_RESULTATS[0].push(1);
+	}
+
+	chercher_suites();
+}
+
+// Complète les suites initialisées et ajoutées par la procédure completer_suites() en recréant les suites de nombres de taille+1
+function chercher_suites() {
+	var resultats = document.getElementById("resultats");
+
+	if(NO_MORE_SEQUENCE == false) {
+		resultats.innerHTML += "<br><br>" + presenter_statut();
+		document.getElementById("calculs").innerHTML += "<tr><td>" + SUITES_DE_NOMBRES[0].length + "</td><td>" + SUITES_DE_NOMBRES.length + "</td></tr>";
+
+		PLUS_RESULTATS.push([]);
+		for(i in NOMBRES) PLUS_RESULTATS[PLUS_RESULTATS.length-1].push(0);
+
+		completer_suites();
+
+		setTimeout(function() {
+			chercher_suites();
+		}, 250);
+	}
+	else {
+		resultats.innerHTML = presenter_suites();
+		document.getElementById("analyse").innerHTML += "<tr><td>" + NOMBRES.length + "</td><td>" + SUITES_DE_NOMBRES[0].length + "</td></tr>";
+		document.getElementById("plus_resultats").innerHTML = presenter_plus_resultats();
+	}
+}
+
+// Crée des nouvelles suites en prenant les actuelles et en leur rajoutant un élément qui est dans la liste des possiblités (X nouvelles suites pour une suite, X étant le nombre de nombres pouvant compléter la suite)
+function completer_suites() {
+	SUITES_DE_NOMBRES_tmp = SUITES_DE_NOMBRES.slice();
+	suites_de_nombres = [];
+
+	while(SUITES_DE_NOMBRES.length > 0) { // Pour chaque suite de nombres S dans le tableau principal des SUITES_DE_NOMBRES
+		S = SUITES_DE_NOMBRES.shift();
+		console.log("Etude de la suite : " + S);
+		possibilites = suivants_possibles(S);
+		console.log("Nombres pouvant s'ajouter à la suite : " + possibilites);
+		for(i = 0; i < possibilites.length; i++) { // Pour chaque nombre P pouvant s'ajouter à la suite de nombres S
+			P = possibilites[i];
+			suites_de_nombres.push(S.concat(P)); // Ajout de la suite (S + P) dans le tableau intermédiaire des suites_de_nombres
+			console.log("Suite enregistrée : " + S.concat(P));
+			PLUS_RESULTATS[suites_de_nombres[0].length-1][S[0]-1]++;
+		}
+	}
+	
+	// Attention à récupérer les anciennes suites si aucune nouvelle suite plus longue n'a pu être générée
+	if(suites_de_nombres.length > 0) {
+		SUITES_DE_NOMBRES = suites_de_nombres;
+	}
+	else {
+		SUITES_DE_NOMBRES = SUITES_DE_NOMBRES_tmp;
+		NO_MORE_SEQUENCE = true;
+		delete PLUS_RESULTATS[PLUS_RESULTATS.length-1];
+	}
+}
+
+function suivants_possibles(suite) {
+	nombre = suite[suite.length-1];
+	possibilites = [];
+
+	trouves = multiples(nombre).concat(diviseurs(nombre));
+
+	while(trouves.length > 0) { // marche pas avec une boucle for (boucle infinie)... #JSthings
+		x = trouves.shift();
+		if(est_present(x, suite) == false && est_present(x, possibilites) == false) {
+			possibilites.push(x);
+		}
+	}
+
+	return possibilites;
+}
+
+function presenter_statut() {
+	res = "== " + SUITES_DE_NOMBRES[0].length + " nombres ==<br>";
+	res += SUITES_DE_NOMBRES.length + " suites entièrement justes.";
+
+	return res;
+}
+
+function presenter_suites() {
+	res = "== " + SUITES_DE_NOMBRES[0].length + " nombres ==<br><br>";
+
+	for(i = 0; i < SUITES_DE_NOMBRES.length; i++) {
+		for(j = 0; j < SUITES_DE_NOMBRES[i].length; j++) {
+			if(j > 0) res += "-";
+			res += SUITES_DE_NOMBRES[i][j];
+		}
+		res += "<br>";
+	}
+
+	res += "<br>" + SUITES_DE_NOMBRES.length + " suite(s) entièrement juste(s).";
+
+	return res;
+}
+
+function presenter_plus_resultats() {
+	res = "<tr><th colspan=\"" + parseInt(parseInt(NOMBRES.length)+1+1) + "\">Plateau de " + NOMBRES.length + " nombre(s)</th></tr>";
+	res += "<tr><th>Taille\\Début</th>";
+	
+	for(i in NOMBRES)
+		res += "<th>" + NOMBRES[i] + "</th>";
+	res += "<th>Total</th></tr>";
+
+	giga_somme_1 = 0;
+
+	for(i in PLUS_RESULTATS) {
+		res += "<tr><th>" + parseInt(parseInt(i)+1) + "</th>";
+		somme = 0;
+		for(j in PLUS_RESULTATS[i]) {
+			res += "<td>" + PLUS_RESULTATS[i][j] + "</td>";
+			somme += PLUS_RESULTATS[i][j];
+		}
+		giga_somme_1 += somme;
+		res += "<th>" + somme + "</th>";
+		res += "</tr>";
+	}
+
+	giga_somme_2 = 0;
+
+	res += "<tr><th>Total</th>";
+	for(i = 0; i < PLUS_RESULTATS[0].length; i++) {
+		somme = 0;
+		for(j in PLUS_RESULTATS) {
+			somme += PLUS_RESULTATS[j][i];
+		}
+		giga_somme_2 += somme;
+		res += "<th>" + somme + "</th>";
+	}
+	res += "<th>" + giga_somme_2 + "</th>";
+	res += "</tr>";
+
+	return res;
+}
+
+function multiples(nombre) {
+	var multiples = [];
+
+	for(mult = nombre; mult <= NOMBRE_MAX; mult++) {
+		if(mult % nombre == 0) multiples.push(mult);
+	}
+
+	return multiples;
+}
+
+function diviseurs(nombre) {
+	var diviseurs = [];
+
+	for(div = NOMBRE_MIN; div <= nombre; div++) {
+		if(nombre / div == Math.round(nombre / div)) diviseurs.push(div);
+	}
+	
+	return diviseurs;
+	// 5%2.2
+}
+
+function est_present(element, tableau) {
+	for(i = 0; i < tableau.length; i++)
+		if(tableau[i] == element)
+			return true;
+	return false;
+}
+
+function taille(tableau) {
+	res = 0;
+	for(element in tableau)
+		if(element != "")
+			res++;
+	return res;
+}
+
+function est_vide(tableau) {
+	for(element in tableau)
+		if(element != "")
+			return false;
+	return true;
+}
+
+
+
+function suite_gagnante() {
+	var A = []; // Ensemble des nombres associés à leur possiblités
+	var NOMBRES_tmp = NOMBRES.slice();
+
+	document.getElementById("suite_gagnante").innerHTML = "Construction de la suite en cours...";
+
+	// Construit l'ensemble des suivants de chaque nombre du tableau
+	while(NOMBRES_tmp.length > 0) {
+		nombre = NOMBRES_tmp.shift();
+		A[nombre] = suivants_possibles([nombre]);
+	}
+
+	var suite = [];
+	NO_MORE_SEQUENCE = false;
+	le_plus_isole = []; // contient en [0] le nombre et en [1] ses suivants possibles
+
+	while(NO_MORE_SEQUENCE == false) {
+		// Recherche du plus isolé des nombres (prend par défaut le premier trouvé)
+		if(suite.length == 0) {
+			for(nombre in A) {
+				if(le_plus_isole.length == 0 || taille(A[nombre]) < taille(le_plus_isole[1])) {
+					le_plus_isole[0] = nombre;
+					le_plus_isole[1] = A[nombre];
+				}
+			}
+		}
+		else {
+			B = le_plus_isole[1];
+			le_plus_isole = [];
+			for(i in B) {
+				if(taille(A[B[i]]) > 0 && (le_plus_isole.length == 0 || taille(A[B[i]]) < taille(le_plus_isole[1]))) { // Choisir un nombre avec de l'avenir, le premier si 1er tour ou le plus rare
+					le_plus_isole[0] = B[i];
+					le_plus_isole[1] = A[B[i]];
+				}
+			}
+			if(le_plus_isole.length == 0) { // Si aucun nombre n'a de suivant possible, prendre le dernier
+				for(i in B) {
+					le_plus_isole[0] = B[i];
+					le_plus_isole[1] = A[B[i]];
+				}
+			}
+		}
+
+		// Condition d'arrêt
+		if(taille(le_plus_isole[1]) == 0)
+			NO_MORE_SEQUENCE = true;
+
+		// Ajoute le nombre à la suite
+		suite.push(le_plus_isole[0]);
+
+		// Ôte le nombre à l'ensemble de départ (et aux possibilités des nombres)
+		for(nombre in A) {
+			for(i in A[nombre]) {
+				if(A[nombre][i] == le_plus_isole[0])
+					delete A[nombre][i];
+			}
+		}
+		delete A[le_plus_isole[0]];
+
+		// Supprime les nombres qui n'ont plus d'avenir
+		/*for(nombre in A) {
+			if(taille(A[nombre]) == 0)
+				delete A[nombre];*/
+	}
+
+	document.getElementById("suite_gagnante").innerHTML = "Tableau de " + NOMBRES[0] + " à " + NOMBRES[NOMBRES.length-1] + "<br><br>";
+	document.getElementById("suite_gagnante").innerHTML += "== " + suite.length + " nombres ==<br><br>";
+	for(i in suite) {
+		if(i > 0) document.getElementById("suite_gagnante").innerHTML += "-";
+		document.getElementById("suite_gagnante").innerHTML += suite[i];
+	}
+}
+
+</script>
+
+
+
+
+<style>
+/*
+#96CA2D - vert cair
+#B5E655 - vert très clair
+#EDF7F2 - blanc teinté vert
+#4BB5C1 - bleu clair
+#7FC6BC - bleu très clair
+*/
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+    justify-content: space-between;
+	font-family: Helvetica;
+	background: #EDF7F2;
+}
+
+wrapper {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	margin-bottom: 10px;
+}
+
+section, aside {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+    justify-content: space-between;
+	/*min-width: 40%;*/
+	margin: 10px;
+	border: 2px solid #96CA2D;
+	background: white;
+	border-radius: 10px;
+}
+
+article {
+	margin: auto;
+	padding: 20px;
+	text-align: center;
+}
+
+header, footer {
+	margin-bottom: 10px;
+	padding: 25px 40px;
+	text-align: center;
+	color: #EDF7F2;
+	background: #4BB5C1;
+}
+
+footer {
+	margin-bottom: 0;
+	text-align: left;
+}
+
+aside {
+	position: fixed;
+	top: 0;
+	width: 50%;
+	height: 100%;
+	margin: 0;
+	transition: 0.8s all ease;
+	text-overflow: auto;
+}
+
+#aside_calculs.ferme {
+	right: -100%;
+	opacity: 0;
+}
+#aside_calculs.ouvert {
+	right: 0;
+	opacity: 1;
+}
+
+#aside_plus_resultats.ferme {
+	left: -100%;
+	opacity: 0;
+}
+#aside_plus_resultats.ouvert {
+	left: 0;
+	opacity: 1;
+}
+
+h2 {
+	font-size: 200%;
+}
+
+h3 {
+	padding: 10px;
+	border: 2px solid #96CA2D;
+	color: #EDF7F2;
+	background: #96CA2D;
+	border-radius: 5px 5px 0 0;
+	font-weight: normal;
+}
+
+input, button {
+	padding: 5px;
+	text-align: center;
+}
+
+input {
+	width: 50px;
+}
+
+span.activer {
+	color: #4BB5C1;
+}
+
+ul {
+	list-style-type: '- ';
+}
+
+.info {
+	float: right;
+	font-size: 50%;
+	margin: 0;
+	padding: 0;
+}
+
+#nombres {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0;
+	border: 1px solid silver;
+}
+
+#nombres cell {
+	width: 40px;
+	line-height: 40px;
+}
+
+#nombres cell:hover, #nombres cell.clicked {
+	color: white;
+	background: #7FC6BC;
+	cursor: pointer;
+}
+
+#resultats {
+	margin: 0;
+}
+
+#calculs, #analyse, #plus_resultats {
+	margin: auto;
+	border: 2px solid silver;
+	background: #EDF7F2;
+	border-radius: 10px;
+}
+
+/*
+#96CA2D - vert cair
+#B5E655 - vert très clair
+#EDF7F2 - blanc teinté vert
+#4BB5C1 - bleu clair
+#7FC6BC - bleu très clair
+*/
+</style>
