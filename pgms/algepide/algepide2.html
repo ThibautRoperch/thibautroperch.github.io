@@ -1,3 +1,11 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<title>Juniper Green - Jeu mathÃ©matiques</title>
+</head>
+
 <all>
 	<panneau>
 		<infos><u>Informations</u></infos>
@@ -8,12 +16,12 @@
 		</etapes>
 		<stats><u>Statistiques</u>
 			<br>Pixels sains = <span id="sains"></span>
-			<br>Pixels contaminés = <span id="contamines"></span>
-			<br>Population contaminée = <span id="pourcentage"></span>%
+			<br>Pixels contaminÃ©s = <span id="contamines"></span>
+			<br>Population contaminÃ©e = <span id="pourcentage"></span>%
 		</stats>
 		<options><u>Options</u>
-			<br><input id="resistants" type="checkbox"/><label for="resistants">Résistants</label>
-			<br><input id="remedes" type="checkbox"/><label for="remedes">Remèdes</label>
+			<br><input id="resistants" type="checkbox"/><label for="resistants">RÃ©sistants</label>
+			<br><input id="remedes" type="checkbox"/><label for="remedes">RemÃ¨des</label>
 		</options>	
 	</panneau>
 	
@@ -21,21 +29,21 @@
 	</ecran>
 	
 	<panneau>
-		- L'épidémie se propage de pixels en pixels de la façon suivante : un pixel sain est contaminé si un de ses voisin proche est contaminé.
-		<br>- Dans une population composée de pixels résistants, un pixel est contaminé avec une probabilité de 0.666.
-		<br>- Dans une population incluant des remèdes, autant de pixels sont guéris (s'ils étaient contaminé) que de pixels sont contaminés à la fin de la vérification des pixels.
+		- L'Ã©pidÃ©mie se propage de pixels en pixels de la faÃ§on suivante : un pixel sain est contaminÃ© si un de ses voisin proche est contaminÃ©.
+		<br>- Dans une population composÃ©e de pixels rÃ©sistants, un pixel est contaminÃ© avec une probabilitÃ© de 0.666.
+		<br>- Dans une population incluant des remÃ¨des, autant de pixels sont guÃ©ris (s'ils Ã©taient contaminÃ©) que de pixels sont contaminÃ©s Ã  la fin de la vÃ©rification des pixels.
 		<br>----<br>
-		L'épidémie évolue en fonction de chaque pixel.
-		A chaque étape de l'épidémie, tous les pixels sont vérifiés à la suite.
-		Un pixel sera à contaminer à la fin de l'étape si un de ses voisin est contaminé.
-		A la fin de l'étape de vérification des pixels, des pixels sont guéris si l'option "Remèdes" est activée. Le nombre de pixels guéris (si contaminés) est égal au nombre de pixels contaminés à la fin de l'étape.
+		L'Ã©pidÃ©mie Ã©volue en fonction de chaque pixel.
+		A chaque Ã©tape de l'Ã©pidÃ©mie, tous les pixels sont vÃ©rifiÃ©s Ã  la suite.
+		Un pixel sera Ã  contaminer Ã  la fin de l'Ã©tape si un de ses voisin est contaminÃ©.
+		A la fin de l'Ã©tape de vÃ©rification des pixels, des pixels sont guÃ©ris si l'option "RemÃ¨des" est activÃ©e. Le nombre de pixels guÃ©ris (si contaminÃ©s) est Ã©gal au nombre de pixels contaminÃ©s Ã  la fin de l'Ã©tape.
 		<br>----<br>
-		Epidémie progressive par contamination individuelle
+		EpidÃ©mie progressive par contamination individuelle
 	</panneau>
 </all>
 
 <table>
-<tr><th>Frame</th><th>Pop contaminée</th></tr>
+<tr><th>Frame</th><th>Pop contaminÃ©e</th></tr>
 </table>
 
 
@@ -133,7 +141,7 @@ function afficherInformations() {
 	infos.innerHTML += "<br>Total = " + ecranWidth * ecranHeight + " pixels";
 }
 
-function remplirEcranDePixels(nombreDeLignesRemplies = 0) { // rempli l'écran ligne par ligne de pixels
+function remplirEcranDePixels(nombreDeLignesRemplies = 0) { // rempli l'ï¿½cran ligne par ligne de pixels
 	if(nombreDeLignesRemplies < ecranHeight) {
 		ligneDePixels(nombreDeLignesRemplies);
 	}
@@ -186,7 +194,7 @@ function etapePropagation() {
 				if(document.getElementById(parseInt(pix.id) - 1).style.backgroundColor == "white")
 					aContaminer[aContaminer.length] = pix.id;
 		}
-		// I) 1 pixel guéri (si contaminé) à chaque pixel vérifié
+		// I) 1 pixel guï¿½ri (si contaminï¿½) ï¿½ chaque pixel vï¿½rifiï¿½
 		/*if(remedes.checked) {
 			pif = Math.round(Math.random() * (ecranWidth * ecranHeight - 1));
 			guerir(document.getElementById(pif));
@@ -196,7 +204,7 @@ function etapePropagation() {
 	contaminer();
 	aContaminer = [];
 	
-	// II) Autant de pixels guéris (si contaminés) que de pixels contaminés à la fin de la vérification des pixels
+	// II) Autant de pixels guï¿½ris (si contaminï¿½s) que de pixels contaminï¿½s ï¿½ la fin de la vï¿½rification des pixels
 	if(remedes.checked) {
 		for(i=0; i<parseInt(contamines.innerHTML)*1; i++) {
 			pif = Math.round(Math.random() * (ecranWidth * ecranHeight - 1));

@@ -8,12 +8,12 @@
 		</etapes>
 		<stats><u>Statistiques</u>
 			<br>Pixels sains = <span id="sains"></span>
-			<br>Pixels contaminés = <span id="contamines"></span>
-			<br>Population contaminée = <span id="pourcentage"></span>%
+			<br>Pixels contaminÃ©s = <span id="contamines"></span>
+			<br>Population contaminÃ©e = <span id="pourcentage"></span>%
 		</stats>
 		<options><u>Options</u>
-			<br><input id="resistants" type="checkbox"/><label for="resistants">Résistants</label>
-			<br><input id="remedes" type="checkbox"/><label for="remedes">Remèdes</label>
+			<br><input id="resistants" type="checkbox"/><label for="resistants">RÃ©sistants</label>
+			<br><input id="remedes" type="checkbox"/><label for="remedes">RemÃ¨des</label>
 		</options>	
 	</panneau>
 	
@@ -21,17 +21,17 @@
 	</ecran>
 	
 	<panneau>
-		- L'épidémie se propage de pixels en pixels de la façon suivante : un pixel infecté contamine ses voisins proches dans l'ordre haut, droit, bas, gauche.
-		<br>- Dans une population composée de pixels résistants, un pixel est contaminé avec une probabilité de 0.666.
-		<br>- Dans une population incluant des remèdes, un pixel est guéri (s'il était contaminé) à chaque fois qu'un pixel est contaminé.
+		- L'Ã©pidÃ©mie se propage de pixels en pixels de la faÃ§on suivante : un pixel infectÃ© contamine ses voisins proches dans l'ordre haut, droit, bas, gauche.
+		<br>- Dans une population composÃ©e de pixels rÃ©sistants, un pixel est contaminÃ© avec une probabilitÃ© de 0.666.
+		<br>- Dans une population incluant des remÃ¨des, un pixel est guÃ©ri (s'il Ã©tait contaminÃ©) Ã  chaque fois qu'un pixel est contaminÃ©.
 		<br>----<br>
-		L'épidémie évolue en suivant la bordure définie par les derniers pixels contaminées.
-		Un pixel ne peut devenir contaminé que lorsqu'un de ses voisin devient contaminé.
-		Un pixel ne change pas d'état seul, sauf avec l'option "Remèdes".
+		L'Ã©pidÃ©mie Ã©volue en suivant la bordure dÃ©finie par les derniers pixels contaminÃ©es.
+		Un pixel ne peut devenir contaminÃ© que lorsqu'un de ses voisin devient contaminÃ©.
+		Un pixel ne change pas d'Ã©tat seul, sauf avec l'option "RemÃ¨des".
 		<br>----<br>
-		Exemple : si le pixel à l'épicentre guéri, il sera recontaminé ssi une vague d'épidémie arrive sur lui. Il ne s'actualisera pas seul, même s'il est entouré de contaminés.
+		Exemple : si le pixel Ã  l'Ã©picentre guÃ©ri, il sera recontaminÃ© ssi une vague d'Ã©pidÃ©mie arrive sur lui. Il ne s'actualisera pas seul, mÃªme s'il est entourÃ© de contaminÃ©s.
 		<br>----<br>
-		Epidémie progressive par contamination périphérique
+		EpidÃ©mie progressive par contamination pÃ©riphÃ©rique
 	</panneau>
 </all>
 
@@ -124,7 +124,7 @@ function afficherInformations() {
 	infos.innerHTML += "<br>Total = " + ecranWidth * ecranHeight + " pixels";
 }
 
-function remplirEcranDePixels(nombreDeLignesRemplies = 0) { // rempli l'écran ligne par ligne de pixels
+function remplirEcranDePixels(nombreDeLignesRemplies = 0) { // rempli l'ï¿½cran ligne par ligne de pixels
 	if(nombreDeLignesRemplies < ecranHeight) {
 		ligneDePixels(nombreDeLignesRemplies);
 	}
