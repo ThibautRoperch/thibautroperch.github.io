@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="styles/live.css" />
+	<title>Clavier 1</title>
+</head>
+
+<body>
+
+	<regles>
+		1 à 9 -> octaves (3 par défaut)<br>
+		a à n -> notes selon l'octave<br>
+		² à backspace -> types d'accords<br>
+		<br>
+		rester appuyé sur un accord puis sur une note pour produire l'accord correspondant
+	</regles>
+
+	<options>
+		<select onchange="change_tonality(this)">
+			<option value="0" selected="selected">0 dièse (gamme majeure)</option>
+			<option value="1">1 dièse</option>
+			<option value="2">2 dièses</option>
+			<option value="3">3 dièses</option>
+			<option value="4">4 dièses</option>
+			<option value="5">5 dièses</option>
+			<option value="6">6 dièses</option>
+			<option value="7">7 dièses</option>
+		</select>
+	</options>
+	
+	<textarea onkeydown="key_pressed(event)" onkeyup="key_released(event)" placeholder="Zone du clavier, cliquer avant de jouer"></textarea>
+
+</body>
+
+</html>
+
+<script type="text/javascript" src="scripts/audiosynth/audiosynth.js"></script>
+<script type="text/javascript" src="scripts/easykeyboard1.js"></script>

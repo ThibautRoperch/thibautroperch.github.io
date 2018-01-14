@@ -1,0 +1,38 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+/* Enfants directs du body */
+
+regles {
+    padding: 30px;
+    text-align: center;
+    color: white;
+    background: #008cba;
+}
+
+options {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background: orange;
+}
+
+textarea {
+    padding: 150px;
+    text-align: center;
+	border: none;
+    background: rgba(0, 0, 0, 0.13);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2) inset;
+}
+
+textarea:focus {
+    background: rgba(0, 0, 0, 0.05);
+}

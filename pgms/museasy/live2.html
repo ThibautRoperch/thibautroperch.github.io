@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="styles/live.css" />
+	<title>Clavier 2</title>
+</head>
+
+<body>
+
+	<regles>
+		1 à 9 -> types d'accords<br>
+		a->$, q->*, <->! -> notes<br>
+		<br>
+		rester appuyé sur un accord puis sur une note pour produire l'accord correspondant
+	</regles>
+
+	<options>
+		<select onchange="change_tonality(this)">
+			<option value="0" selected="selected">Gamme majeure</option>
+			<option value="1">Gamme harmonique mineure</option>
+			<option value="2">Gamme blues</option>
+		</select>
+	</options>
+
+	<textarea onkeydown="key_pressed(event)" onkeyup="key_released(event)" placeholder="Zone du clavier, cliquer avant de jouer"></textarea>
+
+</body>
+
+</html>
+
+<script type="text/javascript" src="scripts/audiosynth/audiosynth.js"></script>
+<script type="text/javascript" src="scripts/easykeyboard2.js"></script>

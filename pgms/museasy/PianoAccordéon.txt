@@ -1,0 +1,37 @@
+﻿Jouer en live :
+
+1 à 9 -> octaves
+z à u -> notes (demi tons) selon l'octave
+q à k -> notes selon l'octave
+
+1 à 9 -> accords
+z à u -> notes (demi tons)
+q à k -> notes
+
+1 à 9 -> octaves
+a à u -> notes selon l'octave
+tonalité gérée à part (ajout des demis tons sur chacune des 7 notes lors d'un changement de tonalité)
+
+1 à 9 -> octaves
+z à u -> notes (demi tons) selon l'octave
+q à k -> notes selon l'octave
+& à à -> accords
+tonalité gérée à part (ajout des demis tons sur chacune des 7 notes lors d'un changement de tonalité)
+
+Enregister un son :
+
+Clavier live * nombre d'instruments, choix de profil pour chaque instrument
+
+Autre mode :
+Changement d'octave automatique tous les 4 temps en fonction de la dernière note jouée
+
+
+======================================================================================
+
+
+Tonalités : https://fr.wikiversity.org/wiki/Lecture_de_partitions/Tonalit%C3%A9s
+Quelques accords de trois notes : https://fr.wikipedia.org/wiki/Accord_de_trois_notes
+Accords suspendus : https://fr.wikipedia.org/wiki/Accord_suspendu
+Accord de sixte : https://fr.wikipedia.org/wiki/Accord_de_sixte
+Cours sur les accords (écoutables) : http://www.humeur-piano.com/accords/
+Tous les accords : http://www.lalecondepiano.com/astuces/liste-acc-test76.htm
