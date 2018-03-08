@@ -1,0 +1,31 @@
+<script>
+
+function getXDomainRequest() {
+	var xdr = null;
+	
+	if (window.XDomainRequest) {
+		xdr = new XDomainRequest(); 
+	} else if (window.XMLHttpRequest) {
+		xdr = new XMLHttpRequest(); 
+	} else {
+		alert("Votre navigateur ne gère pas l'AJAX cross-domain !");
+	}
+	
+	return xdr;	
+}
+
+var xdr = getXDomainRequest();
+xdr.onload = function() {
+	alert(xdr.responseText);
+}
+xdr.onerror = function() {
+    alert("Erreur")
+    console.log(xdr)
+}
+
+// xdr.open("GET", "https://www.html5rocks.com/en/tutorials/cors/");
+xdr.open("GET", "https://api.apientreprise.fr/docs/1.0/apiv1entreprises/show.html");
+xdr.send();
+
+</script>
+  
