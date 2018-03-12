@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Test API Entreprise</title>
+</head>
+
+<body>
+
+	<section>
+
+		<article>
+			<h2>Privilèges du token</h2>
+
+			<p>
+				<input onchange="display_privileges()" id="token" value="OraehahG8Uunahligh3thaez" />
+				<button onclick="display_privileges()">&#10004;</button>
+			</p>
+		</article>
+
+		<article>
+			<h2>Recherche par SIREN</h2>
+
+			<p>
+				<input onchange="search_by_siren()" id="siren" type="text" value="441354776" placeholder="SIREN" />
+				<button onclick="search_by_siren()">&#10004;</button>
+			</p>
+		</article>
+
+	</section>
+
+	<section id="res">
+	</section>
+
+</body>
+
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgb(36, 36, 36);
+}
+
+body > section {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    margin: 40px auto;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+section > article {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+section > article:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Titres */
+
+h2 {
+    margin-bottom: 20px;
+    padding-left: 15px;
+    border-left: 4px solid rgba(255, 255, 255, 0.2);
+    font-size: 100%;
+}
+
+/* Formulaires */
+
+input, button {
+	padding: 8px 10px;
+	line-height: 16px;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	background: rgba(255, 255, 255, 0.7);
+	transition: all .2s ease;
+}
+
+input {
+	width: 20%;
+}
+
+input:focus, button:hover {
+	border: 1px solid rgba(0, 0, 0, 0.7);
+	background: rgba(255, 255, 255, 0.9);
+}
+
+button {
+	cursor: pointer;
+}
+
+/* Liens */
+
+a {
+    text-decoration: none;
+    color: rgba(85, 163, 252, 0.7);
+    transition: all .2s ease;
+}
+
+a:hover {
+    color: rgba(168, 209, 255, 0.9);
+}
+
+/* Autres */
+
+pre {
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.2);
+	overflow: auto;
+}
+
+</style>
+
+<script>
+/*
+function callOtherDomain(url) {
+	invocation = new XMLHttpRequest(); 
+	console.log(url);
+	invocation.open('GET', url, true);
+	invocation.withCredentials = true;
+	invocation.onreadystatechange = ok(invocation);
+	invocation.send(); 
+}
+
+function ok(invocation) {
+	console.log(invocation.responseText);
+	console.log("=======");
+}
+
+// callOtherDomain("http://bar.other/resources/public-data/");
+// callOtherDomain("https://www.google.fr");
+// callOtherDomain("https://entreprise.api.gouv.fr/v2/privileges?token=OraehahG8Uunahligh3thaez");
+*/
+
+// Tuto : https://openclassrooms.com/courses/ajax-et-l-echange-de-donnees-en-javascript/l-xmlhttprequest-cross-domain
+// CORES in action : http://arunranga.com/examples/access-control/
+// Explications : http://blog.inovia-conseil.fr/?p=202
+
+var token = document.querySelector("#token");
+var siren = document.querySelector("#siren");
+var res_dom = document.querySelector("#res");
+
+display_privileges();
+function display_privileges() {
+	call_api("privileges", res_dom);
+}
+
+function search_by_siren() {
+	call_api("entreprises/" + siren.value, res_dom);
+}
+
+function call_api(endpoint, dom) {
+	var url = "https://entreprise.api.gouv.fr/v2/" + endpoint + "?token=" + token.value;
+	res_dom.innerHTML = "<i>Loading...</i>";
+
+	var xhr = new XMLHttpRequest();
+	// xhr.withCredentials = true;
+	xhr.onload = function() {
+		var res = JSON.parse(xhr.responseText);
+		dom.innerHTML = "<pre><a target='_blank' href='" + url + "'>" + url + "</a></pre>";
+		dom.innerHTML += "<pre>" + JSON.stringify(res, null, 4) + "</pre>";
+	};
+	xhr.open("GET", url, true);
+	xhr.send();
+}
+
+</script>

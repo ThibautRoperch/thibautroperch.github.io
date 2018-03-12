@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Test API Entreprise</title>
+</head>
+
+<body>
+
+	<section>
+
+		<article>
+			<h2>Informations du token</h2>
+
+			<p>
+				Clé :<br>
+				<input id="token" value="fcd7a4cda9cff2db815103808e47b0ce" />
+				<br><br>
+				Secret :<br>
+				<input id="secret" value="86a3b1a51ab4742c94ab79b441c60055" />
+			</p>
+		</article>
+
+		<article>
+			<h2>Recherche par SIRET</h2>
+
+			<p>
+				<input onchange="search_by_siret()" id="siret" type="text" value="‎44135477600037" placeholder="SIRET" />
+				<button onclick="search_by_siret()">&#10004;</button>
+			</p>
+		</article>
+
+		<article>
+			<h2>Recherche par ville</h2>
+
+			<p>
+				<input onchange="search_by_city()" id="city" type="text" value="Angers" placeholder="Nom ville" />
+				<button onclick="search_by_city()">&#10004;</button>
+			</p>
+		</article>
+
+		<article>
+			<h2>Autre</h2>
+
+			<p>
+				<input onchange="search_by_other()" id="other" type="text" value="441354776" placeholder="Information" />
+				<button onclick="search_by_other()">&#10004;</button>
+				<i>siret, siren, code postal, ville, raison sociale</i>
+			</p>
+		</article>
+
+	</section>
+
+	<section id="res">
+	</section>
+
+</body>
+
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgb(36, 36, 36);
+}
+
+body > section {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    margin: 40px auto;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+section > article {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+section > article:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Titres */
+
+h2 {
+    margin-bottom: 20px;
+    padding-left: 15px;
+    border-left: 4px solid rgba(255, 255, 255, 0.2);
+    font-size: 100%;
+}
+
+/* Formulaires */
+
+input, button {
+	padding: 8px 10px;
+	line-height: 16px;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	background: rgba(255, 255, 255, 0.7);
+	transition: all .2s ease;
+}
+
+input {
+	width: 20%;
+}
+
+input:focus, button:hover {
+	border: 1px solid rgba(0, 0, 0, 0.7);
+	background: rgba(255, 255, 255, 0.9);
+}
+
+button {
+	cursor: pointer;
+}
+
+/* Liens */
+
+a {
+    text-decoration: none;
+    color: rgba(85, 163, 252, 0.7);
+    transition: all .2s ease;
+}
+
+a:hover {
+    color: rgba(168, 209, 255, 0.9);
+}
+
+/* Autres */
+
+pre {
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.2);
+	overflow: auto;
+}
+
+</style>
+
+<script>
+
+// http://margaine.com/2014/06/28/jsonp-vs-cors.html
+
+var token = document.querySelector("#token");
+var secret = document.querySelector("#secret");
+var siret = document.querySelector("#siret");
+var city = document.querySelector("#city");
+var other = document.querySelector("#other");
+var res_dom = document.querySelector("#res");
+
+function search_by_siret() {
+	call_api("siret?siret=" + siret.value, res_dom);
+}
+
+function search_by_city() {
+	call_api("search?search=" + city.value, res_dom);
+}
+
+function search_by_other() {
+	call_api("search?search=" + other.value, res_dom);
+}
+
+function call_api(endpoint, dom) {
+	var url = "https://www.verif-siret.com/api/" + endpoint;
+	res_dom.innerHTML = "<i>Loading...</i>";
+	console.log(url);
+
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.setRequestHeader("api_key", token.value);
+	xhr.setRequestHeader("api_secret", secret.value);
+	// xhr.overrideMimeType = "application/json";
+	xhr.onload = function() {
+		console.log(xhr.responseText);
+		console.log(xhr.responseType);
+		console.log(xhr.getResponseHeader());
+		// var res = JSON.parse(xhr.responseText);
+		// dom.innerHTML = "<pre><a target='_blank' href='" + url + "'>" + url + "</a></pre>";
+		// dom.innerHTML += "<pre>" + JSON.stringify(res, null, 4) + "</pre>";
+	};
+	xhr.send();
+	console.log(xhr);
+}
+
+</script>

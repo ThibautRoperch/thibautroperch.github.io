@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Test API Entreprise</title>
+</head>
+
+<body>
+
+	<section>
+		<article>
+			<h2>Recherche</h2>
+
+			<p>
+				<input onchange="search()" id="searchword" type="text" value="441354776" placeholder="Information" />
+				<input id="limit" type="number" placeholder="10" class="mini" />
+				<button onclick="search()">&#10004;</button>
+				<ie>siret, siren, code postal, ville, raison sociale, ...</ie>
+			</p>
+
+		</article>
+
+		<article id="records" class="hidden">
+		</article>
+
+		<article id="res" class="hidden">
+		</article>
+	</section>
+
+</body>
+
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgb(36, 36, 36);
+}
+
+body > section {
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    margin: 40px auto;
+}
+
+section > article {
+    margin-bottom: 40px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+section > article:last-child {
+    margin-bottom: 0;
+}
+
+/* Titres */
+
+h2 {
+    margin-bottom: 20px;
+    padding-left: 15px;
+    border-left: 4px solid rgba(255, 255, 255, 0.2);
+    font-size: 100%;
+}
+
+/* Formulaires */
+
+input, button {
+	padding: 8px 10px;
+	line-height: 16px;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	background: rgba(255, 255, 255, 0.7);
+	transition: all .2s ease;
+}
+
+input {
+	width: 20%;
+}
+
+input.mini {
+	width: 4%;
+}
+
+input:focus, button:hover {
+	border: 1px solid rgba(0, 0, 0, 0.7);
+	background: rgba(255, 255, 255, 0.9);
+}
+
+button {
+	cursor: pointer;
+}
+
+/* Liens */
+
+a {
+    text-decoration: none;
+    color: rgba(85, 163, 252, 0.7);
+    transition: all .2s ease;
+}
+
+a:hover {
+    color: rgba(168, 209, 255, 0.9);
+}
+
+/* Tableaux */
+
+table {
+	margin-top: 20px;
+	width: 100%;
+    border-collapse: collapse;
+	font-size: 70%;
+}
+
+table tr {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+table tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+table th, table td {
+    padding: 6px 8px;
+    text-align: left;
+}
+
+table th {
+    padding-right: 30px;
+    font-weight: normal;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+table tr:hover {
+	background: rgba(255, 255, 255, 0.3);
+}
+
+/* Autres */
+
+pre {
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.2);
+	overflow: auto;
+}
+
+ie {
+    float: right;
+	font-style: italic;
+    opacity: 0.7;
+}
+
+.hidden {
+	display: none;
+}
+
+#res {
+	padding: 0;
+}
+
+</style>
+
+<script>
+
+var searchword = document.querySelector("#searchword");
+var limit = document.querySelector("#limit");
+var records_dom = document.querySelector("#records");
+var res_dom = document.querySelector("#res");
+var res_json = null;
+
+function search() {
+	call_api_v1("q=" + searchword.value, true);
+	// call_api_v2("search=" + searchword.value, true);
+}
+
+function call_api_v1(endpoint, new_search) {
+	var facets = "facet=rpet&facet=depet&facet=libcom&facet=siege&facet=libapet&facet=saisonat&facet=libnj&facet=libapen&facet=ess&facet=libtefen&facet=categorie&facet=proden&facet=vmaj1&facet=vmaj2&facet=vmaj3&facet=libtu&facet=liborigine&facet=libtca&facet=libreg_new&facet=nom_dept&facet=section&facet=classe";
+	var rows = limit.value | 10;
+	var url = "https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&" + endpoint + "&rows=" + rows + "&" + facets;
+	call_api(url, new_search, display_datas_v1);
+}
+
+function call_api_v2(endpoint, new_search) {
+	var rows = limit.value | 10;
+	var end = "&pretty=false&timezone=UTC";
+	var url = "https://data.opendatasoft.com/api/v2/catalog/datasets/sirene%40public/records?" + endpoint + "&rows=" + rows + end;
+	call_api(url, new_search, display_datas_v2);
+}
+
+function call_api(url, new_search, callback) {
+	if (new_search) {
+		records_dom.className = "";
+		records_dom.innerHTML = "";
+		res_dom.innerHTML = "";
+		res_dom.className = "";
+	}
+	records_dom.innerHTML += "<i>Loading...</i>";
+	res_dom.innerHTML = "<i>Loading...</i>";
+
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.onload = function() {
+		res_json = JSON.parse(xhr.responseText);
+		res_dom.innerHTML = "<pre><a target='_blank' href='" + url + "'>" + url + "</a></pre>";
+		callback(new_search);
+	};
+	xhr.send();
+}
+
+function display_datas_v1(new_search) {
+	// res dom : the entire response
+	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
+	// records : some values
+	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	if (new_search) {
+		records_dom.innerHTML = res_json["nhits"] + " résultat(s)";
+		var table = document.createElement("table");
+		var row = document.createElement("tr");
+		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
+		table.appendChild(row);
+	}
+	for (var records of res_json["records"]) {
+		var fields = records["fields"];
+		var row = document.createElement("tr");
+		for (property of columns) {
+			var value = fields[property];
+			if (value == undefined) value = "";
+			if (value.length > 50) value = value.substr(0, 50) + "...";
+			row.innerHTML += "<td>" + value + "</td>";
+		}
+		table.appendChild(row);
+	}
+	records_dom.appendChild(table);
+	if (rows < res_json["nhits"]) {
+		records_dom.innerHTML = "<button onclick='call_api(" + endpoints + ", " + false + ")'>Plus de résultats</button>";
+	}
+}
+
+function display_datas_v2(new_search) {
+	// res dom : the entire response
+	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
+	// records : some values
+	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	if (new_search) {
+		records_dom.innerHTML = res_json["total_results"] + " résultat(s)";
+		var table = document.createElement("table");
+		var row = document.createElement("tr");
+		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
+		table.appendChild(row);
+	}
+	for (var records of res_json["records"]) {
+		var fields = records["fields"];
+		var row = document.createElement("tr");
+		for (property of columns) {
+			var value = fields[property];
+			if (value == undefined) value = "";
+			if (value.length > 50) value = value.substr(0, 50) + "...";
+			row.innerHTML += "<td>" + value + "</td>";
+		}
+		table.appendChild(row);
+	}
+	records_dom.appendChild(table);
+	if (rows < res_json["nhits"]) {
+		records_dom.innerHTML = "<button onclick='call_api(" + endpoints + ", " + false + ")'>Plus de résultats</button>";
+	}
+}
+
+</script>

@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Liens</title>
+</head>
+
+<body>
+    <section>
+
+        <article>
+            <h2>OpenDatas - <a href="https://www.data.gouv.fr/fr/">data.gouv.fr</a></h2>
+
+            <p>
+                Cette plateforme ouverte met à disposition en libre service des données publiques françaises sous forme de fichiers (XLS, JSON, ZIP). Ces derniers sont déposés par des organismes et mis à jour à une certaine fréquence.
+
+                <table>
+                    <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                    <tr><th><a class="macaron" href="https://www.data.gouv.fr/fr/terms">CGU</a></th><td><cite>
+                        La <u>consultation</u> des Jeux de données (y compris leur téléchargement) ne nécessite pas de s'inscrire, ni de s'authentifier.<br>
+                        L'<u>utilisation</u> de la Plateforme est libre et gratuite.
+                    </cite></td></tr>
+                    <tr><th><a class="macaron" href="https://www.data.gouv.fr/fr/licences">Licences</a></th><td>
+                        Licence ouverte 2.0 :<br>
+                        <cite>
+                            Le « Concédant » concède au « Réutilisateur » un droit non exclusif et gratuit de libre « Réutilisation » de l’ « Information » objet de la présente licence, à des fins commerciales ou non, dans le monde entier et pour une durée illimitée, dans les conditions exprimées ci-dessous.
+                            <ul>
+                                <li>[...]</li>
+                                <li>mentionner la  paternité de l’« Information » : sa source (au moins le nom du « Concédant ») et la date de dernière mise à jour de l’« Information » réutilisée.</li>
+                            </ul>
+                        </cite>
+                    </td></tr>
+                </table>
+
+                Les données sont également accessibles via l'<a href="https://www.data.gouv.fr/fr/apidoc/">API</a> hébergée par la plateforme (inscription et obtention d'un <i>token</i> nécessaires).
+            </p>
+        </article>
+
+        <article>
+            <h2>DataFrance - <a href="http://map.datafrance.info/">datafrance.info</a></h2>
+
+            <p>
+                DataFrance est un exemple de réutilisation des données (service de <i>datavisualisation</i>).
+                <br>
+                Grâce aux nombreux <a href="https://datafrance.info/#producteurs">producteurs de données sur lesquels elle s'appuie</a>, cette plateforme permet de visualiser des informations telles que la localisation des stations service, des accidents de la route, des couvertures 4G, des écoles doctorales, etc...
+                <br>
+                <br>
+                Ce service permet également d'analyser précisément les informations d'une ville. Par exemple : <a href="https://datafrance.info/angers-49000">Angers - 49000</a>. Les données recueillies permettent de donner une <a href="https://datafrance.info/indices-datafrance">note synthétique</a> sur la qualité de vie de la commune.
+
+                <table>
+                    <tr><th>Crédits<a class="help" href="https://datafrance.info/files/conditions-generales-utilisation-datafrance-info.pdf">?</a></th><td>L'éditeur de la plateforme est <a href="https://www.societe.com/societe/r2d-801387218.html">SAS R2D</a>, aujourd'hui dirigée par l'entreprise <a href="http://velvetconsulting.com/">Velvet Consulting</a>.</td></tr>
+                    <tr><th>A propos<a class="help" href="https://datafrance.info/a-propos">?</a></th><td><cite>
+                        DataFrance peut proposer des services à des organisations ayant des besoins en visualisation de données. Nous pouvons par exemple adapter la carte interactive de DataFrance pour une entreprise privée ou une collectivité territoriale sur laquelle nous intègrerons ses propres données. Pour en savoir plus, veuillez nous contacter par email sur contact@datafrance.info.
+                    </cite></td></tr>
+                    <tr><th><a class="macaron" href="https://datafrance.info/files/conditions-generales-utilisation-datafrance-info.pdf">CGU</a></th><td>Le site est accessible gratuitement. La plateforme DataFrance ne semble pas proposer pas de service de réutilisation des données, uniquement de la visualisation de données.</td></tr>
+                </table>
+            </p>
+        </article>
+
+        <article>
+            <h2>Données exploitables</h2>
+
+            <p>
+                Les données relatives aux entreprises doivent permettre de récupérer les SIRET/SIREN des sociétés implantées dans une ville, et d'obtenir des informations à partir d'un SIRET/SIREN donné.
+                
+                <ul class="wrapper">
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="orange">&#11044;</state>
+                            <h3>gouv.fr</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://entreprise.api.gouv.fr/website/index.html">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Présentation & accès<a class="help" href="https://api.gouv.fr/api/api-entreprise.html">?</a></th><td>Demande de <i>token</i> auprès du service <a href="https://www.demarches-simplifiees.fr">demarches-simplifiees.fr</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                <tr><th>Volumétrie<a class="help" href="https://api.apientreprise.fr/documentation?json#volum-trie">?</a></th><td>1000 requêtes par heure par IP. Possibilité de contacter l'organisme pour plus de volumétrie.</td></tr>
+                                <tr><th>Provenance des données<a class="help" href="https://entreprise.api.gouv.fr/website/index.html">?</a></th><td>Plusieurs fournisseurs de données différents (11).</td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://dashboard.entreprise.api.gouv.fr/#/endpoints">?</a></th><td>Informations depuis un SIREN, liasses et attestations fiscales, certificats Qualibats, ...</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur du service est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                <tr><th><a class="macaron" href="https://mps.apientreprise.fr/cgu">CGU</a></th><td>Relatives aux CGU des 11 bases de données fournissant l'API.</td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="https://api.apientreprise.fr/documentation?json">Documentation</a> <a class="macaron" href="https://dashboard.entreprise.api.gouv.fr/#/endpoints">Dashboard</a> <a class="macaron" href="https://entreprise.api.gouv.fr/website/faq/">FAQ</a></td></tr>
+                            </table>
+                            <cite>Les informations d’adresse sont issues des adresses géographiques et normalisées. Nous ne prenons pas en compte l’adresse déclarée. La géolocalisation de l’entreprise peut être faite grâce au service de géocodage suivant : <a href="http://adresse.data.gouv.fr">http://adresse.data.gouv.fr</a></cite>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="red">&#11044;</state>
+                            <h3>SOCIETEINFO</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://societeinfo.com/api/">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès & volumétrie<a class="help" href="https://societeinfo.com/tarifs/">?</a><a class="help" href="https://societeinfo.com/api-doc/#credits">?</a></th><td>Demande de <i>token</i> et achat de crédits, consommés lors des requêtes envoyées au service.</td></tr>
+                                <tr><th>Provenance des données<a class="help" href="https://societeinfo.com/">?</a></th><td><i>Web crawling</i> et <i>data mining</i> : <cite>Nous agrégeons la donnée légale des sociétés mais également toute l’information disponible sur le web.</cite></td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://societeinfo.com/api-doc/">?</a></th><td>Informations depuis un SIREN/SIRET, <a href="https://societeinfo.com/api-doc#placesearch">entreprises par commune</a>, <a href="https://societeinfo.com/api-doc#statements">états financiers</a>, ...</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://societeinfo.com/mentions-legales/">?</a></th><td>L'éditeur de la plateforme est SMART DATA.</td></tr>
+                                <tr><th><a class="macaron" href="https://societeinfo.com/api/">CGU</a></th><td><cite>Les offres présentées sur ce site ne sont pas éligibles à la rediffusion ou la redistribution commerciale. Pas de problème pour autant ! Présentez nous votre projet et nous deviendrons partenaires !</cite></td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="https://societeinfo.com/api-doc/">Documentation</a></td></tr>
+                            </table>
+                            Mise à disposition d'un <a href="https://societeinfo.com/app/">moteur de recherche</a> utilisant les données présentées dans l'API, exemple : <a href="https://societeinfo.com/app/view/587962b3b3a280671799932d">ILTR</a>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Base Sirene</h3>
+                            <type>CSV</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://www.data.gouv.fr/fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès</th><td>Téléchargement libre</td></tr>
+                                <tr><th>Provenance des données</th><td>L'<a href="https://www.data.gouv.fr/fr/organizations/institut-national-de-la-statistique-et-des-etudes-economiques-insee/">INSEE</a> met à jour les ressources quotidiennement.</td></tr>
+                                <tr><th>Nature des données<a class="help" href="http://sirene.fr/static-resources/doc/dessin_XL2_description_complete.pdf?version=1.19.1">?</a></th><td>SIREN, localisation, caractéristiques économiques, ...</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                            </table>
+                            Mise à disposition d'un <a href="http://www.sirene.fr/sirene/public/creation-fichier">générateur de fichiers</a> utilisant les données présentées dans les fichiers (recherche par localisation, activité, effectif, ...).
+                            <br>
+                            La base Sirene est également disponible via le service <a href="https://www.opendatasoft.fr/">OpenDataSoft</a> qui propose une <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/api/?flg=fr&q=&lang=">API</a> dédiée, exemple : <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/?flg=fr&refine.depet=49&refine.libcom=ANGERS">Angers</a>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Données comptables des collectivités</h3>
+                            <type>CSV</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://www.data.gouv.fr/fr/datasets/donnees-comptables-et-fiscales-des-collectivites-locales/">Source</a>
+                        </header>
+                        <section>
+                                <table>
+                                    <tr><th>Accès</th><td>Téléchargement libre</td></tr>
+                                    <tr><th>Provenance des données</th><td><a href="https://www.data.gouv.fr/fr/organizations/nosdonnees-fr/">NosDonnées.fr</a> a mis à jour à jour les ressources annuellement, de 2000 à 2012.</td></tr>
+                                    <tr><th>Nature des données</th><td>Taxe, poulation, ... des communes, EPCI, départemens ou régions.</td></tr>
+                                    <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                    <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                </table>
+                                Note : les données comptables détaillées et de fiscalité directe locale des collectivités et établissements publics locaux sont publiées sur <a href="http://www.collectivites-locales.gouv.fr">collectivites-locales.gouv.fr</a>.
+                       </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Verif-siret.com</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://www.verif-siret.com/api/">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès<a class="help" href="https://www.verif-siret.com/api/documentation/">?</a></th><td>Demande de <i>token</i></td></tr>
+                                <tr><th>Provenance des données<a class="help" href="https://www.verif-siret.com/api/">?</a></th><td>Un seul fournisseur de données : <a href="http://www.data.gouv.fr">data.gouv.fr</a>.</td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://www.verif-siret.com/#top-results">?</a></th><td>Adresse, effectif, recherche par SIREN/SIRET, département, ...</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://www.verif-siret.com/mentions-legales">?</a></th><td>L'auteur de cette plateforme est S.A ATAFOTO.</td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="https://www.verif-siret.com/api/documentation/">Documentation</a></td></tr>
+                            </table>
+                        </section>
+                    </li>
+                </ul>
+
+                Les autres sources données permettent d'ajouter des informations au tableau de bord d'un commune. 
+
+                <ul class="wrapper">
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Cadastre</h3>
+                            <type>GeoJSON</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://www.data.gouv.fr/fr/datasets/cadastre/">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès</th><td>Téléchargement libre</td></tr>
+                                <tr><th>Provenance des données</th><td><a href="https://www.data.gouv.fr/fr/organizations/etalab/">Etalab</a> met à jour les ressources trimestriellement.</td></tr>
+                                <tr><th>Nature des données</th><td>Bâtiments, parcelles, ... par département ou par commune.</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                            </table>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Bornes incendie</h3>
+                            <type>CSV/JSON</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://docs.google.com/document/d/1Hhcc104vXOtEqxBoMP-ztq70kxkpeuHX5TEh_wm2_Aw/edit">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès</th><td>Téléchargement libre</td></tr>
+                                <tr><th>Provenance des données</th><td>Les SDIS, les collectivités territoriales et/ou les délégataires de service public.</td></tr>
+                                <tr><th>Nature des données</th><td>Identifiant des points d'eau, source, adresse, coordonnées (lattitude / longitude), ...</td></tr>
+                                <tr><th>Crédits</th><td>La démarche de création d'un tel jeu de données et sa publication a été initiée par <a href="http://www.afigeo.asso.fr/pole-entreprise/groupe-dinteret-ogc.html">le groupe de travail Open Data de l'AFIGEO</a>.</td></tr>
+                            </table>
+                            Provenance : <a href="http://www.afigeo.asso.fr/1880">http://www.afigeo.asso.fr/1880</a>
+                            <br>
+                            A Angers (en JSON et sur data.gouv.fr) : <a href="https://www.data.gouv.fr/fr/datasets/borne-incendie/">Source</a>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="red">&#11044;</state>
+                            <h3>Emplacement des défibrilateurs</h3>
+                            <type>Application mobile</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="http://www.stayingalive.org/fr.php">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès</th><td>A demander (<a href="http://www.stayingalive.org/fr.php#fifth">contact</a>)</td></tr>
+                                <tr><th>Provenance des données</th><td>Les emplacements des défribilateurs sont données par la communauté.</td></tr>
+                                <tr><th>Crédits</th><td>L'application est éditée par <a href="http://ajila.org/associations-rmcbfm/">Association RMC / BFM</a>.</td></tr>
+                            </table>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="red">&#11044;</state>
+                            <h3>Chemins de course</h3>
+                            <type>Application mobile</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://www.openrunner.com/">Source</a>
+                        </header>
+                        <section>
+                            Application qui recense les chemins pédestres utilisés par sa communauté
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="red">&#11044;</state>
+                            <h3>le.Taxi</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://api.gouv.fr/api/le-taxi.html">Source</a>
+                        </header>
+                        <section>
+                            Permet de localiser les taxis autour d'un point (lat/long)
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Hub'Eau</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://api.gouv.fr/api/api_hubeau_indic_EP_Asst.html">Source</a>
+                        </header>
+                        <section>
+                            Indicateurs Eau potable et Assainissement
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="red">&#11044;</state>
+                            <h3>Vélos en libre service</h3>
+                            <type>Autre</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://fr.wikipedia.org/wiki/Liste_des_syst%C3%A8mes_de_v%C3%A9los_en_libre-service_en_France">Source</a>
+                        </header>
+                        <section>
+                            Au total, environ 51.000 vélos et 4.000 stations sont en libre service dans toute la France. Quelques sociétés et systèmes implantés en France :
+                            <ul>
+                                <li>Vélib' Métropole (Vélib') en région parisienne, 20.000 vélos et 1.200 stations : <a href="https://www.velib-metropole.fr/map#/">Carte des stations</a></li>
+                                <li>JCDecaux (filiale Cyclocity, services vélo'v, VéloCité, Cy'clic, Vélam, bicloo, ...), 10.000 vélos et 1.000 stations : <a href="https://developer.jcdecaux.com/#/opendata">JCDecaux developer API</a></li>
+                                <li>Smoove (Métrovélo, Vélomagg', Vélopop', ...) à Grenoble, Montpellier et Avignon entre autres : <a href="http://www.smoove.fr/realisations">Réalisations, dont Vélib'</a></li>
+                            </ul>
+                            D'autres données : <a href="https://www.data.gouv.fr/fr/search/?q=v%C3%A9los">data.gouv.fr/vélos</a>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Population</h3>
+                            <type>XLS</type>
+                            <!-- <stars>&#127969;&#9921;</stars> -->
+                            <a href="https://www.data.gouv.fr/fr/datasets/population/">Source</a>
+                        </header>
+                        <section>
+                            Pour calcul de moyenne / médiane d'âge des villes (critère discriminant par rapport aux activités de la ville ?)
+                            <br>
+                            API du gouv : <a href="https://api.gouv.fr/api/api-geo.html">api.gouv.fr/api/api-geo.html</a>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="green">&#11044;</state>
+                            <h3>Réseau mobile</h3>
+                            <type>CSV</type>
+                            <!-- <stars>&#127969;&#9921;</stars> -->
+                            <a href="https://www.data.gouv.fr/fr/datasets/monreseaumobile/">Source</a>
+                        </header>
+                        <section>
+                            Etudier l'impact de la couverture réseau sur les entreprises des villes
+                            <br>
+                            Application : <a href="monreseaumobile.fr">monreseaumobile.fr</a>
+                        </section>
+                    </li>
+                </ul>
+
+                <!-- <legend>
+                    Légende : 
+                    <span>&#127981;<info>Donnée utile pour les entreprises</info></span>
+                    <span>&#127969;<info>Donnée utile pour la vue de la ville</info></span>
+                    <span>&#9921;<info>Donnée utile pour l'analyse des données</info></span>
+                </legend> -->
+
+                <legend>
+                    Légende :
+                    <state class="green">&#11044;</state> Accessible
+                    <state class="orange">&#11044;</state> Demande d'accès en cours
+                    <state class="red">&#11044;</state> Non accessible
+                </legend>
+
+                <br>
+                Autre source de données à exploiter : <a href="https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques">https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques</a>.
+                <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Annuaire des données</a>
+                Quali de l'air
+            </p>
+
+        </article>
+
+    </section>
+</body>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgb(36, 36, 36);
+}
+
+body > section {
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    margin: 40px auto;
+}
+
+section > article {
+    margin-bottom: 40px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+section > article:last-child {
+    margin-bottom: 0;
+}
+
+/* Titres */
+
+h2 {
+    margin-bottom: 35px;
+    padding-left: 10px;
+    border-left: 8px solid rgba(255, 255, 255, 0.2);
+    font-size: 110%;
+}
+
+h3 {
+    font-size: 100%;
+    font-weight: normal;
+}
+
+/* Listes */
+
+ul {
+    margin-left: 30px;
+}
+
+ul.wrapper  {
+    list-style: none;
+    margin: 20px 0 30px 0;
+}
+
+ul.wrapper > li {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 5px;
+}
+
+ul.wrapper > li > * {
+    flex: 1;
+}
+
+ul li header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+ul li header > * {
+    flex: 1;
+    line-height: 35px;
+}
+
+ul li header > *:first-child { /* début du header (état) */
+    flex: 0.05;
+    padding-left: 15px;
+}
+
+ul li header > *:last-child { /* fin du header (lien) */
+    flex: 0.1;
+    margin: 0;
+    padding: 0 15px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+ul li header > *:last-child:hover {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+ul li:last-child header {
+    border-bottom-width: 1px;
+}
+
+ul li header:hover, ul li.expand header {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+ul li section {
+    display: none;
+    margin-bottom: 10px;
+    padding: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.075);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) inset;
+}
+
+ul li.expand section {
+    display: block;
+}
+
+/* Liens */
+
+a {
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.4);
+    transition: all .2s ease;
+}
+
+a:hover {
+    color: rgba(85, 163, 252, 0.7);
+}
+
+a.macaron {
+    padding: 3px 6px;
+    vertical-align: baseline;
+    font-size: 80%;
+    font-weight: bold;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(85, 163, 252, 0.7);
+    border-radius: 50px;
+}
+
+a.macaron:hover {
+    background: rgba(59, 137, 226, 0.8);
+}
+
+a.help {
+    margin-left: 5px;   
+    padding: 2px 6px;
+    vertical-align: top;
+    font-size: 60%;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50px;
+}
+
+/* Tableaux */
+
+table {
+    min-width: 45%;
+    max-width: 90%;
+    margin: 15px auto;
+    border-collapse: collapse;
+}
+
+table tr {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+table tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+table th, table td {
+    padding: 6px 8px;
+    text-align: left;
+}
+
+table th {
+    padding-right: 30px;
+    font-weight: normal;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+/* Autres */
+
+stars {
+    letter-spacing: 10px;
+}
+
+stars, type, state {
+    text-align: center;
+    opacity: 0.6;
+}
+
+state {
+    text-align: left;
+    vertical-align: middle;
+    font-size: 50%;
+}
+
+.green {
+    color: yellowgreen;
+}
+
+.orange {
+    color: orange;
+}
+
+.red {
+    color: brown;
+}
+
+.right {
+    float: right;
+}
+
+legend {
+    float: right;
+    opacity: 0.7;
+}
+
+legend span {
+    cursor: help;
+    margin-left: 10px;
+}
+
+legend state {
+    padding-bottom: 3px;
+}
+
+span info {
+    display: none;
+    position: absolute;
+    padding: 5px;
+    font-size: 80%;
+    font-weight: normal;
+    color: rgb(0, 0, 0);
+    background: rgb(255, 255, 255);
+}
+
+span:hover info {
+    display: block;
+}
+
+</style>
+
+<script>
+
+function expand(dom) {
+    var class_name = dom.parentNode.className;
+    var new_class_name = (class_name === "") ? "expand" : "";
+    dom.parentNode.className = new_class_name;
+}
+
+</script>
