@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Liens</title>
+    <link rel="stylesheet" type="text/css" href="css.css">
 </head>
 
 <body>
@@ -34,6 +35,8 @@
                 </table>
 
                 Les données sont également accessibles via l'<a href="https://www.data.gouv.fr/fr/apidoc/">API</a> hébergée par la plateforme (inscription et obtention d'un <i>token</i> nécessaires).
+                <br>
+                <a href="https://doc.data.gouv.fr/faq/reutilisateur.html">Découvrir l'OpenData en tant que réutilisateur</a>
             </p>
         </article>
 
@@ -82,6 +85,7 @@
                                 <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur du service est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
                                 <tr><th><a class="macaron" href="https://mps.apientreprise.fr/cgu">CGU</a></th><td>Relatives aux CGU des 11 bases de données fournissant l'API.</td></tr>
                                 <tr><th>Autres</th><td><a class="macaron" href="https://api.apientreprise.fr/documentation?json">Documentation</a> <a class="macaron" href="https://dashboard.entreprise.api.gouv.fr/#/endpoints">Dashboard</a> <a class="macaron" href="https://entreprise.api.gouv.fr/website/faq/">FAQ</a></td></tr>
+                                <tr><th><a class="macaron" href="api_entreprise.html">Utilisation</a></th><td><error class="orange"></error>Attente de la réponse à la demande de clé d'API</td></tr>
                             </table>
                             <cite>Les informations d’adresse sont issues des adresses géographiques et normalisées. Nous ne prenons pas en compte l’adresse déclarée. La géolocalisation de l’entreprise peut être faite grâce au service de géocodage suivant : <a href="http://adresse.data.gouv.fr">http://adresse.data.gouv.fr</a></cite>
                         </section>
@@ -124,9 +128,21 @@
                                 <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
                                 <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
                             </table>
+
                             Mise à disposition d'un <a href="http://www.sirene.fr/sirene/public/creation-fichier">générateur de fichiers</a> utilisant les données présentées dans les fichiers (recherche par localisation, activité, effectif, ...).
                             <br>
-                            La base Sirene est également disponible via le service <a href="https://www.opendatasoft.fr/">OpenDataSoft</a> <a class="macaron" href="https://data.opendatasoft.com/terms/terms-of-use/">CGU</a> qui propose une <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/api/?flg=fr&q=&lang=">API</a> dédiée. Exemple : <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/?flg=fr&refine.depet=49&refine.libcom=ANGERS">Angers</a>.
+                            La base Sirene est également disponible via le service <a href="https://www.opendatasoft.fr/">OpenDataSoft</a> qui propose une <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/api/?flg=fr&q=&lang=">API</a> dédiée. Exemple : <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/?flg=fr&refine.depet=49&refine.libcom=ANGERS">Angers</a>.
+                            <br><br>
+                            A propos d'<a href="https://www.opendatasoft.fr/">OpenDataSoft</a> :
+                            <table>
+                                <tr><th><a class="macaron" href="https://data.opendatasoft.com/terms/terms-of-use/">CGU</a></th><td><cite>
+                                    Dans le cadre de l’utilisation des SERVICES, les BENEFICIAIRES s’engagent à :
+                                    <ul>
+                                        <li>Respecter strictement la LICENCE OUVERTE ou PARTICULIERE correspondant au JEU DE DONNEES consulté via la PLATEFORME OPENDATASOFT ou le DOMAINE du CLIENT. Il appartient ainsi à chaque BENEFICIAIRE de consulter la LICENCE concernent chaque JEU DE DONNEES avant tout téléchargement ou extraction.</li>
+                                        <li>En toute hypothèse, mentionner la source des JEUX DE DONNEES en cas de réutilisation de tout ou partie de ceux-ci.</li>
+                                    </ul>
+                                </cite></td></tr>
+                            </table>
                         </section>
                     </li>
 
@@ -139,14 +155,37 @@
                             <a href="https://www.data.gouv.fr/fr/datasets/donnees-comptables-et-fiscales-des-collectivites-locales/">Source</a>
                         </header>
                         <section>
-                                <table>
-                                    <tr><th>Accès</th><td>Téléchargement libre</td></tr>
-                                    <tr><th>Provenance des données</th><td><a href="https://www.data.gouv.fr/fr/organizations/nosdonnees-fr/">NosDonnées.fr</a> a mis à jour à jour les ressources annuellement, de 2000 à 2012.</td></tr>
-                                    <tr><th>Nature des données</th><td>Taxe, poulation, ... des communes, EPCI, départemens ou régions.</td></tr>
-                                    <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
-                                    <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
-                                </table>
-                                Note : les données comptables détaillées et de fiscalité directe locale des collectivités et établissements publics locaux sont publiées sur <a href="http://www.collectivites-locales.gouv.fr">collectivites-locales.gouv.fr</a>.
+                            <table>
+                                <tr><th>Accès</th><td>Téléchargement libre</td></tr>
+                                <tr><th>Provenance des données</th><td><a href="https://www.data.gouv.fr/fr/organizations/nosdonnees-fr/">NosDonnées.fr</a> a mis à jour à jour les ressources annuellement, de 2000 à 2012.</td></tr>
+                                <tr><th>Nature des données</th><td>Taxe, poulation, ... des communes, EPCI, départemens ou régions.</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                            </table>
+                            Note : les données comptables détaillées et de fiscalité directe locale des collectivités et établissements publics locaux sont publiées sur <a href="http://www.collectivites-locales.gouv.fr">collectivites-locales.gouv.fr</a>.
+                            <br>
+                            Lien secondaire vers les <a href="https://www.impots.gouv.fr/cll/zf1/accueil/flux.ex?_flowId=accueilcclloc-flow">comptes des collectivités</a>.
+                       </section>
+                    </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state class="red">&#11044;</state>
+                            <h3>RNCS - Comptes annuels</h3>
+                            <type>XML</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://www.inpi.fr/fr/licence-registre-national-du-commerce-et-des-societes-rncs">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès<a class="help" href="https://www.inpi.fr/fr/licence-registre-national-du-commerce-et-des-societes-rncs#no-anchor-gui-18868">?</a></th><td>Demander l'accès au serveur FTP livrant les données : <cite>Télécharger la <a href="https://www.inpi.fr/sites/default/files/licence_rncs_comptes_annuels_mars_2017_1.pdf">licence de réutilisation</a> à renvoyer complétée à l'adresse <a href="mailto:licences@inpi.fr">licences@inpi.fr</a></cite>.</td></tr>
+                                <tr><th>Provenance des données<a class="help" href="https://www.inpi.fr/fr/licence-registre-national-du-commerce-et-des-societes-rncs#no-anchor-gui-18873">?</a></th><td>Comptes annuels déposés auprès des greffes des tribunaux de commerce (TC), tribunaux d’instance, tribunaux mixtes de commerce et transmis à l’INPI dans le cadre de ses missions.</td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://www.inpi.fr/fr/licence-registre-national-du-commerce-et-des-societes-rncs#no-anchor-gui-18873">?</a></th><td>Comptes annuels quotidennement déposés depuis le 1er janvier 2017 (données relatives aux bilans (actif/passif), comptes de résultat, immobilisations, amortissements et provisions).</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://fr.wikipedia.org/wiki/Institut_national_de_la_propri%C3%A9t%C3%A9_industrielle">?</a></th><td>Institut national de la propriété industrielle, établissement public administratif.</td></tr>
+                                <tr><th><a class="macaron" href="https://www.inpi.fr/sites/default/files/licence_rncs_comptes_annuels_mars_2017_1.pdf">Licence</a></th><td><cite>
+                                    La réutilisation s’entend de l’utilisation de tout ou partie des Informations pour la réalisation d’un produit ou d’un service à destination de toute personne et selon toutes modalités techniques et financières.
+                                </cite></td></tr>
+                            </table>
                        </section>
                     </li>
 
@@ -165,10 +204,17 @@
                                 <tr><th>Nature des données<a class="help" href="https://www.verif-siret.com/#top-results">?</a></th><td>Adresse, effectif, recherche par SIREN/SIRET, département, ...</td></tr>
                                 <tr><th>Crédits<a class="help" href="https://www.verif-siret.com/mentions-legales">?</a></th><td>L'auteur de cette plateforme est S.A ATAFOTO.</td></tr>
                                 <tr><th>Autres</th><td><a class="macaron" href="https://www.verif-siret.com/api/documentation/">Documentation</a></td></tr>
+                                <tr><th><a class="macaron" href="api_verif_siret.html">Utilisation</a></th><td><error class="red"></error>Erreurs CORS</td></tr>
                             </table>
                         </section>
                     </li>
                 </ul>
+
+                <table>
+                    <tr><th><a class="macaron" target="_blank" href="api_data_soft.html">Solution</a></th><td>Base Sirene via OpenDataSoft + Données comptables dans une BDD</td></tr>
+                </table>
+
+                <br>
 
                 Les autres sources données permettent d'ajouter des informations au tableau de bord d'un commune. 
 
@@ -234,12 +280,22 @@
                         <header onclick="expand(this)">
                             <state class="red">&#11044;</state>
                             <h3>Chemins de course</h3>
-                            <type>Application mobile</type>
+                            <type>Application web et mobile</type>
                             <!-- <stars>&#127969;</stars> -->
                             <a href="https://www.openrunner.com/">Source</a>
                         </header>
                         <section>
-                            Application qui recense les chemins pédestres utilisés par sa communauté
+                            <table>
+                                <tr><th>Accès</th><td>Sur inscription, tarif de départ gratuit permettant au moins de visualiser les chemins et les exporter.</td></tr>
+                                <tr><th>Provenance des données</th><td>Les chemins de courses sont créés par la communauté.</td></tr>
+                                <tr><th>Nature des données</th><td>Ensemble des coordonnées des points constituant un parcours (format GPX).</td></tr>
+                                <tr><th><a class="macaron" href="https://www.openrunner.com/cgu">CGU</a></th><td><cite>
+                                    L’Editeur s’engage à détenir toutes les autorisations et licences requises aux fins d’exploitation et de diffusion des interfaces desdites API, et répondra seul de tout litige lié à la publication de ces API sur le Site.
+                                </cite></td></tr>
+                            </table>
+                            Consulter la <a href="https://fr.wikipedia.org/wiki/GPX_(format_de_fichier)#Logiciels_de_manipulation_de_fichiers_GPX">liste des logiciels de manipulation de fichiers GPX</a>.
+                            <br>
+                            Limite de 5 parcours affichables simultanément, exportation à la main des chemins un par un.
                         </section>
                     </li>
 
@@ -271,14 +327,22 @@
 
                     <li>
                         <header onclick="expand(this)">
-                            <state class="red">&#11044;</state>
-                            <h3>Vélos en libre service</h3>
-                            <type>Autre</type>
+                            <state class="green">&#11044;</state>
+                            <h3>Vélos en libre service - JCDecaux</h3>
+                            <type>API</type>
                             <!-- <stars>&#127969;</stars> -->
-                            <a href="https://fr.wikipedia.org/wiki/Liste_des_syst%C3%A8mes_de_v%C3%A9los_en_libre-service_en_France">Source</a>
+                            <a href="https://developer.jcdecaux.com/#/opendata/vls?page=getstarted">Source</a>
                         </header>
                         <section>
-                            Au total, environ 51.000 vélos et 4.000 stations sont en libre service dans toute la France. Quelques sociétés et systèmes implantés en France :
+                            <table>
+                                <tr><th>Accès<a class="help" href="https://developer.jcdecaux.com/#/account">?</a></th><td>Demande de <i>token</i> après inscription sur la plateforme (11c4f1ced2617e66a186743cccf5b6d1a122f262)</td></tr>
+                                <tr><th>Nature des données</th><td>Données statiques : positions GPS des bornes, présence d’un terminal de paiement, ... Données dynamiques (rafraichies toutes les minutes) : état d'une station, nombre de vélos disponibles, ...</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://fr.wikipedia.org/wiki/JCDecaux">?</a></th><td>JCDecaux est une industrie française, principalement connue pour ses systèmes d'arrêts d'autobus publicitaires et ses systèmes de location de vélos en libre service.</td></tr>
+                                <tr><th><a class="macaron" href="https://developer.jcdecaux.com/#/opendata/license">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                <tr><th>Autres</th><td><a class="macaron"href="https://developer.jcdecaux.com/#/opendata">Documentation</a></td></tr>
+                                <tr><th>Utilisation</th><td>TODO</td></tr>
+                            </table>
+                            Au total, environ 51.000 vélos et 4.000 stations sont en libre service dans toute la France (<a href="https://fr.wikipedia.org/wiki/Liste_des_syst%C3%A8mes_de_v%C3%A9los_en_libre-service_en_France">Wikipédia</a>). Quelques sociétés et systèmes implantés en France :
                             <ul>
                                 <li>Vélib' Métropole (Vélib') en région parisienne, 20.000 vélos et 1.200 stations : <a href="https://www.velib-metropole.fr/map#/">Carte des stations</a></li>
                                 <li>JCDecaux (filiale Cyclocity, services vélo'v, VéloCité, Cy'clic, Vélam, bicloo, ...), 10.000 vélos et 1.000 stations : <a href="https://developer.jcdecaux.com/#/opendata">JCDecaux developer API</a></li>
@@ -339,262 +403,14 @@
                 Quali de l'air
                 <br>
                 Article <a href="https://www.forbes.fr/technologie/lopen-data-va-t-il-tuer-les-fournisseurs-de-donnees/">"L'OpenData va-t-il tuer les fournisseurs de données ?"</a>
+                <br>
+                Datas libres sur <a href="https://www.inpi.fr/fr/services-et-prestations-domaine/open-data">inpi.fr</a>
             </p>
 
         </article>
 
     </section>
 </body>
-
-<style>
-
-* {
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    color: rgba(255, 255, 255, 0.8);
-    background: rgb(36, 36, 36);
-}
-
-body > section {
-    display: flex;
-    flex-direction: column;
-    width: 70%;
-    margin: 40px auto;
-}
-
-section > article {
-    margin-bottom: 40px;
-    padding: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-}
-
-section > article:last-child {
-    margin-bottom: 0;
-}
-
-/* Titres */
-
-h2 {
-    margin-bottom: 35px;
-    padding-left: 10px;
-    border-left: 8px solid rgba(255, 255, 255, 0.2);
-    font-size: 110%;
-}
-
-h3 {
-    font-size: 100%;
-    font-weight: normal;
-}
-
-/* Listes */
-
-ul {
-    margin-left: 30px;
-}
-
-ul.wrapper  {
-    list-style: none;
-    margin: 20px 0 30px 0;
-}
-
-ul.wrapper > li {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 5px;
-}
-
-ul.wrapper > li > * {
-    flex: 1;
-}
-
-ul li header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.05);
-    cursor: pointer;
-    transition: all .2s ease;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-}
-
-ul li header > * {
-    flex: 1;
-    line-height: 35px;
-}
-
-ul li header > *:first-child { /* début du header (état) */
-    flex: 0.05;
-    padding-left: 15px;
-}
-
-ul li header > *:last-child { /* fin du header (lien) */
-    flex: 0.1;
-    margin: 0;
-    padding: 0 15px;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.1);
-}
-
-ul li header > *:last-child:hover {
-    background: rgba(0, 0, 0, 0.5);
-}
-
-ul li:last-child header {
-    border-bottom-width: 1px;
-}
-
-ul li header:hover, ul li.expand header {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-ul li section {
-    display: none;
-    margin-bottom: 10px;
-    padding: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.075);
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) inset;
-}
-
-ul li.expand section {
-    display: block;
-}
-
-/* Liens */
-
-a {
-    text-decoration: none;
-    color: rgba(255, 255, 255, 0.4);
-    transition: all .2s ease;
-}
-
-a:hover {
-    color: rgba(85, 163, 252, 0.7);
-}
-
-a.macaron {
-    padding: 3px 6px;
-    vertical-align: baseline;
-    font-size: 80%;
-    font-weight: bold;
-    white-space: nowrap;
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(85, 163, 252, 0.7);
-    border-radius: 50px;
-}
-
-a.macaron:hover {
-    background: rgba(59, 137, 226, 0.8);
-}
-
-a.help {
-    margin-left: 5px;   
-    padding: 2px 6px;
-    vertical-align: top;
-    font-size: 60%;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 50px;
-}
-
-/* Tableaux */
-
-table {
-    min-width: 45%;
-    max-width: 90%;
-    margin: 15px auto;
-    border-collapse: collapse;
-}
-
-table tr {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-table tr:nth-child(odd) {
-    background: rgba(0, 0, 0, 0.05);
-}
-
-table th, table td {
-    padding: 6px 8px;
-    text-align: left;
-}
-
-table th {
-    padding-right: 30px;
-    font-weight: normal;
-    opacity: 0.8;
-    white-space: nowrap;
-}
-
-/* Autres */
-
-stars {
-    letter-spacing: 10px;
-}
-
-stars, type, state {
-    text-align: center;
-    opacity: 0.6;
-}
-
-state {
-    text-align: left;
-    vertical-align: middle;
-    font-size: 50%;
-}
-
-.green {
-    color: yellowgreen;
-}
-
-.orange {
-    color: orange;
-}
-
-.red {
-    color: brown;
-}
-
-.right {
-    float: right;
-}
-
-legend {
-    float: right;
-    opacity: 0.7;
-}
-
-legend span {
-    cursor: help;
-    margin-left: 10px;
-}
-
-legend state {
-    padding-bottom: 3px;
-}
-
-span info {
-    display: none;
-    position: absolute;
-    padding: 5px;
-    font-size: 80%;
-    font-weight: normal;
-    color: rgb(0, 0, 0);
-    background: rgb(255, 255, 255);
-}
-
-span:hover info {
-    display: block;
-}
-
-</style>
 
 <script>
 
