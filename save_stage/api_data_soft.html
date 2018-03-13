@@ -15,6 +15,7 @@
 			<p>
 				<input onchange="search()" id="searchword" type="text" value="441354776" placeholder="Information" />
 				<input id="limit" type="number" placeholder="10" class="mini" />
+				<select id="version" ><option value="v1">V1</option><option value="v2">V2</option></select>
 				<button onclick="search()">&#10004;</button>
 				<ie>siret, siren, code postal, ville, raison sociale, ...</ie>
 			</p>
@@ -74,7 +75,7 @@ h2 {
 
 /* Formulaires */
 
-input, button {
+input, button, select {
 	padding: 8px 10px;
 	line-height: 16px;
 	border: 1px solid rgba(0, 0, 0, 0.5);
@@ -163,8 +164,18 @@ ie {
 	display: none;
 }
 
+#records button {
+	padding: 5px;
+	font-size: 70%;
+	opacity: 0.7;
+}
+
 #res {
 	padding: 0;
+}
+
+.full {
+	width: 100%;
 }
 
 </style>
@@ -173,26 +184,40 @@ ie {
 
 var searchword = document.querySelector("#searchword");
 var limit = document.querySelector("#limit");
+var version = document.querySelector("#version");
+
 var records_dom = document.querySelector("#records");
 var res_dom = document.querySelector("#res");
+
 var res_json = null;
 
+var results;
+var total_results;
+
+var begin_search;
+var end_search;
+
 function search() {
-	call_api_v1("q=" + searchword.value, true);
-	// call_api_v2("search=" + searchword.value, true);
+	results = 0;
+	if (version.value == "v1") {
+		call_api_v1("q=" + searchword.value, true);
+	} else if (version.value == "v2") {
+		call_api_v2("search=" + searchword.value, true);
+	}
 }
 
 function call_api_v1(endpoint, new_search) {
 	var facets = "facet=rpet&facet=depet&facet=libcom&facet=siege&facet=libapet&facet=saisonat&facet=libnj&facet=libapen&facet=ess&facet=libtefen&facet=categorie&facet=proden&facet=vmaj1&facet=vmaj2&facet=vmaj3&facet=libtu&facet=liborigine&facet=libtca&facet=libreg_new&facet=nom_dept&facet=section&facet=classe";
-	var rows = limit.value | 10;
-	var url = "https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&" + endpoint + "&rows=" + rows + "&" + facets;
+	var rows = (limit.value === "") ? 10 : parseInt(limit.value);
+	var url = "https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&" + endpoint + "&rows=" + rows + "&start=" + results + "&" + facets;
+	results += rows;
 	call_api(url, new_search, display_datas_v1);
 }
 
 function call_api_v2(endpoint, new_search) {
-	var rows = limit.value | 10;
-	var end = "&pretty=false&timezone=UTC";
-	var url = "https://data.opendatasoft.com/api/v2/catalog/datasets/sirene%40public/records?" + endpoint + "&rows=" + rows + end;
+	var rows = (limit.value === "") ? 10 : parseInt(limit.value);
+	var url = "https://data.opendatasoft.com/api/v2/catalog/datasets/sirene%40public/records?" + endpoint + "&rows=" + rows + "&start=" + results;
+	results += rows;
 	call_api(url, new_search, display_datas_v2);
 }
 
@@ -200,77 +225,110 @@ function call_api(url, new_search, callback) {
 	if (new_search) {
 		records_dom.className = "";
 		records_dom.innerHTML = "";
-		res_dom.innerHTML = "";
-		res_dom.className = "";
+	} else {
+		records_dom.removeChild(records_dom.lastChild);
 	}
+
 	records_dom.innerHTML += "<i>Loading...</i>";
-	res_dom.innerHTML = "<i>Loading...</i>";
+	begin_search = new Date().getTime();
 
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", url, true);
 	xhr.onload = function() {
+		end_search = new Date().getTime();
 		res_json = JSON.parse(xhr.responseText);
+		res_dom.className = "";
 		res_dom.innerHTML = "<pre><a target='_blank' href='" + url + "'>" + url + "</a></pre>";
-		callback(new_search);
+		callback(url, new_search);
 	};
 	xhr.send();
 }
 
-function display_datas_v1(new_search) {
+function display_datas_v1(url, new_search) {
 	// res dom : the entire response
 	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
+
 	// records : some values
 	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	var table;
+
+	total_results = res_json["nhits"];
+
 	if (new_search) {
-		records_dom.innerHTML = res_json["nhits"] + " résultat(s)";
-		var table = document.createElement("table");
+		records_dom.innerHTML = total_results + " résultat(s) - " + parseInt(end_search - begin_search) + " ms";
+		table = document.createElement("table");
+		records_dom.appendChild(table);
 		var row = document.createElement("tr");
 		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
 		table.appendChild(row);
+	} else {
+		records_dom.removeChild(records_dom.lastChild);
+		table = records_dom.getElementsByTagName("table")[0];
 	}
-	for (var records of res_json["records"]) {
-		var fields = records["fields"];
+
+	for (var record of res_json["records"]) {
+		var fields = record["fields"];
 		var row = document.createElement("tr");
 		for (property of columns) {
 			var value = fields[property];
 			if (value == undefined) value = "";
 			if (value.length > 50) value = value.substr(0, 50) + "...";
+			if (property == "coordonnees") value = "<a href='https://www.google.fr/search?q=" + value[0] + "," + value[1] + "'>&#128506;</a>";
 			row.innerHTML += "<td>" + value + "</td>";
 		}
 		table.appendChild(row);
 	}
-	records_dom.appendChild(table);
-	if (rows < res_json["nhits"]) {
-		records_dom.innerHTML = "<button onclick='call_api(" + endpoints + ", " + false + ")'>Plus de résultats</button>";
+
+	if (results < total_results) {
+		var more = document.createElement("button");
+		more.className = "full";
+		more.innerHTML = "Plus de résultats";
+		more.onclick = function() { call_api_v1("q=" + searchword.value, false); };
+		records_dom.appendChild(more);
 	}
 }
 
-function display_datas_v2(new_search) {
+function display_datas_v2(url, new_search) {
 	// res dom : the entire response
 	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
+
 	// records : some values
 	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	var table;
+
+	total_results =  res_json["total_count"];
+
 	if (new_search) {
-		records_dom.innerHTML = res_json["total_results"] + " résultat(s)";
-		var table = document.createElement("table");
+		records_dom.innerHTML = total_results + " résultat(s) - " + parseInt(end_search - begin_search) + " ms";
+		table = document.createElement("table");
+		records_dom.appendChild(table);
 		var row = document.createElement("tr");
 		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
 		table.appendChild(row);
+	} else {
+		records_dom.removeChild(records_dom.lastChild);
+		table = records_dom.getElementsByTagName("table")[0];
 	}
-	for (var records of res_json["records"]) {
-		var fields = records["fields"];
+
+	for (var record of res_json["records"]) {
+		var fields = record["record"]["fields"];
 		var row = document.createElement("tr");
 		for (property of columns) {
 			var value = fields[property];
 			if (value == undefined) value = "";
 			if (value.length > 50) value = value.substr(0, 50) + "...";
+			if (property == "coordonnees") value = "<a href='https://www.google.fr/search?q=" + value["lat"] + "," + value["lon"] + "'>&#128506;</a>";
 			row.innerHTML += "<td>" + value + "</td>";
 		}
 		table.appendChild(row);
 	}
-	records_dom.appendChild(table);
-	if (rows < res_json["nhits"]) {
-		records_dom.innerHTML = "<button onclick='call_api(" + endpoints + ", " + false + ")'>Plus de résultats</button>";
+
+	if (results < total_results) {
+		var more = document.createElement("button");
+		more.className = "full";
+		more.innerHTML = "Plus de résultats";
+		more.onclick = function() { call_api_v1("q=" + searchword.value, false); };
+		records_dom.appendChild(more);
 	}
 }
 
