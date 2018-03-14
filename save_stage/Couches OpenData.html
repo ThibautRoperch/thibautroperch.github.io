@@ -142,6 +142,7 @@
                                         <li>En toute hypothèse, mentionner la source des JEUX DE DONNEES en cas de réutilisation de tout ou partie de ceux-ci.</li>
                                     </ul>
                                 </cite></td></tr>
+                                <tr><th><a class="macaron" href="api_data_soft.html">Utilisation</a></th><td><verif class="green"></verif>La v1 de l'API est plus rapide et plus précise, la v2 plus lente et plus 'large'.</td></tr>
                             </table>
                         </section>
                     </li>
@@ -161,6 +162,7 @@
                                 <tr><th>Nature des données</th><td>Taxe, poulation, ... des communes, EPCI, départemens ou régions.</td></tr>
                                 <tr><th>Crédits<a class="help" href="https://www.data.gouv.fr/fr/credits">?</a></th><td>L'éditeur de la plateforme qui héberge ces ressources est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a> de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
                                 <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                <tr><th><a class="macaron" href="http://localhost:8080/tests/donnees_comptables/donnees_comptables.php">Utilisation</a></th><td><verif class="green"></verif>Script PHP interrogant la base de données dans laquelle ont été importées les données du fichier CSV.</td></tr>
                             </table>
                             Note : les données comptables détaillées et de fiscalité directe locale des collectivités et établissements publics locaux sont publiées sur <a href="http://www.collectivites-locales.gouv.fr">collectivites-locales.gouv.fr</a>.
                             <br>
@@ -211,7 +213,7 @@
                 </ul>
 
                 <table>
-                    <tr><th><a class="macaron" target="_blank" href="api_data_soft.html">Solution</a></th><td>Base Sirene via OpenDataSoft + Données comptables dans une BDD</td></tr>
+                    <tr><th><a class="macaron" target="_blank" href="solution_entreprises.html">Solution</a></th><td>Base Sirene via OpenDataSoft + Données comptables dans une BDD</td></tr>
                 </table>
 
                 <br>
@@ -308,7 +310,16 @@
                             <a href="https://api.gouv.fr/api/le-taxi.html">Source</a>
                         </header>
                         <section>
-                            Permet de localiser les taxis autour d'un point (lat/long)
+                            <table>
+                                <tr><th>Accès<a class="help" href="http://le.taxi/join.html">?</a></th><td>API ouverte sous contrat aux collectivités, entreprises et éditeurs d'applications. Demande de <i>token</i> en remplissant <a href="https://docs.google.com/forms/d/e/1FAIpQLSdY08d885a4Ps5T2G3kB0pAGx3zFgZqVAER0yHYx5XZ3O4gbQ/viewform?c=0&w=1">ce formulaire</a>.</td</tr>
+                                <tr><th>Provenance des données<a class="help" href="http://le.taxi/partners.html">?</a></th><td>Les données sont apportées par les agences de Taxis implantées en France.</td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://api.taxi/documentation/moteur">?</a></th><td>Position (lat/long) des taxis autour d'un point donné.</td></tr>
+                                <tr><th>Crédits<a class="help" href="http://hubeau.eaufrance.fr/page/mentions-legales-credits">?</a></th><td>L'éditeur du service est <a href="http://www.etalab.gouv.fr/">Mission Etalab</a>, qui travaille avec la <a href="https://fr.wikipedia.org/wiki/D%C3%A9l%C3%A9gation_%C3%A0_la_s%C3%A9curit%C3%A9_et_%C3%A0_la_circulation_routi%C3%A8res">DSCR</a> (organisme français d'Etat).</td></tr>
+                                <tr><th><a class="macaron" href="http://le.taxi/files/CGU.pdf">CGU</a></th><td><cite>
+                                    Les données proposées au téléchargement sur ce site sont disponibles sous licence ouverte. Elles sont donc librement utilisables et réutilisables, y compris dans un but commerciale, gratuitement. L'utilisateur de ces données devra veiller à citer l'auteur de ces données.
+                                </cite></td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="https://api.taxi/documentation">Documentation</a></td></tr>
+                            </table>
                         </section>
                     </li>
 
@@ -321,7 +332,19 @@
                             <a href="https://api.gouv.fr/api/api_hubeau_indic_EP_Asst.html">Source</a>
                         </header>
                         <section>
-                            Indicateurs Eau potable et Assainissement
+                            <table>
+                                <tr><th>Accès<a class="help" href="https://api.gouv.fr/api/api_hubeau_indic_EP_Asst.html">?</a></th><td>API ouverte à tous.</td</tr>
+                                <tr><th>Provenance des données<a class="help" href="https://api.gouv.fr/api/api_hubeau_indic_EP_Asst.html">?</a></th><td>Les données sont apportées par les collectivités locales sur le site Service.</td></tr>
+                                <tr><th>Nature des données<a class="help" href="http://hubeau.eaufrance.fr/page/documentation-api-indicateurs-services-eau-assainissement">?</a></th><td>Indicateurs eau potable (AEP) et assainissement (AC/ANC) mis à jour tous les 1er du mois sur Hub'Eau, recherche par commune, par indicateur et par service.</td></tr>
+                                <tr><th>Crédits<a class="help" href="http://hubeau.eaufrance.fr/page/mentions-legales-credits">?</a></th><td>L'éditeur du service est <a href="http://www.brgm.fr/">BRGM</a>, l'organisme public français impliqué dans le domaine des sciences de la Terre. C'est le <cite>service géologique national français</cite><a class="help" href="https://fr.wikipedia.org/wiki/Bureau_de_recherches_g%C3%A9ologiques_et_mini%C3%A8res">?</a>, et travaille avec l'<a href="https://www.afbiodiversite.fr/">AFB</a>.</td></tr>
+                                <tr><th><a class="macaron" href="http://hubeau.eaufrance.fr/page/avertissement">CGU</a></th><td><cite>
+                                    Les données proposées au téléchargement sur ce site sont disponibles sous licence ouverte. Elles sont donc librement utilisables et réutilisables, y compris dans un but commerciale, gratuitement. L'utilisateur de ces données devra veiller à citer l'auteur de ces données.
+                                </cite></td></tr>
+                                <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="http://hubeau.eaufrance.fr/page/documentation-eau_potable-assainissement">Documentation</a> <a class="macaron" href="http://hubeau.eaufrance.fr/page/documentation-api-indicateurs-services-eau-assainissement">Dashboard</a></td></tr>
+                                <tr><th><a class="macaron" href="">Utilisation</a></th><td>TODO</td></tr>
+                            </table>
+                            D'autre API sur la qualité de l'eau : <a href="http://hubeau.eaufrance.fr/">http://hubeau.eaufrance.fr/</a>.
                         </section>
                     </li>
 
@@ -331,7 +354,7 @@
                             <h3>Vélos en libre service - JCDecaux</h3>
                             <type>API</type>
                             <!-- <stars>&#127969;</stars> -->
-                            <a href="https://developer.jcdecaux.com/#/opendata/vls?page=getstarted">Source</a>
+                            <a href="https://developer.jcdecaux.com">Source</a>
                         </header>
                         <section>
                             <table>
@@ -381,6 +404,31 @@
                             Application : <a href="monreseaumobile.fr">monreseaumobile.fr</a>
                         </section>
                     </li>
+
+                    <li>
+                        <header onclick="expand(this)">
+                            <state>&#11044;</state>
+                            <h3>DATAtourisme</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127969;&#9921;</stars> -->
+                            <a href="http://www.datatourisme.fr">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès<a class="help" href="http://www.datatourisme.fr/api/">?</a></th><td>API à venir</td></tr>
+                                <tr><th>Provenance des données<a class="help" href="http://www.datatourisme.fr/">?</a></th><td>ADT-CDT, offices de tourisme, CRT</td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://www.data.gouv.fr/fr/datasets/donnees-touristiques-de-la-base-datatourisme/#_">?</a></th><td>Potentiellement la description des sites touristiques et la description des événements ayant lieu sur ces sites</td></tr>
+                                <tr><th>Crédits<a class="help" href="http://www.datatourisme.fr/mentions-legales/">?</a></th><td>DGE et Tourisme & Territoires</td></tr>
+                                <tr><th><a class="macaron" href="https://diffuseur.datatourisme.gouv.fr/cgu/download">CGU</a></th><td><cite>
+                                    61. Tous les jeux de données publiés sur la plateforme sont régis par la licence ouverte / open licence Etalab à jour au moment de leur publication.<br>
+                                    62. Les producteurs des jeux de données concèdent un droit non exclusif et gratuit de libre extraction et réutilisation des jeux de données publiés sur la plateforme, à des fins commerciales ou non, dans le monde entier et pour une durée illimitée.<br>
+                                    64. Néanmoins, le diffuseur doit toujours mentionner la paternité du jeu de données utilisé dans le cadre de sa réutilisation et la date de dernière mise à jour du jeu de données réutilisé.
+                                </cite></td></tr>
+                                <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                <tr><th>Autres</th><td><a class="macaron"href="http://www.datatourisme.fr/api/">Documentation</a></td></tr>
+                            </table>
+                        </section>
+                    </li>
                 </ul>
 
                 <!-- <legend>
@@ -398,13 +446,12 @@
                 </legend>
 
                 <br>
+                <br>
                 Autre source de données à exploiter : <a href="https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques">https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques</a>.
-                <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Annuaire des données</a>
-                Quali de l'air
+                <br>
+                <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Annuaire des données</a> Quali de l'air
                 <br>
                 Article <a href="https://www.forbes.fr/technologie/lopen-data-va-t-il-tuer-les-fournisseurs-de-donnees/">"L'OpenData va-t-il tuer les fournisseurs de données ?"</a>
-                <br>
-                Datas libres sur <a href="https://www.inpi.fr/fr/services-et-prestations-domaine/open-data">inpi.fr</a>
             </p>
 
         </article>

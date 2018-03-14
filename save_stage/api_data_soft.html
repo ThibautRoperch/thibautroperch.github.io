@@ -92,12 +92,12 @@ function call_api(url, new_search, callback) {
 		res_json = JSON.parse(xhr.responseText);
 		res_dom.className = "";
 		res_dom.innerHTML = "<pre><a target='_blank' href='" + url + "'>" + url + "</a></pre>";
-		callback(url, new_search);
+		callback(new_search);
 	};
 	xhr.send();
 }
 
-function display_datas_v1(url, new_search) {
+function display_datas_v1(new_search) {
 	// res dom : the entire response
 	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
 
@@ -142,7 +142,7 @@ function display_datas_v1(url, new_search) {
 	}
 }
 
-function display_datas_v2(url, new_search) {
+function display_datas_v2(new_search) {
 	// res dom : the entire response
 	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
 

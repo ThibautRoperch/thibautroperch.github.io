@@ -268,6 +268,11 @@ error::before {
     margin-right: 5px;
 }
 
+verif::before {
+    content: "✔";
+    margin-right: 5px;
+}
+
 /* Autres */
 
 pre {
