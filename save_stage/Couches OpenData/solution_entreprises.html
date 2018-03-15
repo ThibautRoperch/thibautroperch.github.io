@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Solution entreprises</title>
+    <link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body>
+
+	<section>
+		<article>
+			<h2>Recherche</h2>
+
+			<p>
+				<input onchange="search()" id="city" type="text" value="Angers" placeholder="Ville" />
+				<input id="limit" type="number" placeholder="10" class="mini" />
+				<button onclick="search()">&#10004;</button>
+			</p>
+
+		</article>
+
+		<article id="finances" class="hidden">
+		</article>
+
+		<article id="entreprises" class="hidden">
+		</article>
+
+	</section>
+
+</body>
+
+<script src="expand.js"></script>
+
+<script>
+
+// DOM des entrées des requêtes
+var city = document.querySelector("#city");
+var limit = document.querySelector("#limit");
+
+// DOM des sorties des requêtes
+var finances_dom = document.querySelector("#finances");
+var entreprises_dom = document.querySelector("#entreprises");
+
+// Résultats JSON des requêtes
+var finances_json = null;
+var entreprises_json = null;
+
+// Variables pour la requête des entreprises
+var displayed_entreprises;
+var total_entreprises;
+
+// Mesure du temps de la requête des finances
+var finances_begin_search;
+var finances_end_search;
+
+// Mesure du temps de la requête des entreprises
+var entreprises_begin_search;
+var entreprises_end_search;
+
+function search() {
+	displayed_entreprises = 0;
+	call_api_finances("ville=" + city.value);
+	call_api_entreprises("q=" + city.value, true);
+}
+
+function call_api_finances(endpoint) {
+	var url = "http://localhost:8080/tests/donnees_comptables/donnees_comptables.php?" + endpoint;
+	
+	finances_dom.className = "";
+	finances_dom.innerHTML = "<h2>Finances</h2>";
+	finances_dom.innerHTML += "<i>Loading...</i>";
+
+	finances_begin_search = new Date().getTime();
+
+	ajax(url, display_finances, null);
+}
+
+function call_api_entreprises(endpoint, new_search) {
+	var facets = "facet=rpet&facet=depet&facet=libcom&facet=siege&facet=libapet&facet=saisonat&facet=libnj&facet=libapen&facet=ess&facet=libtefen&facet=categorie&facet=proden&facet=vmaj1&facet=vmaj2&facet=vmaj3&facet=libtu&facet=liborigine&facet=libtca&facet=libreg_new&facet=nom_dept&facet=section&facet=classe";
+	var rows = (limit.value === "") ? 10 : parseInt(limit.value);
+	var url = "https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&" + endpoint + "&rows=" + rows + "&start=" + displayed_entreprises + "&" + facets;
+	displayed_entreprises += rows;
+
+	if (new_search) {
+		entreprises_dom.className = "";
+		entreprises_dom.innerHTML = "<h2>Entreprises</h2>";
+	} else {
+		entreprises_dom.removeChild(entreprises_dom.lastChild);
+	}
+	entreprises_dom.innerHTML += "<i>Loading...</i>";
+
+	entreprises_begin_search = new Date().getTime();
+
+	ajax(url, display_entreprises, new_search);
+}
+
+function ajax(url, callback, args) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.onload = function() {
+		callback(xhr.responseText, args);
+	};
+	xhr.send();
+}
+
+function display_finances(response_text, args) {
+	finances_end_search = new Date().getTime();
+
+	finances_json = JSON.parse(response_text);
+
+	finances_dom.removeChild(finances_dom.lastChild);
+	finances_dom.innerHTML += finances_json["ncities"] + " résultat(s) - " + parseInt(finances_end_search - finances_begin_search) + " ms";
+
+	var list = document.createElement("ul");
+	list.className = "wrapper";
+		finances_dom.appendChild(list);
+
+	var columns = ["annee", "population", "fonds_roulement", "resultat_comptable", "total_charges_fct", "total_emplois_inv", "total_produits_fct", "total_ressources_inv", "url"];
+
+	for (var record of finances_json["records"]) {
+		var item = document.createElement("li");
+			list.appendChild(item);
+		var header = document.createElement("header");
+			item.appendChild(header);
+		var section = document.createElement("section");
+			item.appendChild(section);
+
+		header.onclick = function() { expand-expand(this); };
+		header.innerHTML = "<h3>" + record["name"] + "</h3><span>" + record["nyears"] + " publications</span>";
+
+		var table = document.createElement("table");
+			section.appendChild(table);
+		table.className = "full dezoom";
+		var row = document.createElement("tr");
+		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
+		table.appendChild(row);
+
+		for (var year in record["years"]) {
+			var fields = record["years"][year];
+			var row = document.createElement("tr");
+			for (property of columns) {
+				var value = fields[property];
+				if (value == undefined) value = "";
+				if (property == "url") value = "<a target='_blank' href='" + value + "'>&#127757;</a>";
+				if (property == "annee") row.innerHTML += "<th>" + value + "</th>";
+				else row.innerHTML += "<td>" + value + "</td>";
+			}
+			table.appendChild(row);
+		}
+	}
+}
+
+function display_entreprises(response_text, args) {
+	entreprises_end_search = new Date().getTime();
+
+	var new_search = args;
+
+	entreprises_json = JSON.parse(response_text);
+
+	total_entreprises = entreprises_json["nhits"];
+
+	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "libapen", "categorie", "l6_normalisee", "coordonnees"];
+	var table;
+
+	if (new_search) {
+		entreprises_dom.removeChild(entreprises_dom.lastChild);
+		entreprises_dom.innerHTML += total_entreprises + " résultat(s) - " + parseInt(entreprises_end_search - entreprises_begin_search) + " ms";
+		table = document.createElement("table");
+		table.className = "full dezoom";
+		entreprises_dom.appendChild(table);
+		var row = document.createElement("tr");
+		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
+		table.appendChild(row);
+	} else {
+		entreprises_dom.removeChild(entreprises_dom.lastChild);
+		table = entreprises_dom.getElementsByTagName("table")[0];
+	}
+
+	for (var record of entreprises_json["records"]) {
+		var fields = record["fields"];
+		var row = document.createElement("tr");
+		for (property of columns) {
+			var value = fields[property];
+			if (value == undefined) value = "";
+			if (value.length > 60) value = value.substr(0, 50) + "...";
+			if (property == "coordonnees") value = "<a target='_blank' href='https://www.google.fr/search?q=" + value[0] + "," + value[1] + "'>&#128506;</a>";
+			row.innerHTML += "<td>" + value + "</td>";
+		}
+		table.appendChild(row);
+	}
+
+	if (displayed_entreprises < total_entreprises) {
+		var more = document.createElement("button");
+		more.className = "full";
+		more.innerHTML = "Plus de résultats";
+		more.onclick = function() { call_api_entreprises("q=" + city.value, false); };
+		entreprises_dom.appendChild(more);
+	}
+}
+
+</script>

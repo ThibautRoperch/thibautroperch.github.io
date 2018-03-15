@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Liens</title>
-    <link rel="stylesheet" type="text/css" href="css.css">
+    <link rel="stylesheet" type="text/css" href="paper.css">
 </head>
 
 <body>
@@ -69,7 +69,7 @@
                 
                 <ul class="wrapper">
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="orange">&#11044;</state>
                             <h3>gouv.fr</h3>
                             <type>API</type>
@@ -92,7 +92,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="red">&#11044;</state>
                             <h3>SOCIETEINFO</h3>
                             <type>API</type>
@@ -113,7 +113,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Base Sirene</h3>
                             <type>CSV</type>
@@ -148,7 +148,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Données comptables des collectivités</h3>
                             <type>CSV</type>
@@ -171,7 +171,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="red">&#11044;</state>
                             <h3>RNCS - Comptes annuels</h3>
                             <type>XML</type>
@@ -185,14 +185,16 @@
                                 <tr><th>Nature des données<a class="help" href="https://www.inpi.fr/fr/licence-registre-national-du-commerce-et-des-societes-rncs#no-anchor-gui-18873">?</a></th><td>Comptes annuels quotidennement déposés depuis le 1er janvier 2017 (données relatives aux bilans (actif/passif), comptes de résultat, immobilisations, amortissements et provisions).</td></tr>
                                 <tr><th>Crédits<a class="help" href="https://fr.wikipedia.org/wiki/Institut_national_de_la_propri%C3%A9t%C3%A9_industrielle">?</a></th><td>Institut national de la propriété industrielle, établissement public administratif.</td></tr>
                                 <tr><th><a class="macaron" href="https://www.inpi.fr/sites/default/files/licence_rncs_comptes_annuels_mars_2017_1.pdf">Licence</a></th><td><cite>
-                                    La réutilisation s’entend de l’utilisation de tout ou partie des Informations pour la réalisation d’un produit ou d’un service à destination de toute personne et selon toutes modalités techniques et financières.
+                                    3.1 Le Licencié bénéficie d’un droit personnel, non exclusif et gratuit de réutilisation  des Informations. La réutilisation s’entend de l’utilisation de tout ou partie des Informations pour la réalisation d’un produit ou d’un service à destination de toute personne et selon toutes modalités techniques et financières.
+                                    <br>
+                                    3.5 Le Licencié devra indiquer la source telle que mentionnée à l’article 2.3 ainsi que la date des mises à jour des Informations, sans que ces mentions puissent être interprétées comme une quelconque garantie donnée par l’INPI. 
                                 </cite></td></tr>
                             </table>
                        </section>
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Verif-siret.com</h3>
                             <type>API</type>
@@ -222,7 +224,7 @@
 
                 <ul class="wrapper">
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Cadastre</h3>
                             <type>GeoJSON</type>
@@ -241,7 +243,26 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
+                            <state class="green">&#11044;</state>
+                            <h3>API Géo</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://api.gouv.fr/api/api-geo.html">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès<a class="help" href="https://api.gouv.fr/api/api-geo.html">?</a></th><td>API ouverte à tous.</td></tr>
+                                <tr><th>Provenance des données<a class="help" href="https://api.gouv.fr/api/api-geo.html">?</a></th><td>Etalab, La Poste, INSEE, OpenStreetMap</td></tr>
+                                <tr><th>Nature des données<a class="help" href="https://geo.api.gouv.fr/">?</a></th><td>Codes postaux, surfaces, population, ... Recherche par commune, région et département.</td></tr>
+                                <tr><th>Crédits</th><td>Une mission de la <a href="http://www.modernisation.gouv.fr/">DINSIC</a>.</td></tr>
+                                <tr><th><a class="macaron" href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                            </table>
+                        </section>
+                    </li>
+
+                    <li>
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Bornes incendie</h3>
                             <type>CSV/JSON</type>
@@ -262,7 +283,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="red">&#11044;</state>
                             <h3>Emplacement des défibrilateurs</h3>
                             <type>Application mobile</type>
@@ -279,7 +300,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="red">&#11044;</state>
                             <h3>Chemins de course</h3>
                             <type>Application web et mobile</type>
@@ -302,7 +323,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="red">&#11044;</state>
                             <h3>le.Taxi</h3>
                             <type>API</type>
@@ -324,7 +345,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Hub'Eau</h3>
                             <type>API</type>
@@ -349,7 +370,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Vélos en libre service - JCDecaux</h3>
                             <type>API</type>
@@ -376,22 +397,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
-                            <state class="green">&#11044;</state>
-                            <h3>Population</h3>
-                            <type>XLS</type>
-                            <!-- <stars>&#127969;&#9921;</stars> -->
-                            <a href="https://www.data.gouv.fr/fr/datasets/population/">Source</a>
-                        </header>
-                        <section>
-                            Pour calcul de moyenne / médiane d'âge des villes (critère discriminant par rapport aux activités de la ville ?)
-                            <br>
-                            API du gouv : <a href="https://api.gouv.fr/api/api-geo.html">api.gouv.fr/api/api-geo.html</a>
-                        </section>
-                    </li>
-
-                    <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state class="green">&#11044;</state>
                             <h3>Réseau mobile</h3>
                             <type>CSV</type>
@@ -406,7 +412,7 @@
                     </li>
 
                     <li>
-                        <header onclick="expand(this)">
+                        <header class="onclick-expand">
                             <state>&#11044;</state>
                             <h3>DATAtourisme</h3>
                             <type>API</type>
@@ -440,18 +446,38 @@
 
                 <legend>
                     Légende :
+                    <state>&#11044;</state> Non disponible
                     <state class="green">&#11044;</state> Accessible
                     <state class="orange">&#11044;</state> Demande d'accès en cours
                     <state class="red">&#11044;</state> Non accessible
                 </legend>
 
                 <br>
-                <br>
+
+                <table>
+                    <tr><th><a class="macaron" target="_blank" href="solution_dashboard.html">Solution</a></th><td></td></tr>
+                </table>
+
+                <br><br>
+
                 Autre source de données à exploiter : <a href="https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques">https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques</a>.
                 <br>
+                https://api.gouv.fr/apis
+
+                <br><br>
+
                 <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Annuaire des données</a> Quali de l'air
                 <br>
                 Article <a href="https://www.forbes.fr/technologie/lopen-data-va-t-il-tuer-les-fournisseurs-de-donnees/">"L'OpenData va-t-il tuer les fournisseurs de données ?"</a>
+
+                <br><br>
+
+                resultats bac : https://api.gouv.fr/api/arpent-resultats-api.html
+
+                <br><br>
+
+                world population : http://api.population.io/
+
             </p>
 
         </article>
@@ -459,12 +485,4 @@
     </section>
 </body>
 
-<script>
-
-function expand(dom) {
-    var class_name = dom.parentNode.className;
-    var new_class_name = (class_name === "") ? "expand" : "";
-    dom.parentNode.className = new_class_name;
-}
-
-</script>
+<script src="expand.js"></script>

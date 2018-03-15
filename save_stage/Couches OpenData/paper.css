@@ -80,12 +80,15 @@ ul li header > * {
     line-height: 35px;
 }
 
-ul li header > *:first-child { /* début du header (état) */
-    flex: 0.05;
+ul li header > *:first-child {
     padding-left: 15px;
 }
 
-ul li header > *:last-child { /* fin du header (lien) */
+ul li header > state {
+    flex: 0.05;
+}
+
+ul li header > a {
     flex: 0.1;
     margin: 0;
     padding: 0 15px;
@@ -93,7 +96,7 @@ ul li header > *:last-child { /* fin du header (lien) */
     background: rgba(0, 0, 0, 0.1);
 }
 
-ul li header > *:last-child:hover {
+ul li header > a:hover {
     background: rgba(0, 0, 0, 0.5);
 }
 
@@ -112,6 +115,7 @@ ul li section {
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.075);
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.4) inset;
+    overflow: auto;
 }
 
 ul li.expand section {
