@@ -277,6 +277,11 @@ verif::before {
     margin-right: 5px;
 }
 
+cols {
+    display: flex;
+    flex-direction: row;
+}
+
 /* Autres */
 
 pre {
@@ -336,4 +341,8 @@ span:hover info {
 
 #res {
 	padding: 0;
+}
+
+.svgs svg {
+    position: absolute;
 }

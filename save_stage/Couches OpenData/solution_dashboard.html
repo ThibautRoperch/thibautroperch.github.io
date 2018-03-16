@@ -31,6 +31,7 @@
 </body>
 
 <script src="expand.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
 
 <script>
 
@@ -52,16 +53,6 @@ function search() {
 }
 
 function call_api_informations(endpoint) {
-	var end = "&fields=code,nom,codesPostaux,codeDepartement,codeRegion,departement,region,population,surface,centre,contour&format=json"
-	var url = "https://geo.api.gouv.fr/communes?" + endpoint + end;
-
-	informations_dom.className = "";
-	informations_dom.innerHTML = "<h2>Informations</h2>";
-	informations_dom.innerHTML += "<i>Loading...</i>";
-
-	informations_begin_search = new Date().getTime();
-
-	ajax(url, display_informations, null);
 }
 
 function ajax(url, callback, args) {
@@ -74,67 +65,12 @@ function ajax(url, callback, args) {
 }
 
 function display_informations(response_text, args) {
-	informations_end_search = new Date().getTime();
-
-	informations_json = JSON.parse(response_text);
-
-	console.log(informations_json);
-
-	informations_dom.removeChild(informations_dom.lastChild);
-	informations_dom.innerHTML += informations_json["length"] + " résultat(s) - " + parseInt(informations_end_search - informations_begin_search) + " ms";
 	
-	var list = document.createElement("ul");
-	list.className = "wrapper";
-		informations_dom.appendChild(list);
-
-	for (var city of informations_json) {
-		var item = document.createElement("li");
-			list.appendChild(item);
-		var header = document.createElement("header");
-			item.appendChild(header);
-		var section = document.createElement("section");
-			item.appendChild(section);
-		
-		header.onclick = function() { expand-expand(this); };
-		header.innerHTML = "<h3>" + city["nom"] + "</h3>";
-		
-		var table = document.createElement("table");
-			section.appendChild(table);
-
-		table.innerHTML += "<tr><th>Code</th><td>" + city["code"] + "</td></tr>";
-		table.innerHTML += "<tr><th>Département</th><td>" + city["departement"]["nom"] + "</td></tr>";
-		table.innerHTML += "<tr><th>Région</th><td>" + city["region"]["nom"] + "</td></tr>";
-		table.innerHTML += "<tr><th>Codes postaux</th><td>" + city["codesPostaux"] + "</td></tr>";
-		table.innerHTML += "<tr><th>Population</th><td>" + city["population"] + " habitants</td></tr>";
-		table.innerHTML += "<tr><th>Surface</th><td>" + city["surface"] + " m²</td></tr>";
-
-		var canvas = document.createElement("canvas");
-			section.appendChild(canvas);
-		draw_polygon(canvas, city["contour"]["coordinates"][0]);
-	}
 }
 
-function draw_polygon(canvas, coordinates) {
-	var ctx = canvas.getContext('2d');
 
-	ctx.fillStyle = '#f00';
-	ctx.beginPath();
-	ctx.moveTo(50, 50);
+function draw_geojson(dom, datas) {
 
-	for (coo of coordinates) {
-		console.log(coo[0], coo[1]);
-	// 	ctx.lineTo(coo[0]*10, coo[1]*10);
-	}
-
-	ctx.closePath();
-	ctx.fill();
 }
 
 </script>
-<style>
-
-canvas {
-	background: rgba(0, 0, 0, 0.1);
-}
-
-</style>

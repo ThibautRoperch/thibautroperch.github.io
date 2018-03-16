@@ -102,7 +102,7 @@ function display_datas_v1(new_search) {
 	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
 
 	// records : some values
-	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	var columns = ["siret", "apet700", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
 	var table;
 
 	total_results = res_json["nhits"];
@@ -147,7 +147,7 @@ function display_datas_v2(new_search) {
 	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
 
 	// records : some values
-	var columns = ["siret", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	var columns = ["siret", "apet700", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
 	var table;
 
 	total_results =  res_json["total_count"];
