@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Solution tableau de bord</title>
+    <title>API Geo</title>
     <link rel="stylesheet" type="text/css" href="paper.css">
 </head>
 
@@ -180,22 +180,6 @@ function display_informations_geojson(response_text, args) {
 	}
 }
 
-function draw_polygon(dom, coordinates) {
-	var context = dom.getContext('2d');
-
-	context.fillStyle = '#f00';
-	context.beginPath();
-	context.moveTo(50, 50);
-
-	for (coo of coordinates) {
-		console.log(coo[0], coo[1]);
-		context.lineTo(coo[0]*10, coo[1]*10);
-	}
-
-	context.closePath();
-	context.fill();
-}
-
 function draw_geojson(dom, datas, width, height, scale, color) {
 	var dom = d3.select(dom);
 	var svg = dom.append("svg")
@@ -211,7 +195,8 @@ function draw_geojson(dom, datas, width, height, scale, color) {
 
 	// VERIF DU CONTENU DES DATAS
 	// console.log(datas);
-	// dom.selectAll("p")
+	// var pre = dom.append("pre");
+	// pre.selectAll("p")
 	// 	.data(datas)
 	// 	.enter()
 	// 	.append("p")
@@ -235,91 +220,5 @@ function draw_geojson(dom, datas, width, height, scale, color) {
 		})
 }
 
-test_d3();
-function test_d3() {
-	var width = 700;
-	var height = 600;
-
-	var body = d3.select("#france");
-	var svg = body.append("svg")
-		.attr("width", width)
-		.attr("height", height)
-		.attr("style", "display:block;margin:auto;background:rgba(0, 0, 0, 0.1)");
-		
-	var path = d3.geoPath();
-	var projection = d3.geoConicConformal()
-		.center([2.454071, 46.279229])
-		.scale(3000)
-		.translate([width/2, height/2]);
-	path.projection(projection);
-
-	var tooltip = d3.select("body").append("tooltip");
-
-	d3.json('departments.json', function(req, geo_json) {
-		svg.selectAll("path") // pour chaque balise 'path' à générer
-			.data(geo_json.features) // lire les données geo_json.features
-			.enter() // entrer dans 'svg'
-			.append("path") // ajouter une balise 'path' (un polygone en SVG)
-			.attr("d", path) // attribution des coordonnées des points (attribut 'd' du polygone en SVG)
-			.attr("fill", "black")
-			// .attr("stroke", "rgba(255, 255, 255, 0.1)")
-			.on("mouseover", function(d) {
-				d3.select(this)
-					.attr("fill", "rgba(255, 255, 255, 0.1)");
-				tooltip
-					.html("Département : " + d.properties.NOM_DEPT + "<br>" +  "Région : " + d.properties.NOM_REGION)
-					.style("left", (d3.event.pageX + 40) + "px")
-					.style("top", (d3.event.pageY - 20) + "px")
-					.attr("class", "display");
-			})
-			.on("mouseout", function() {
-				d3.select(this)
-					.attr("fill", "black")
-				tooltip.attr("class", "");
-			})
-	});
-
-	var pre = body.append("pre");
-	d3.json('departments.json', function(req, geo_json) {
-		pre.selectAll("p")
-			.data(geo_json.features)
-			.enter()
-			.append("p")
-			.attr("style", "border-bottom:1px solid white;background:rgba(100, 50, 20, 0.1)")
-			.text(path);
-	});
-}
-
 </script>
-
-<style>
-
-tooltip {
-	position: absolute;
-	display: none;
-}
-
-tooltip.display {
-	display: block;
-	padding: 5px;
-	font-size: 85%;
-	background: darkslategray;
-	z-index: 500;
-	opacity: 0.5;
-}
-
-tooltip::before {
-	content: "";
-	position: absolute;
-	display: block;
-	width: 15px;
-	height: 15px;
-	margin-left: -11px;
-	margin-top: 8px;
-	transform: rotate(45deg);
-	background: darkslategray;
-	z-index: -100;
-}
-
-</style>
 	

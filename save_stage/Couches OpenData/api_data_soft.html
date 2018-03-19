@@ -60,7 +60,7 @@ function search() {
 }
 
 function call_api_v1(endpoint, new_search) {
-	var facets = "facet=rpet&facet=depet&facet=libcom&facet=siege&facet=libapet&facet=saisonat&facet=libnj&facet=libapen&facet=ess&facet=libtefen&facet=categorie&facet=proden&facet=vmaj1&facet=vmaj2&facet=vmaj3&facet=libtu&facet=liborigine&facet=libtca&facet=libreg_new&facet=nom_dept&facet=section&facet=classe";
+	var facets = "facet=rpet&facet=depet&facet=libcom&facet=siege&facet=libapet&facet=saisonat&facet=libnj&facet=libapen&facet=ess&facet=libtefen&facet=categorie&facet=proden&facet=vmaj1&facet=vmaj2&facet=vmaj3&facet=libtu&facet=liborigine&facet=libtca&facet=libreg_new&facet=nom_dept&facet=section";
 	var rows = (limit.value === "") ? 10 : parseInt(limit.value);
 	var url = "https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&" + endpoint + "&rows=" + rows + "&start=" + results + "&" + facets;
 	results += rows;
