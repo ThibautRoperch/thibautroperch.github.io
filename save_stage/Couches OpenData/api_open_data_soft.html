@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>API OpenDataSoft</title>
+    <link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body>
+
+	<section>
+		<article>
+			<h2>Liste des jeux de données</h2>
+
+			<p>
+				<select onchange="search()" id="version" ><option value="v1">V1</option><option value="v2">V2</option></select>
+				<button onclick="search()">&#10004;</button>
+			</p>
+
+		</article>
+
+		<article id="datasets" class="hidden">
+		</article>
+
+	</section>
+
+</body>
+
+<script>
+
+var version = document.querySelector("#version");
+
+var datasets_dom = document.querySelector("#datasets");
+
+var begin_search;
+var end_search;
+
+function search() {
+	results = 0;
+	if (version.value == "v1") {
+		call_api_v1();
+	} else if (version.value == "v2") {
+		call_api_v2();
+	}
+}
+
+function call_api_v1() {
+	var url = "https://data.opendatasoft.com/api/datasets/1.0/search/";
+	call_api(url, display_datas_v1);
+}
+
+function call_api_v2() {
+	var url = "https://data.opendatasoft.com/api/v2/catalog/datasets/sirene%40public/records?" + endpoint + "&rows=" + rows + "&start=" + results;
+	results += rows;
+	call_api(url, display_datas_v2);
+}
+
+function call_api(url, callback) {
+	datasets_dom.innerHTML = "<i>Loading...</i>";
+	begin_search = new Date().getTime();
+
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.onload = function() {
+		callback(xhr.responseText);
+	};
+	xhr.send();
+}
+
+function display_datas_v1(response_text) {
+	end_search = new Date().getTime();
+
+	res_json = JSON.parse(response_text);
+
+	console.log(res_json);
+}
+
+function display_datas_v2() {
+	// res dom : the entire response
+	res_dom.innerHTML += "<pre>" + JSON.stringify(res_json, null, 4) + "</pre>";
+
+	// records : some values
+	var columns = ["siret", "apet700", "siren", "sigle", "nomen_long", "activite", "categorie", "coordonnees"];
+	var table;
+
+	total_results =  res_json["total_count"];
+
+	if (new_search) {
+		records_dom.innerHTML = total_results + " résultat(s) - " + parseInt(end_search - begin_search) + " ms";
+		table = document.createElement("table");
+		table.className = "full dezoom";
+		records_dom.appendChild(table);
+		var row = document.createElement("tr");
+		for (col of columns) row.innerHTML += "<th>" + col.toUpperCase() + "</th>";
+		table.appendChild(row);
+	}
+
+	for (var record of res_json["records"]) {
+		var fields = record["record"]["fields"];
+		var row = document.createElement("tr");
+		for (property of columns) {
+			var value = fields[property];
+			if (value == undefined) value = "";
+			if (value.length > 50) value = value.substr(0, 50) + "...";
+			if (property == "coordonnees") value = "<a href='https://www.google.fr/search?q=" + value["lat"] + "," + value["lon"] + "'>&#128506;</a>";
+			row.innerHTML += "<td>" + value + "</td>";
+		}
+		table.appendChild(row);
+	}
+	
+}
+
+</script>

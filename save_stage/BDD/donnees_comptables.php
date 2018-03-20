@@ -2,7 +2,7 @@
 
 header("Access-Control-Allow-Origin: *");
 
-$conn = new PDO('mysql:host=localhost;dbname=tests', 'root', '');
+$conn = new PDO('mysql:host=localhost;dbname=open_datas', 'root', '');
 
 if (isset($_GET["ville"]) && $_GET["ville"] != "") {
     $ville = $_GET["ville"];

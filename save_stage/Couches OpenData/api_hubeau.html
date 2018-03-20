@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>API Hub'Eau</title>
+    <link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body>
+
+	<section>
+		<article>
+			<h2>Recherche</h2>
+
+			<p>
+				<input onchange="search()" id="city_code" type="text" value="47007" placeholder="Code de ville" />
+				<input id="limit" type="number" placeholder="10" class="mini" />
+				<button onclick="search()">&#10004;</button>
+			</p>
+
+		</article>
+
+		<article id="links" class="hidden">
+		</article>
+	</section>
+
+</body>
+
+<script src="expand.js"></script>
+
+<script>
+
+var city_code = document.querySelector("#city_code");
+var limit = document.querySelector("#limit");
+
+var links_dom = document.querySelector("#links");
+
+function search() {
+	links_dom.className = "";
+	links_dom.innerHTML = "<h2>Données de qualité de l'eau</h2>";
+
+	var list = document.createElement("ul");
+	list.className = "wrapper";
+		links_dom.appendChild(list);
+
+	call_api("code_commune=" + city_code.value);
+}
+
+function call_api(endpoint) {
+	var size = (limit.value === "") ? 10 : parseInt(limit.value);
+	
+	var url = "http://hubeau.eaufrance.fr/api/v0/etat_piscicole/code_espece_poisson?size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-poisson", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/01-poisson.png", url, "Lexique des codes espèces poisson en France"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v0/etat_piscicole/lieux_peche?code_espece_poisson=ABH%2CABL&" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-poisson", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/01-poisson.png", url, "Lieux où ont été effectuées des pêches électriques"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v0/etat_piscicole/poissons?code_station=06250157%2C01020102&" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-poisson", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/01-poisson.png", url, "Poissons décomptés par pêche électrique"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v0/indicateurs_services/communes?" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/documentation-api-indicateurs-services-eau-assainissement", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/02-indicateurs_services.png", url, "Performance des services publics d'eau et d'assainissement"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v1/niveaux_nappes/stations?" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-piezometrie", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/03-piezo.png", url, "Stations piézométriques"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v1/qualite_rivieres/analyse_pc?" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-qualite-cours-deau", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/04-qualite_rivieres.png", url, "Analyses physicochimique"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v1/qualite_rivieres/condition_environnementale_pc?" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-qualite-cours-deau", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/04-qualite_rivieres.png", url, "Conditions environnementales physicochimique d'analyses "]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v1/qualite_rivieres/station_pc?exact_count=true&" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-qualite-cours-deau", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/04-qualite_rivieres.png", url, "Stations de mesures physicochimique"]);
+
+	var url = "http://hubeau.eaufrance.fr/api/v1/qualite_nappes/stations?" + endpoint + "&size=" + size;
+	links_dom.innerHTML += "<span>Loading...</span>";
+	ajax(url, display, ["http://hubeau.eaufrance.fr/page/api-qualite-nappes-deau-souterraines", "http://hubeau.eaufrance.fr/sites/default/files/upload/images/05-qualite_nappes.png", url, "Stations de mesure des qualités des nappes d'eau"]);
+}
+
+function ajax(url, callback, args) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.onload = function() {
+		callback(xhr.responseText, args);
+	};
+	xhr.send();
+}
+
+function display(response_text, args) {
+	links_dom.removeChild(links_dom.lastChild);
+
+	var list = document.getElementsByClassName("wrapper")[0];
+
+	var item = document.createElement("li");
+		list.appendChild(item);
+	var header = document.createElement("header");
+		header.onclick = function() { expand-expand(this); };
+		var nom_api = args[0].substr(args[0].lastIndexOf("api") + 4);
+		while (nom_api.indexOf("-") != -1) nom_api = nom_api.replace("-", " ");
+		header.innerHTML = "<state><img src=\"" + args[1] + "\" title=\"API " + nom_api + "\"></state><h3>" + args[3] + "</h3><a href=\"" + args[0] + "\">Source</a>";
+		item.appendChild(header);
+	var section = document.createElement("section");
+		section.innerHTML = "<pre><a target='_blank' href='" + args[2] + "'>" + args[2] + "</a></pre>";
+		section.innerHTML += "<pre>" + JSON.stringify(JSON.parse(response_text), null, 4) + "</pre>";
+		item.appendChild(section);
+}
+
+</script>

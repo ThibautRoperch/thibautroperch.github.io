@@ -35,9 +35,6 @@
 
 </body>
 
-<script src="expand.js"></script>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-
 <script>
 
 var token = document.querySelector("#token");
@@ -79,7 +76,7 @@ function display(response_text, args) {
 	end_search = new Date().getTime();
 
 	stations_json = JSON.parse(response_text);
-console.log(stations_json)
+
 	stations_dom.removeChild(stations_dom.lastChild);
 	stations_dom.innerHTML += stations_json["length"] + " résultat(s) - " + parseInt(end_search - begin_search) + " ms";
 
@@ -102,6 +99,11 @@ console.log(stations_json)
 			if (value.length > 50) value = value.substr(0, 50) + "...";
 			if (property == "status" && value == "OPEN") value = "<state class=\"green\">&#11044;</state>";
 			if (property == "status" && value == "CLOSED") value = "<state class=\"red\">&#11044;</state>";
+			if (property == "last_update") {
+				var a = new Date(value);
+				var months = ['jan.', 'fev.', 'mars','avril', 'mai','juin','juil.','aou.','sep.','oct.','nov.','dec.'];
+				value = a.getDate() + " " + months[a.getMonth()] + " " + a.getFullYear();
+			}
 			if (property == "position") value = "<a href='https://www.google.fr/search?q=" + value["lat"] + "," + value["lng"] + "'>&#128506;</a>";
 			row.innerHTML += "<td>" + value + "</td>";
 		}

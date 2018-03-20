@@ -299,10 +299,14 @@ stars, type, state {
     opacity: 0.6;
 }
 
-state {
+state, state * {
     text-align: left;
     vertical-align: middle;
     font-size: 50%;
+}
+
+state img {
+    height: 18px;
 }
 
 legend {
