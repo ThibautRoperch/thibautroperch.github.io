@@ -46,18 +46,20 @@ function search() {
 }
 
 function call_api_v1() {
-	var url = "https://data.opendatasoft.com/api/datasets/1.0/search/";
+	var url = "https://data.opendatasoft.com/api/datasets/1.0/search?rows=100";
 	call_api(url, display_datas_v1);
 }
 
 function call_api_v2() {
-	var url = "https://data.opendatasoft.com/api/v2/catalog/datasets/sirene%40public/records?" + endpoint + "&rows=" + rows + "&start=" + results;
-	results += rows;
+	var url = "https://data.opendatasoft.com/api/v2/catalog/datasets/sirene%40public/records?rows=1000";
 	call_api(url, display_datas_v2);
 }
 
 function call_api(url, callback) {
+	datasets_dom.className = "";
+	datasets_dom.innerHTML = "<h2>Jeux de données</h2>";
 	datasets_dom.innerHTML = "<i>Loading...</i>";
+
 	begin_search = new Date().getTime();
 
 	var xhr = new XMLHttpRequest();
@@ -71,9 +73,21 @@ function call_api(url, callback) {
 function display_datas_v1(response_text) {
 	end_search = new Date().getTime();
 
-	res_json = JSON.parse(response_text);
+	datasets_json = JSON.parse(response_text);
 
-	console.log(res_json);
+	console.log(datasets_json);
+	datasets_dom.removeChild(datasets_dom.lastChild);
+	datasets_dom.innerHTML += datasets_json["nhits"] + " résultat(s) - " + parseInt(end_search - begin_search) + " ms";
+
+	var table = document.createElement("table");
+	table.className = "full dezoom";
+	datasets_dom.appendChild(table);
+
+	for (var dataset of datasets_json.datasets) {
+		var row = document.createElement("tr");
+		table.appendChild(row);
+		row.innerHTML += "<th>" + dataset.datasetid + "</th>";
+	}
 }
 
 function display_datas_v2() {
