@@ -71,7 +71,7 @@
                     <li>
                         <header class="onclick-expand">
                             <state class="orange">&#11044;</state>
-                            <h3>gouv.fr</h3>
+                            <h3>entreprise.api.gouv.fr</h3>
                             <type>API</type>
                             <!-- <stars>&#127981;</stars> -->
                             <a href="https://entreprise.api.gouv.fr/website/index.html">Source</a>
@@ -143,7 +143,9 @@
                                         <li>En toute hypothèse, mentionner la source des JEUX DE DONNEES en cas de réutilisation de tout ou partie de ceux-ci.</li>
                                     </ul>
                                 </cite></td></tr>
-                                <tr><th>Autres</th><td><a class="macaron" href="api_open_data_soft.html">Jeux de données OpenDataSoft</a></td></tr>
+                                <tr><th>API Key</th><td><tt>9c3183ecfc09611f4ac81793f7b789a98c4005bea14e9e6518c9954d</tt></td></tr>
+                                <tr><th>Limite</th><td><tt>rows + start < 10 000</tt> <a href="https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&rows=1&start=10000&apikey=9c3183ecfc09611f4ac81793f7b789a98c4005bea14e9e6518c9954d">même avec l'API Key</a>.</td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="api_open_data_soft.html">Jeux de données OpenDataSoft</a> <a class="macaron" href="https://docs.opendatasoft.com/fr/">Documentation V1</a> <a class="macaron" href="https://docs.opendatasoft.com/api/explore/v2.html">Documentation V2</a></td></tr>
                                 <tr><th><a class="macaron" href="api_sirene.html">Utilisation</a></th><td><verif class="green"></verif>La v1 de l'API est plus rapide et plus précise, la v2 plus lente et plus 'large'.</td></tr>
                             </table>
                         </section>
@@ -215,6 +217,10 @@
                         </section>
                     </li>
                 </ul>
+
+                <a href="https://opendata.datainfogreffe.fr/explore/?q=entreprises&sort=modified">Entreprises radiées et immatriculées sur plusieurs années</a>
+                <br>
+                AOE/APET/APEN/NAF : <a href="https://www.insee.fr/fr/metadonnees/nafr2/section/A?champRecherche=true">Nomenclature interactive</a>, <a href="http://blog.easyfichiers.com/wp-content/uploads/2014/08/Liste-code-naf-ape.pdf">Nomenclature PDF</a>
 
                 <table>
                     <tr><th><a class="macaron" target="_blank" href="solution_entreprises.html">Solution</a></th><td>Base Sirene via OpenDataSoft + Données comptables dans une BDD</td></tr>
@@ -386,7 +392,8 @@
                         </header>
                         <section>
                             <table>
-                                <tr><th>Accès<a class="help" href="https://developer.jcdecaux.com/#/account">?</a></th><td>Demande de <i>token</i> après inscription sur la plateforme (11c4f1ced2617e66a186743cccf5b6d1a122f262)</td></tr>
+                                <tr><th>Accès<a class="help" href="https://developer.jcdecaux.com/#/account">?</a></th><td>Demande de <i>token</i> après inscription sur la plateforme</td></tr>
+                                <tr><th>API Key</th><td><tt>11c4f1ced2617e66a186743cccf5b6d1a122f262</tt></td></tr>
                                 <tr><th>Nature des données</th><td>Données statiques : positions GPS des bornes, présence d’un terminal de paiement, ... Données dynamiques (rafraichies toutes les minutes) : état d'une station, nombre de vélos disponibles, ...</td></tr>
                                 <tr><th>Crédits<a class="help" href="https://fr.wikipedia.org/wiki/JCDecaux">?</a></th><td>JCDecaux est une industrie française, principalement connue pour ses systèmes d'arrêts d'autobus publicitaires et ses systèmes de location de vélos en libre service.</td></tr>
                                 <tr><th><a class="macaron" href="https://developer.jcdecaux.com/#/opendata/license">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
@@ -442,6 +449,32 @@
                             </table>
                         </section>
                     </li>
+                    
+                    <li>
+                        <header class="onclick-expand">
+                            <state class="green">&#11044;</state>
+                            <h3>Base Adresse Nationale</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127969;</stars> -->
+                            <a href="https://adresse.data.gouv.fr/api">Source</a>
+                        </header>
+                        <section>
+                            <table>
+                                <tr><th>Accès</th><td>API ouverte à tous.</td></tr>
+                                <tr><th>Provenance des données<a class="help" href="https://adresse.data.gouv.fr/about">?</a></th><td><a href="https://www.etalab.gouv.fr/">Etalab</a>, <a href="http://ign.fr/">IGN</a>, <a href="https://portail.dgfip.finances.gouv.fr/portail/accueilIAM.pl">DGFiP</a> et <a href="http://legroupe.laposte.fr/">La Poste</a>.</td></tr>
+                                <tr><th>Nature des données</th><td>Emplacement d'une adresse dans les communes.</td></tr>
+                                <tr><th>Crédits<a class="help" href="https://adresse.data.gouv.fr/download">?</a></th><td>A étudier</td></tr>
+                                <tr><th><a class="macaro<n" href="https://adresse.data.gouv.fr/cgu">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                <tr><th>Exemple</th><td><a href="https://api-adresse.data.gouv.fr/search/?q=orgemont&citycode=49007">Recherche d'une adresse dans une ville</a></td></tr>
+                            </table>
+
+                            <a href="https://www.data.gouv.fr/fr/datasets/ban-base-adresse-nationale/#_">BAN</a> et <a href="https://www.data.gouv.fr/fr/datasets/base-d-adresses-nationale-ouverte-bano/#_">BANO</a> sur data.gouv.fr.
+                            <br>
+                            <a href="https://www.geonov.fr/smartdata/fantoir/#api">Base FANTOIR</a>, API en cours de dev.
+                            <br>
+                            <a href="http://openstreetmap.fr/outils">openstreetmap</a>
+                        </section>
+                    </li>
                 </ul>
 
                 <!-- <legend>
@@ -473,27 +506,17 @@
 
                 <br><br>
 
-                <a href="https://www.identites-mutuelle.com/lesfrigossolidaires">Frigos solidaires</a>, <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Qualité de l'air</a>, <a href="https://api.gouv.fr/api/arpent-resultats-api.html">Resultats BAC</a>, <a href=" http://api.population.io/">World population</a>
+                <a href="https://www.identites-mutuelle.com/lesfrigossolidaires">Frigos solidaires</a>, <a href="http://www.apivet49.com/points-de-collecte-apivet-maineetloire.aspx">API vet</a>
+
+                <br><br>
+                
+                <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Qualité de l'air</a>, <a href="https://api.gouv.fr/api/arpent-resultats-api.html">Resultats BAC</a>
 
                 <br><br>
                 Etudier :<br>
                 http://www.installationsclassees.developpement-durable.gouv.fr/<br>
                 http://cartelie.application.developpement-durable.gouv.fr/cartelie/voir.do?carte=hr_risques&service=DDT_68
                 <br>
-                <a href="https://www.geonov.fr/smartdata/fantoir/#api">Base FANTOIR</a>
-
-                <br><br>
-
-                AOE/APET/APEN/NAF :
-                <br>
-                http://blog.easyfichiers.com/wp-content/uploads/2014/08/Liste-code-naf-ape.pdf
-                <br>
-                https://www.insee.fr/fr/metadonnees/nafr2/section/A?champRecherche=true
-
-                <br><br>
-                
-                Entreprises radiées : https://opendata-infogreffe.com/explore/dataset/entreprises-radiees-2017/information/?sort=date_radiation
-
             </p>
 
         </article>
