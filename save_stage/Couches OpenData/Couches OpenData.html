@@ -130,6 +130,8 @@
                                 <tr><th>Autres</th><td><a class="macaron" href="http://sirene.fr/static-resources/doc/dessin_XL2_description_complete.pdf?version=1.19.1">Documentation</a></td></tr>
                             </table>
 
+                            En lien avec la Base Sirene : <a href="https://opendata.datainfogreffe.fr/explore/?q=entreprises&sort=modified">Entreprises radiées et immatriculées sur plusieurs années</a>
+                            <br>
                             Mise à disposition d'un <a href="http://www.sirene.fr/sirene/public/creation-fichier">générateur de fichiers</a> utilisant les données présentées dans les fichiers (recherche par localisation, activité, effectif, ...).
                             <br>
                             La base Sirene est également disponible via le service <a href="https://www.opendatasoft.fr/">OpenDataSoft</a> qui propose une <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/api/?flg=fr&q=&lang=">API</a> dédiée. Exemple : <a href="https://data.opendatasoft.com/explore/dataset/sirene%40public/?flg=fr&refine.depet=49&refine.libcom=ANGERS">Angers</a>.
@@ -144,9 +146,13 @@
                                     </ul>
                                 </cite></td></tr>
                                 <tr><th>API Key</th><td><tt>9c3183ecfc09611f4ac81793f7b789a98c4005bea14e9e6518c9954d</tt></td></tr>
-                                <tr><th>Limite</th><td><tt>rows + start < 10 000</tt> <a href="https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&rows=1&start=10000&apikey=9c3183ecfc09611f4ac81793f7b789a98c4005bea14e9e6518c9954d">même avec l'API Key</a>.</td></tr>
-                                <tr><th>Autres</th><td><a class="macaron" href="api_open_data_soft.html">Jeux de données OpenDataSoft</a> <a class="macaron" href="https://docs.opendatasoft.com/fr/">Documentation V1</a> <a class="macaron" href="https://docs.opendatasoft.com/api/explore/v2.html">Documentation V2</a></td></tr>
+                                <tr><th>Limites</th><td><tt>rows + start < 10 000</tt> <a href="https://data.opendatasoft.com/api/records/1.0/search/?dataset=sirene%40public&rows=1&start=10000&apikey=9c3183ecfc09611f4ac81793f7b789a98c4005bea14e9e6518c9954d">même avec l'API Key</a>, <tt>row <= 100</tt>, <tt>requests limit = 5 000 || 10 000</tt> resp. sans et avec la clé d'API.</td></tr>
+                                <tr><th>Autres</th><td><a class="macaron" href="https://docs.opendatasoft.com/fr/">Documentation V1</a> <a class="macaron" href="https://docs.opendatasoft.com/api/explore/v2.html">Documentation V2</a></td></tr>
                                 <tr><th><a class="macaron" href="api_sirene.html">Utilisation</a></th><td><verif class="green"></verif>La v1 de l'API est plus rapide et plus précise, la v2 plus lente et plus 'large'.</td></tr>
+                            </table>
+
+                            <table>
+                                <tr><th><a class="macaron" target="_blank" href="diff_sirene_lyon.html">Application</a></th><td>Comparaison base SIRENE / table Lyon des exploitants</td></tr>
                             </table>
                         </section>
                     </li>
@@ -216,19 +222,48 @@
                             </table>
                         </section>
                     </li>
+
+                    <li>
+                        <header class="onclick-expand">
+                            <state class="green">&#11044;</state>
+                            <h3>Base NAF (APE/APET/APEN)</h3>
+                            <type>API</type>
+                            <!-- <stars>&#127981;</stars> -->
+                            <a href="https://public.opendatasoft.com/explore/dataset/naf2008_5_niveaux/">Source</a>
+                        </header>
+                        <section>
+                            AOE/APET/APEN/NAF : <a href="https://www.insee.fr/fr/metadonnees/nafr2/section/A?champRecherche=true">Nomenclature interactive</a>, <a href="http://blog.easyfichiers.com/wp-content/uploads/2014/08/Liste-code-naf-ape.pdf">Nomenclature PDF</a>
+                            <br>
+                            <a href="https://data.opendatasoft.com/explore/dataset/nomenclature-dactivites-francaise-naf-rev-2@public/">Base NAF</a> (1707 enregistrements) (14/12/2017)
+                            <br>
+                            <a href="https://public.opendatasoft.com/explore/dataset/naf2008_5_niveaux/">Base NAF</a> (732 enregistrements) (19/03/2018) (Les 5 niveaux)
+                            <br>
+                            D'après la <a href="https://www.insee.fr/fr/information/2120875#titre-bloc-18">liste des NAF</a> téléchargeable, il y a 732 NAF. Il faut donc retenir la base NAF la plus petite.
+                        </section>
+                    </li>
                 </ul>
 
-                <a href="https://opendata.datainfogreffe.fr/explore/?q=entreprises&sort=modified">Entreprises radiées et immatriculées sur plusieurs années</a>
-                <br>
-                AOE/APET/APEN/NAF : <a href="https://www.insee.fr/fr/metadonnees/nafr2/section/A?champRecherche=true">Nomenclature interactive</a>, <a href="http://blog.easyfichiers.com/wp-content/uploads/2014/08/Liste-code-naf-ape.pdf">Nomenclature PDF</a>
+                <table>
+                    <tr><th><a class="macaron" target="_blank" href="api_open_data_soft.html">Datasets</a></th><td>Jeux de données OpenDataSoft</td></tr>
+                </table>
 
                 <table>
-                    <tr><th><a class="macaron" target="_blank" href="solution_entreprises.html">Solution</a></th><td>Base Sirene via OpenDataSoft + Données comptables dans une BDD</td></tr>
+                    <tr>
+                        <th>
+                            <a class="macaron" target="_blank" href="solution_entreprises.html">Solution</a>
+                        </th>
+                        <td>
+                            Base Sirene via OpenDataSoft + Données comptables dans une BDD<br>
+                            <br>
+                            A cause des limites techniques de l'API, on ne peut récupérer toutes les entreprises d'une ville en même temps (cf. <tt>Limites</tt> de la Base Sirene). Aussi, les utilisateurs de GEODP TLPE/Voirie n'ont pas besoin de toutes les entreprises.<br>
+                            La recherche peut être affinée avec les codes APE importants, récupérés en faisant l'intersection des codes APE des <tt>Exploitant</tt> des bases clients importants.
+                        </td>
+                    </tr>
                 </table>
 
                 <br>
 
-                Les autres sources données permettent d'ajouter des informations au tableau de bord d'un commune. 
+                Les autres sources données permettent d'ajouter des informations au tableau de bord d'une commune. 
 
                 <ul class="wrapper">
                     <li>
@@ -422,6 +457,7 @@
                             Etudier l'impact de la couverture réseau sur les entreprises des villes
                             <br>
                             Application : <a href="http://www.monreseaumobile.fr">monreseaumobile.fr</a>
+                            Données : <a href="https://www.arcep.fr/index.php?id=12823">ezefze</a>
                         </section>
                     </li>
 
@@ -464,7 +500,7 @@
                                 <tr><th>Provenance des données<a class="help" href="https://adresse.data.gouv.fr/about">?</a></th><td><a href="https://www.etalab.gouv.fr/">Etalab</a>, <a href="http://ign.fr/">IGN</a>, <a href="https://portail.dgfip.finances.gouv.fr/portail/accueilIAM.pl">DGFiP</a> et <a href="http://legroupe.laposte.fr/">La Poste</a>.</td></tr>
                                 <tr><th>Nature des données</th><td>Emplacement d'une adresse dans les communes.</td></tr>
                                 <tr><th>Crédits<a class="help" href="https://adresse.data.gouv.fr/download">?</a></th><td>A étudier</td></tr>
-                                <tr><th><a class="macaro<n" href="https://adresse.data.gouv.fr/cgu">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
+                                <tr><th><a class="macaron" href="https://adresse.data.gouv.fr/cgu">Licence</a></th><td>Licence libre : <cite>Une licence qui promeut la réutilisation la plus large en autorisant la reproduction, la redistribution, l’adaptation et l’exploitation commerciale des données.</cite></td></tr>
                                 <tr><th>Exemple</th><td><a href="https://api-adresse.data.gouv.fr/search/?q=orgemont&citycode=49007">Recherche d'une adresse dans une ville</a></td></tr>
                             </table>
 
@@ -494,9 +530,11 @@
 
                 <br>
 
-                <table>
+                <!-- <table>
                     <tr><th><a class="macaron" target="_blank" href="solution_dashboard.html">Solution</a></th><td></td></tr>
-                </table>
+                </table> -->
+
+                <br><hr><br>
 
                 Autres stats : <a href="https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques">https://www.ecologique-solidaire.gouv.fr/politiques/observation-et-statistiques</a>.
 
@@ -510,13 +548,29 @@
 
                 <br><br>
                 
-                <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Qualité de l'air</a>, <a href="https://api.gouv.fr/api/arpent-resultats-api.html">Resultats BAC</a>
+                <a href="http://www.statistiques.developpement-durable.gouv.fr/accueil.html">Qualité de l'air</a>
 
                 <br><br>
+
                 Etudier :<br>
                 http://www.installationsclassees.developpement-durable.gouv.fr/<br>
                 http://cartelie.application.developpement-durable.gouv.fr/cartelie/voir.do?carte=hr_risques&service=DDT_68
-                <br>
+
+                <br><br>
+
+                Chambre de commerce :<br>
+                <a href="https://les-aides.fr/api/">Présentation de l'API les-aides.fr</a><br>
+                <a href="https://api.les-aides.fr/">Accès aux données de l'API les-aides.fr</a>
+
+                <br><br>
+
+                <a href="https://data.opendatasoft.com/explore/dataset/indicateur-dactivite-source-tva%40public/?disjunctive.intitule_naf">base ALISSE - Indicateur d'activité (selon NAF)</a>
+
+                <br><br>
+
+                <a href="https://data.culturecommunication.gouv.fr/explore/?sort=modified">Données du Ministère de la Culture</a><br>
+                <a href="https://data.opendatasoft.com/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques%40culture/information/">Immeubles protégés au titre des Monuments Historiques</a><br>
+
             </p>
 
         </article>
