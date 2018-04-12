@@ -59,14 +59,16 @@ $dest_marche = "dest_marche";
 $dest_marche_lang = "dest_marche_langue";
 $dest_article = "dest_article";
 $dest_article_lang = "dest_article_langue";
-$dest_exploitant = "dest_exploitant";
-$dest_societe_marche = "dest_societe_marche";
 $dest_activitecomm = "dest_activitecommerciale";
 $dest_activitecomm_lang = "dest_activitecommerciale_langue";
+$dest_exploitant = "dest_exploitant";
 $dest_abonnement = "dest_societe_marche";
 
+$dest_piece = "dest_societe_propriete";
+$dest_piece_lang = "dest_societe_propriete_langue";
+$dest_piece_val = "dest_societe_propriete_valeur";
+
 if (!$test_mode) {
-    $test_mode = false;
     $dest_activite = "ACTIVITE";
     $dest_activite_lang = "ACTIVITE_LANGUE";
     $dest_utilisateur = "UTILISATEUR";
@@ -75,22 +77,25 @@ if (!$test_mode) {
     $dest_marche_lang = "MARCHE_LANGUE";
     $dest_article = "ARTICLE";
     $dest_article_lang = "ARTICLE_LANGUE";
-    $dest_exploitant = "EXPLOITANT";
-    $dest_societe_marche = "SOCIETE_MARCHE";
     $dest_activitecomm = "ACTIVITECOMMERCIALE";
     $dest_activitecomm_lang = "ACTIVITECOMMERCIALE_LANGUE";
+    $dest_exploitant = "EXPLOITANT";
     $dest_abonnement = "SOCIETE_MARCHE";
+
+    $dest_piece = "SOCIETE_PROPRIETE";
+    $dest_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
+    $dest_piece_val = "SOCIETE_PROPRIETE_VALEUR";
 }
 
 // Valeurs des champs DCREAT et UCREAT utilisées dans les requêtes SQL
-$dest_dcreat = date("y/m/d", time());
+$dest_dcreat = $test_mode ? date("y/m/d", time()) : date("d/m/y", time());
 $dest_ucreat = "ILTR";
 
 // Mettre à vrai pour supprimer les données des tables de destination avant l'insertion des nouvelles, mettre à faux sinon
-$erase_destination_tables = false; // true | false
+$erase_destination_tables = true; // true | false
 
 // Mettre à vrai pour afficher les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
-$display_dest_requests = true; // true | false
+$display_dest_requests = false; // true | false
 
 // Mettre à vrai pour exécuter les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
 $exec_dest_requests = true; // true | false
@@ -152,16 +157,21 @@ function prune($str) {
  *************************/
 
 $output_file = fopen($output_filename, "w+");
+$usual_days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+
+function yes_no($bool) {
+    return $bool ? "Oui" : "Non";
+}
 
 function get_from_address($info, $address) {
     switch ($info) {
         case "num":
-            $matches = array();
+            $matches = [];
             preg_match('/^( )*[0-9]+/', $address, $matches);
             return isset($matches[0]) ? $matches[0] : "";
             break;
         case "voie":
-            $matches = array();
+            $matches = [];
             preg_match('/^( )*[0-9]+( )*,?( )*/', $address, $matches);
             return isset($matches[0]) ? substr($address, strpos($address, $matches[0]) + strlen($matches[0])) : $address;
             break;
@@ -228,9 +238,15 @@ function execute_query($query, &$nb_executed, &$nb_to_execute) {
     }
 }
 
-function summarize_queries($nb_inserted, $nb_to_insert) {
-    $class = ($nb_inserted == $nb_to_insert) ? "success" : "warning";
-    echo "<p class=\"$class\">$nb_inserted requêtes réussies sur $nb_to_insert tentées</p>";
+function summarize_queries($nb_inserted, $nb_to_insert, &$nb_errors, $warnings, &$nb_warnings) {
+    foreach ($warnings as $warning) {
+        echo "<p class=\"warning\">$warning</p>";
+    }
+    $nb_warnings += count($warnings);
+
+    $class = ($nb_inserted == $nb_to_insert) ? "success" : "danger";
+    echo "<p class=\"$class\">$nb_inserted requêtes réussies sur $nb_to_insert exécutées</p>";
+    $nb_errors += $nb_to_insert - $nb_inserted;
 }
 
 
@@ -307,15 +323,19 @@ foreach ($detected_files as $file) {
                         $button_disabled = "disabled";
                     }
 
-                echo "<h2>Paramètres</h2>";
+                echo "<h2>Paramètres du client</h2>";
 
+                    echo "<field><label for=\"servor\">Serveur de connexion Oracle</label><input id=\"servor\" type=\"disabled\" value=\"$oracle_host:$oracle_port/$oracle_service\" disabled /></field>";
                     echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_password(this)\" type=\"text\" placeholder=\"geodpville\" required /></field>";
                     echo "<field><label for=\"password\">Mot de passe de connexion Oracle</label><input id=\"password\" name=\"password\" type=\"password\"/><span onmousedown=\"show_password(true)\" onmouseup=\"show_password(false) \">&#128065;</span></field>";
                     echo "<field><label for=\"type\">Type de client</label><input id=\"type\" name=\"type\" type=\"text\" placeholder=\"A définir\"/></field>";
 
                 echo "<h2></h2>";
 
-                echo "<input type=\"submit\" $button_disabled value=\"Créer un client GEODP à partir de ces fichiers\" />";
+                echo "<field>";
+                    echo "<a class=\"button\" href=\"?analyze=1\">Tester la reprise en local</a>";
+                    echo "<input type=\"submit\" value=\"Créer un client GEODP à partir de ces fichiers\" $button_disabled />";
+                echo "</field>";
                 
             echo "</form>";
 
@@ -333,7 +353,14 @@ foreach ($detected_files as $file) {
             echo "<aside>";
             echo "<h1>Reprise dibtic vers GEODP v1</h1>";
             echo "<ol id=\"sommaire\">";
-                echo "<li><a href=\"#summary\">Résumé</a>";
+                echo "<li><a href=\"#summary\">Résumé</a></li>";
+                echo "<li><a href=\"#parameters\">Paramètres</a>";
+                    echo "<ol>";
+                        echo "<li><a href=\"#oracle\">Serveur Oracle</a></li>";
+                        echo "<li><a href=\"#src_datas\">Données source</a></li>";
+                        echo "<li><a href=\"#dest_datas\">Données extraites</a></li>";
+                    echo "</ol>";
+                echo "</li>";
                 echo "<li><a href=\"#source\">Chargement des fichiers sources dibtic</a>";
                     echo "<ol>";
                         foreach ($expected_content as $exp) {
@@ -354,6 +381,7 @@ foreach ($detected_files as $file) {
                         echo "<li><a href=\"#datas_articles\">Articles / Articles Langue</a></li>";
                         echo "<li><a href=\"#datas_activites_comm\">Activités commerciales / Activités commerciales Langue</a></li>";
                         echo "<li><a href=\"#datas_exploitants\">Exploitants / Abonnements</a></li>";
+                        echo "<li><a href=\"#datas_pieces\">Pièces justificatives / Pièces justificatives Langue / Pièces justificatives Valeur</a></li>";
                     echo "</ol>";
                 echo "</li>";
             echo "</ol>";
@@ -363,10 +391,59 @@ foreach ($detected_files as $file) {
 
             echo "<summary id=\"summary\">";
                 echo $test_mode ? "<h1>[ MODE TEST ]</h1>" : "<h1>".$_POST["type"]."</h1>";
-                echo "<p><ok></ok><br><br>Reprise terminée avec 0 erreurs</p>";
-                echo "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
-                // TODO compter les erreurs
+                echo "<p id=\"nb_errors\"></p>";
+                echo $test_mode ? "<div><a href=\"from_dibtic_to_geodpv1.php\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
+
+            $nb_errors = 0;
+            $nb_warnings = 0;
+            
+            if ($erase_destination_tables) {
+                $dest_conn->exec("DELETE FROM $dest_abonnement");
+                $dest_conn->exec("DELETE FROM $dest_exploitant");
+
+                $dest_conn->exec("DELETE FROM $dest_activitecomm_lang");
+                $dest_conn->exec("DELETE FROM $dest_activitecomm");
+
+                $dest_conn->exec("DELETE FROM $dest_article_lang");
+                $dest_conn->exec("DELETE FROM $dest_article");
+
+                $dest_conn->exec("DELETE FROM $dest_marche_lang");
+                $dest_conn->exec("DELETE FROM $dest_marche");
+
+                $dest_conn->exec("DELETE FROM $dest_activite_lang");
+                $dest_conn->exec("DELETE FROM $dest_activite"); // FK_UAL_UA_ACT_REF_UTI_REF dépendance introuvable // TODO
+            }
+
+            //// Paramètres
+
+            echo "<h1 id=\"parameters\">Paramètres</h1>";
+
+            echo "<h2 id=\"oracle\">Serveur oracle</h2>";
+            
+            if ($test_mode) {
+                echo "<div>Aucune connexion au serveur Oracle n'est établie durant la phase de test.</div>";
+            } else {
+                echo "<form>";
+                    echo "<field><label>Serveur de connexion Oracle</label><input type=\"disabled\" value=\"$oracle_host:$oracle_port/$oracle_service\" disabled /></field>";
+                    echo "<field><label>Identifiant de connexion Oracle</label><input type=\"disabled\" value=\"$oracle_login\" disabled /></field>";
+                    echo "<field><label>Mot de passe Oracle</label><input type=\"disabled\" value=\"$oracle_password\" disabled /></field>";
+                echo "</form>";
+            }
+
+            echo "<h2 id=\"src_datas\">Données sources (fichiers dibtic vers tables MySQL)</h2>";
+            
+            echo "<form>";
+                echo "<field><label>Afficher le contenu des fichiers sources lors de leur lecture</label><input type=\"disabled\" value=\"".yes_no($display_source_files_contents)."\" disabled /></field>";
+            echo "</form>";
+
+            echo ($test_mode) ? "<h2 id=\"dest_datas\">Données extraites (requêtes SQL pour tables MySQL)</h2>" : "<h2 id=\"dest_datas\">Données extraites (requêtes SQL pour tables Oracle)</h2>";
+
+            echo "<form>";
+                echo "<field><label>Vider les tables de destination en amont</label><input type=\"disabled\" value=\"".yes_no($erase_destination_tables)."\" disabled /></field>";
+                echo "<field><label>Afficher les requêtes à exécuter</label><input type=\"disabled\" value=\"".yes_no($display_dest_requests)."\" disabled /></field>";
+                echo "<field><label>Exécuter les requêtes</label><input type=\"disabled\" value=\"".yes_no($exec_dest_requests)."\" disabled /></field>";
+            echo "</form>";
 
             //// Chargement des fichiers sources dibtic
             
@@ -448,7 +525,7 @@ foreach ($detected_files as $file) {
 
                 echo "<h3>Contrôle du nombre d'insertions faites par rapport au nombre de données du fichier</h3>";
 
-                summarize_queries($nb_inserted, count($xls_data) - 1));
+                summarize_queries($nb_inserted, count($xls_data) - 1), $nb_errors, [], $nb_warnings);
     */
             }
 
@@ -459,9 +536,9 @@ foreach ($detected_files as $file) {
             $src_exploitant = $src_tables["exploitants"];
 
             // Récupération des colonnes des classes d'articles (elles commencent par "classe" et sont peut-être suivies par un entier)
-            $src_exploitant_classe_cols = array();
+            $src_exploitant_classe_cols = [];
             foreach ($src_conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$src_exploitant'") as $row) {
-                $matches = array();
+                $matches = [];
                 preg_match('/^classe[0-9]*$/', $row["COLUMN_NAME"], $matches);
                 if (isset($matches[0])) {
                     array_push($src_exploitant_classe_cols, $matches[0]);
@@ -469,12 +546,22 @@ foreach ($detected_files as $file) {
             }
 
             // Récupération des colonnes des marchés (elles commencent par "m" et sont peut-être suivies par un entier)
-            $src_exploitant_marche_cols = array();
+            $src_exploitant_marche_cols = [];
             foreach ($src_conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$src_exploitant'") as $row) {
-                $matches = array();
+                $matches = [];
                 preg_match('/^m[0-9]*$/', $row["COLUMN_NAME"], $matches);
                 if (isset($matches[0])) {
                     array_push($src_exploitant_marche_cols, $matches[0]);
+                }
+            }
+
+            // Récupération des colonnes des pièces justificatives (elles commencent par "n" et sont peut-être suivies par un entier)
+            $src_exploitant_piece_cols = [];
+            foreach ($src_conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$src_exploitant'") as $row) {
+                $matches = [];
+                preg_match('/^n[0-9]*$/', $row["COLUMN_NAME"], $matches);
+                if (isset($matches[0])) {
+                    array_push($src_exploitant_piece_cols, $matches[0]);
                 }
             }
 
@@ -499,11 +586,6 @@ foreach ($detected_files as $file) {
             $nb_to_insert = 0;
             $nb_inserted = 0;
 
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_activite_lang");
-                $dest_conn->exec("DELETE FROM $dest_activite");
-            }
-
             $req_last_act_ref = $dest_conn->query(build_query("SELECT ACT_REF FROM $dest_activite", "", "ACT_REF DESC", "1"))->fetch();
             $last_act_ref = ($req_last_act_ref == null) ? 0 : $req_last_act_ref["ACT_REF"];
             ++$last_act_ref;
@@ -513,16 +595,16 @@ foreach ($detected_files as $file) {
             $dest_activite_values = [$last_act_ref, 13, "'placier'", "'$dest_dcreat'", "'$dest_ucreat'", 1]; // TODO ACT_NUM_CSS = 13 ???
 
             $insert_into_query = "INSERT INTO $dest_activite (" . implode(", ", $dest_activite_cols) . ") VALUES (" . implode(", ", $dest_activite_values) . ")";
-            // execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
-            $dest_activite_lang_values = [$last_act_ref, 1, "'Marchés'", "'$dest_dcreat'", "'$dest_ucreat'"];
+            $dest_activite_lang_values = [$last_act_ref, 1, "'Placier'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
             $insert_into_query = "INSERT INTO $dest_activite_lang (" . implode(", ", $dest_activite_lang_cols) . ") VALUES (" . implode(", ", $dest_activite_lang_values) . ")";
-            // execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
             if ($display_dest_requests) echo "</div>";
             
-            summarize_queries($nb_inserted, $nb_to_insert);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
 
             // Utilisateur / Utilisateur Activité Langue
 
@@ -537,21 +619,20 @@ foreach ($detected_files as $file) {
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
 
-            $update_query = "UPDATE $dest_utilisateur SET UTI_NOM = 'Mairie' WHERE UTI_REF = $last_uti_ref";
-            // execute_query($update_query, $nb_inserted, $nb_to_insert);
+            $uti_nom = (isset($_POST["type"]) && $_POST["type"] !== "") ? $_POST["type"] : "A définir";
+            $update_query = "UPDATE $dest_utilisateur SET UTI_NOM = '$uti_nom' WHERE UTI_REF = $last_uti_ref";
+            execute_query($update_query, $nb_inserted, $nb_to_insert);
 
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
 
             //// Insertion des données GEODP
 
             echo "<h1 id=\"destination\">Insertion des données GEODP</h1>";
             fwrite($output_file, "\n---------------------------------------------\n-- Insertion des données GEODP\n--\n\n");
             
-            $assoc_marcheCode_marcheRef = [];
-
-            $dest_marche_cols = ["MAR_REF", "UTI_REF", "ACT_REF", "MAR_JOUR"];
+            $dest_marche_cols = ["MAR_REF", "UTI_REF", "ACT_REF", "MAR_JOUR", "MAR_VISIBLE", "MAR_CODE", "DCREAT", "UCREAT", "MAR_VALIDE"];
             $dest_marche_lang_cols = ["MAR_REF", "LAN_REF", "MAR_NOM", "DCREAT", "UCREAT"];
 
             $dest_article_cols = ["ART_REF", "MAR_REF", "UTI_REF", "ART_PRIX_TTC", "ART_PRIX_HT", "ART_TAUX_TVA", "ART_COULEUR", "ART_VALIDE_DEPUIS", "ART_VALIDE_JUSQUA", "ART_VISIBLE", "DCREAT", "UCREAT"];
@@ -560,9 +641,13 @@ foreach ($detected_files as $file) {
             $dest_activitecomm_cols = ["ACO_REF", "UTI_REF", "ACO_COULEUR", "DCREAT", "UCREAT"];
             $dest_activitecomm_lang_cols = ["ACO_REF", "LAN_REF", "ACO_NOM", "DCREAT", "UCREAT"];
             
-            $dest_exploitant_cols = ["EXP_REF", "EXP_CODE", "UTI_REF", "GRA_REF", "LAN_REF", "ACO_REF", "EXP_NOM_PERS_PHYSIQUE", "EXP_PRENOM_PERS_PHYSIQUE", "EXP_RAISON_SOCIALE", "EXP_NOM", "EXP_VISIBLE", "EXP_VALIDE", "EXP_NRUE", "EXP_ADRESSE", "EXP_CP", "EXP_VILLE", "EXP_TELEPHONE", "EXP_PORTABLE", "EXP_FAX", "EXP_EMAIL"];
+            $dest_exploitant_cols = ["EXP_REF", "EXP_CODE", "UTI_REF", "GRA_REF", "LAN_REF", "ACO_REF", "EXP_NOM_PERS_PHYSIQUE", "EXP_PRENOM_PERS_PHYSIQUE", "EXP_RAISON_SOCIALE", "EXP_NOM", "EXP_VISIBLE", "EXP_VALIDE", "EXP_NRUE", "EXP_ADRESSE", "EXP_CP", "EXP_VILLE", "EXP_TELEPHONE", "EXP_PORTABLE", "EXP_FAX", "EXP_EMAIL", "DCREAT", "UCREAT"];
             
-            $dest_abonnement_cols = ["EXP_REF", "MAR_REF", "ACO_REF"];
+            $dest_abonnement_cols = ["EXP_REF", "MAR_REF", "ACO_REF", "SMA_TITULAIRE", "SMA_ABONNE", "DCREAT", "UCREAT"];
+
+            $dest_piece_cols = ["PROP_REF", "ACT_REF", "UTI_REF", "DCREAT", "UCREAT"];
+            $dest_piece_lang_cols = ["PROP_REF", "LAN_REF", "PROP_NOM", "DCREAT", "UCREAT"];
+            $dest_piece_valeur_cols = ["EXP_REF", "PROP_REF", "PROP_VALEUR", "PROP_DATE", "PROP_DATE_VALIDITE", "DCREAT", "UCREAT"];
 
             // Marchés / Marchés Langue
 
@@ -572,82 +657,87 @@ foreach ($detected_files as $file) {
             $nb_to_insert = 0;
             $nb_inserted = 0;
 
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_marche_lang");
-                $dest_conn->exec("DELETE FROM $dest_marche");
-            }
-
             $req_last_mar_ref = $dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "", "MAR_REF DESC", "1"))->fetch();
             $last_mar_ref = ($req_last_mar_ref == null) ? 0 : $req_last_mar_ref["MAR_REF"];
-// TODO
-            var_dump("<hr>$last_mar_ref</hr>");
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT * FROM $src_marche") as $row) {
-                $last_mar_ref += 1;
-
-                $dest_marche_values = [];
-
-                foreach ($dest_marche_cols as $col) {
-                    switch ($col) {
-                        case "MAR_REF":
-                            array_push($dest_marche_values, "$last_mar_ref");
-                            break;
-                        case "UTI_REF":
-                            array_push($dest_marche_values, "1");
-                            break;
-                        case "ACT_REF":
-                            array_push($dest_marche_values, "2");
-                            break;
-                        case "MAR_JOUR":
-                            $mar_day = "";
-                            $days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
-                            foreach ($days as $d) {
-                                if ($row[$d] === "1") {
-                                    if ($mar_day === "") {
-                                        $mar_day = "'$d'";
-                                    } else {
-                                        $mar_day = "NULL";
-                                        break;
-                                    }
-                                }
-                            }
-                            array_push($dest_marche_values, $mar_day);
-                            break;
-                        default:
-                            array_push($dest_marche_values, "'TODO'");
-                            break;
+                // Créer un marché pour chaque jour de la semaine où le marché est ouvert (il en résultera plusieurs lignes correspondant à un même marché mais associé à des jours différents)
+                // Si le marché est présent tous les jours, n'insérer qu'un seul jour et mettre à 'null' MAR_JOUR
+                $all_the_week = true;
+                foreach ($usual_days as $mar_day) {
+                    if ($row[$mar_day] === "0") {
+                        $all_the_week = $all_the_week && false;
                     }
                 }
-                
-                $assoc_marcheCode_marcheRef[$row["code"]] = $last_mar_ref;
 
-                $insert_into_query = "INSERT INTO $dest_marche (" . implode(", ", $dest_marche_cols) . ") VALUES (" . implode(", ", $dest_marche_values) . ")";
-                execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                foreach ($usual_days as $mar_day) {
+                    if ($row[$mar_day] === "1") {
+                        $last_mar_ref += 1;
 
-                // Marché langue
+                        $dest_marche_values = [];
 
-                $dest_marche_lang_values = [$last_mar_ref, 1, "'".addslashes($row["libelle"])."'", "'".$dest_dcreat."'", "'".$dest_ucreat."'"];
+                        foreach ($dest_marche_cols as $col) {
+                            switch ($col) {
+                                case "MAR_REF":
+                                    array_push($dest_marche_values, "$last_mar_ref");
+                                    break;
+                                case "UTI_REF":
+                                    array_push($dest_marche_values, "$last_uti_ref");
+                                    break;
+                                case "ACT_REF":
+                                    array_push($dest_marche_values, "$last_act_ref");
+                                    break;
+                                case "MAR_JOUR":
+                                    if ($all_the_week) array_push($dest_marche_values, "NULL");
+                                    else array_push($dest_marche_values, "'$mar_day'");
+                                    break;
+                                case "MAR_VISIBLE":
+                                    array_push($dest_marche_values, "1");
+                                    break;
+                                case "MAR_CODE":
+                                    array_push($dest_marche_values, "'".$row["code"]."'");
+                                    break;
+                                case "DCREAT":
+                                    array_push($dest_marche_values, "'$dest_dcreat'");
+                                    break;
+                                case "UCREAT":
+                                    array_push($dest_marche_values, "'$dest_ucreat'");
+                                    break;
+                                case "MAR_VALIDE":
+                                    array_push($dest_marche_values, "1");
+                                    break;
+                                default:
+                                    array_push($dest_marche_values, "'TODO'");
+                                    break;
+                            }
+                        }
+                        
+                        $insert_into_query = "INSERT INTO $dest_marche (" . implode(", ", $dest_marche_cols) . ") VALUES (" . implode(", ", $dest_marche_values) . ")";
+                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
-                $insert_into_query = "INSERT INTO $dest_marche_lang (" . implode(", ", $dest_marche_lang_cols) . ") VALUES (" . implode(", ", $dest_marche_lang_values) . ")";
-                execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                        // Marché langue
+
+                        $completement_mar_nom = $all_the_week ? "" : " ".strtoupper($mar_day);
+                        $dest_marche_lang_values = [$last_mar_ref, 1, "'".addslashes($row["libelle"])."$completement_mar_nom'", "'$dest_dcreat'", "'$dest_ucreat'"];
+
+                        $insert_into_query = "INSERT INTO $dest_marche_lang (" . implode(", ", $dest_marche_lang_cols) . ") VALUES (" . implode(", ", $dest_marche_lang_values) . ")";
+                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                    } // Fin "si $row[$mar_day] = 1"
+                    if ($all_the_week) break; // Arrêter la boucle de parcours des jours si le marché est ouvert toute la semaine, car dans ce cas, une seule insertion est faite au lieu de 7
+                } // Fin "pour chaque jour de la semaine"
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
 
             // Articles / Articles Langue
-/*
+
             echo "<h2 id=\"datas_articles\">Articles / Articles Langue</h2>";
             fwrite($output_file, "\n-- Articles / Articles Langue\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
-
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_article_lang");
-                $dest_conn->exec("DELETE FROM $dest_article");
-            }
             
             $req_last_art_ref = $dest_conn->query(build_query("SELECT ART_REF FROM $dest_article", "", "ART_REF DESC", "1"))->fetch();
             $last_art_ref = ($req_last_art_ref == null) ? 0 : $req_last_art_ref["ART_REF"];
@@ -664,7 +754,7 @@ foreach ($detected_files as $file) {
                 $src_art_numc = $row["numc"];
 
                 foreach ($src_exploitant_classe_cols as $src_exploitant_classe_col) { // pour chaque colonne de classe possible, récupère les exploitants qui matchent avec le combo groupe-classe de l'article en cours
-                    $matches = array();
+                    $matches = [];
                     preg_match('/[0-9]+/', $src_exploitant_classe_col, $matches);
                     $num_groupe = isset($matches[0]) ? $matches[0] : ""; // pour les groupes, la première colonne s'appelle juste 'groupe', comme pour les classes
 
@@ -678,14 +768,19 @@ foreach ($detected_files as $file) {
                         $groupe_marche = ($req_groupe_marche == null) ? -1 : $req_groupe_marche["groupe"];
 
                         if ($groupe_marche === $src_art_numc) { // ici, $src_art_numc est forcément équivalent au groupe de la colonne groupe$num_groupe de l'exploitant, donc on peut le comparer avec $groupe_marche
-                            $marche_ref = $assoc_marcheCode_marcheRef[$marche_code];
-                            if (!in_array($marche_ref, $dest_marches_ref)) {
-                                array_push($dest_marches_ref, $marche_ref);
+                            // Il y a plusieurs marché qui ont le même code (un marché est ouvert x jours -> x marchés insérés, qui ont tous les même code de marché)
+                            // Il faut donc récupérer dans la table de destination des marchés toutes les MAR_REF où il y a ce code et les ajouter au tableau pour que l'article soit associé à tous les marchés portant ce code
+                            foreach ($dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$marche_code'", "", "")) as $marche) {
+                                $marche_ref = $marche["MAR_REF"];
+                                if (!in_array($marche_ref, $dest_marches_ref)) {
+                                    array_push($dest_marches_ref, $marche_ref);
+                                }
                             }
                         }
                     }
                 }
 
+                // Insérer un nouvel article pour chacun de ses marchés de référence
                 foreach ($dest_marches_ref as $mar_ref) {
                     $last_art_ref += 1;
         
@@ -697,28 +792,28 @@ foreach ($detected_files as $file) {
                                 array_push($dest_article_values, "$last_art_ref");
                                 break;
                             case "UTI_REF":
-                                array_push($dest_article_values, "1");
+                                array_push($dest_article_values, "$last_uti_ref");
                                 break;
                             case "MAR_REF":
                                 array_push($dest_article_values, "$mar_ref");
                                 break;
                             case "ART_PRIX_TTC":
                                 if ($row["tva"] === "") {
-                                    array_push($dest_article_values, "'".str_replace(' ', '', $row["prix_unit"])."'");
+                                    array_push($dest_article_values, str_replace(' ', '', $row["prix_unit"]));
                                 } else {
                                     array_push($dest_article_values, "NULL");
                                 }
                                 break;
                             case "ART_PRIX_HT":
                                 if ($row["tva"] !== "") {
-                                    array_push($dest_article_values, "'".str_replace(' ', '', $row["prix_unit"])."'");
+                                    array_push($dest_article_values, str_replace(' ', '', $row["prix_unit"]));
                                 } else {
                                     array_push($dest_article_values, "NULL");
                                 }
                                 break;
                             case "ART_TAUX_TVA":
                                 if ($row["tva"] !== "") {
-                                    array_push($dest_article_values, "'".str_replace(' ', '', $row["tva"])."'");
+                                    array_push($dest_article_values, str_replace(' ', '', $row["tva"]));
                                 } else {
                                     array_push($dest_article_values, "NULL");
                                 }
@@ -727,17 +822,21 @@ foreach ($detected_files as $file) {
                                 array_push($dest_article_values, "'fff'");
                                 break;
                             case "ART_VALIDE_DEPUIS":
-                                array_push($dest_article_values, "'".date("y/01/01", time())."'"); // 1 janvier de cette année
+                                // 1 janvier de cette année
+                                $first_jan = $test_mode ? date("y/01/01", time()) : date("01/01/y", time());
+                                array_push($dest_article_values, "'$first_jan'");
                                 break;
                             case "ART_VALIDE_JUSQUA":
-                                array_push($dest_article_values, "'".date("y/12/31", time())."'"); // 31 décembre de cette année
+                                // 31 décembre de cette année
+                                $last_dec = $test_mode ? date("y/12/31", time()) : date("31/12/y", time());
+                                array_push($dest_article_values, "'$last_dec'");
                                 break;
                             case "ART_VISIBLE":
                                 array_push($dest_article_values, "1");
                                 break;
                             case "DCREAT":
-                            array_push($dest_article_values, "'".$dest_dcreat."'");
-                            break;
+                                array_push($dest_article_values, "'$dest_dcreat'");
+                                break;
                             case "UCREAT":
                                 array_push($dest_article_values, "'$dest_ucreat'");
                                 break;
@@ -752,7 +851,7 @@ foreach ($detected_files as $file) {
 
                     // Article langue
 
-                    $dest_article_lang_values = [$last_art_ref, 1, "'".addslashes($row["nom"])."'", "'".addslashes($row["unite"])."'", "'".$dest_dcreat."'", "'".$dest_ucreat."'"];
+                    $dest_article_lang_values = [$last_art_ref, 1, "'".addslashes($row["nom"])."'", "'".addslashes($row["unite"])."'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
                     $insert_into_query = "INSERT INTO $dest_article_lang (" . implode(", ", $dest_article_lang_cols) . ") VALUES (" . implode(", ", $dest_article_lang_values) . ")";
                     execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
@@ -760,7 +859,7 @@ foreach ($detected_files as $file) {
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
 
             // Activités
 
@@ -769,34 +868,29 @@ foreach ($detected_files as $file) {
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
-
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_activitecomm_lang");
-                $dest_conn->exec("DELETE FROM $dest_activitecomm");
-            }
             
-            $req_last_actco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm", "", "ACO_REF DESC", "1"))->fetch();
-            $last_actco_ref = ($req_last_actco_ref == null) ? 0 : $req_last_actco_ref["ACO_REF"];
+            $req_last_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm", "", "ACO_REF DESC", "1"))->fetch();
+            $last_aco_ref = ($req_last_aco_ref == null) ? 0 : $req_last_aco_ref["ACO_REF"];
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT * FROM $src_activite") as $row) {
-                $last_actco_ref += 1;
+                $last_aco_ref += 1;
 
                 $dest_activitecomm_values = [];
                 
                 foreach ($dest_activitecomm_cols as $col) {
                     switch ($col) {
                         case "ACO_REF":
-                            array_push($dest_activitecomm_values, "$last_actco_ref");
+                            array_push($dest_activitecomm_values, "$last_aco_ref");
                             break;
                         case "UTI_REF":
-                            array_push($dest_activitecomm_values, "1");
+                            array_push($dest_activitecomm_values, "$last_uti_ref");
                             break;
                         case "ACO_COULEUR":
                             array_push($dest_activitecomm_values, "'fff'");
                             break;
                         case "DCREAT":
-                            array_push($dest_activitecomm_values, "'".$dest_dcreat."'");
+                            array_push($dest_activitecomm_values, "'$dest_dcreat'");
                             break;
                         case "UCREAT":
                             array_push($dest_activitecomm_values, "'$dest_ucreat'");
@@ -812,14 +906,14 @@ foreach ($detected_files as $file) {
 
                 // Activité langue
 
-                $dest_activitecomm_lang_values = [$last_actco_ref, 1, "'".addslashes($row["activiti"])."'", "'".$dest_dcreat."'", "'".$dest_ucreat."'"];
+                $dest_activitecomm_lang_values = [$last_aco_ref, 1, "'".addslashes($row["activiti"])."'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
                 $insert_into_query = "INSERT INTO $dest_activitecomm_lang (" . implode(", ", $dest_activitecomm_lang_cols) . ") VALUES (" . implode(", ", $dest_activitecomm_lang_values) . ")";
                 execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
 
             // Exploitants / Abonnements
 
@@ -828,11 +922,8 @@ foreach ($detected_files as $file) {
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
+            $warnings = [];
 
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_exploitant");
-            }
-            
             $req_last_exp_ref = $dest_conn->query(build_query("SELECT EXP_REF FROM $dest_exploitant", "", "EXP_REF DESC", "1"))->fetch();
             $last_exp_ref = ($req_last_exp_ref == null) ? 0 : $req_last_exp_ref["EXP_REF"];
 
@@ -851,7 +942,7 @@ foreach ($detected_files as $file) {
                             array_push($dest_exploitant_values, "'".$row["ntiers"]."'");
                             break;
                         case "UTI_REF":
-                            array_push($dest_exploitant_values, "1");
+                            array_push($dest_exploitant_values, "$last_uti_ref");
                             break;
                         case "GRA_REF":
                             array_push($dest_exploitant_values, "1");
@@ -865,16 +956,18 @@ foreach ($detected_files as $file) {
                                 $req_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm_lang", "ACO_NOM = '".addslashes(strtoupper($row["type"]))."'", "", ""))->fetch();
                                 $aco_ref = ($req_aco_ref == null) ? NULL : $req_aco_ref["ACO_REF"];
                                 if ($aco_ref == NULL) {
+                                    array_push($warnings, "L'activité " . addslashes(strtoupper($row["type"])) . " de l'exploitant " . $row["nom_deb"] . " n'existe pas encore dans la table $dest_activitecomm, elle y est donc insérée");
+
                                     if ($display_dest_requests) echo "-- L'activité " . addslashes(strtoupper($row["type"])) . " lue dans le fichier des exploitants est manquante dans le fichier des activités.<br>";
                                     fwrite($output_file, "-- L'activité " . addslashes(strtoupper($row["type"])) . " lue dans le fichier des exploitants est manquante dans le fichier des activités.\n");
                                     
-                                    $req_last_actco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm", "", "ACO_REF DESC", "1"))->fetch();
-                                    $last_actco_ref = ($req_last_actco_ref == null) ? 0 : $req_last_actco_ref["ACO_REF"];
-                                    ++$last_actco_ref;
+                                    $req_last_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm", "", "ACO_REF DESC", "1"))->fetch();
+                                    $last_aco_ref = ($req_last_aco_ref == null) ? 0 : $req_last_aco_ref["ACO_REF"];
+                                    ++$last_aco_ref;
 
                                     // Activité
 
-                                    $dest_activitecomm_values = [$last_actco_ref, 1, "'fff'", "'".$dest_dcreat."'", "'".$dest_ucreat."'"];
+                                    $dest_activitecomm_values = [$last_aco_ref, $last_uti_ref, "'fff'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
                                     $insert_into_query = "INSERT INTO $dest_activitecomm (" . implode(", ", $dest_activitecomm_cols) . ") VALUES (" . implode(", ", $dest_activitecomm_values) . ")";
                                     if ($display_dest_requests) echo "-- Correctif appliqué à la table $dest_activitecomm :<br>";
@@ -883,7 +976,7 @@ foreach ($detected_files as $file) {
 
                                     // Activité langue
 
-                                    $dest_activitecomm_lang_values = [$last_actco_ref, 1, "'".addslashes(strtoupper($row["type"]))."'", "'".$dest_dcreat."'", "'".$dest_ucreat."'"];
+                                    $dest_activitecomm_lang_values = [$last_aco_ref, 1, "'".addslashes(strtoupper($row["type"]))."'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
                                     $insert_into_query = "INSERT INTO $dest_activitecomm_lang (" . implode(", ", $dest_activitecomm_lang_cols) . ") VALUES (" . implode(", ", $dest_activitecomm_lang_values) . ")";
                                     if ($display_dest_requests) echo "-- Correctif appliqué à la table $dest_activitecomm_lang :<br>";
@@ -893,7 +986,7 @@ foreach ($detected_files as $file) {
                                     if ($display_dest_requests) echo "-- Fin des correctifs<br>";
                                     fwrite($output_file, "-- Fin des correctifs\n");
 
-                                    $aco_ref = $last_actco_ref;
+                                    $aco_ref = $last_aco_ref;
                                 }
                             }
                             array_push($dest_exploitant_values, $aco_ref);
@@ -940,6 +1033,12 @@ foreach ($detected_files as $file) {
                         case "EXP_EMAIL":
                             array_push($dest_exploitant_values, addslashes_nullify($row["mail"]));
                             break;
+                        case "DCREAT":
+                            array_push($dest_exploitant_values, "'$dest_dcreat'");
+                            break;
+                        case "UCREAT":
+                            array_push($dest_exploitant_values, "'$dest_ucreat'");
+                            break;
                         default:
                             array_push($dest_exploitant_values, "'TODO'");
                             break;
@@ -951,35 +1050,216 @@ foreach ($detected_files as $file) {
 
                 // Abonnements
 
-                // Pour toutes les colonnes des marchés associées à l'exploitant, regarder s'il y est abonné et si le marché est bien dans son groupe, effectuer une insertion dans ce cas
+                $aco_ref = $dest_exploitant_values[array_search("ACO_REF", $dest_exploitant_cols)];
+
+                // Pour toutes les colonnes des marchés associées à l'exploitant, si le marché est bien dans son groupe, regarder s'il y est abonné et effectuer une insertion pour chaque jour où il y est abonné
                 foreach ($src_exploitant_marche_cols as $src_exploitant_marche_col) {
-                    $matches = array();
+                    $matches = [];
                     preg_match('/[0-9]+/', $src_exploitant_marche_col, $matches);
                     $num_abo = isset($matches[0]) ? $matches[0] : "1"; // pour les abonnements, la première colonne s'appelle 'abo1', contrairement à la première colonne des marchés qui s'appelle juste 'm'
                     $num_groupe = isset($matches[0]) ? $matches[0] : ""; // pour les groupes, la première colonne s'appelle juste 'groupe'
+                    $num_day = isset($matches[0]) ? $matches[0] : "1"; // pour les jours, la première colonne s'appelle '`prefixe_du_jour`1'
+                    $aco_ref = $dest_exploitant_values[array_search("ACO_REF", $dest_exploitant_cols)];
                     
                     $marche_code = $row[$src_exploitant_marche_col];
-                    $req_groupe_marche = $src_conn->query("SELECT groupe FROM $src_marche WHERE code = '$marche_code'")->fetch();
-                    $groupe_marche = ($req_groupe_marche == null) ? -1 : $req_groupe_marche["groupe"];
 
-                    if ($marche_code !== "" && isset($row["abo$num_abo"]) && $row["abo$num_abo"] === "1" && isset($row["groupe$num_groupe"]) && $row["groupe$num_groupe"] === $groupe_marche) {
-                        $mar_ref = $assoc_marcheCode_marcheRef[$marche_code];
-                        $aco_ref = $dest_exploitant_values[array_search("ACO_REF", $dest_exploitant_cols)];
-                        $dest_abonnement_values = [$last_exp_ref, $mar_ref, $aco_ref];
+                    if ($marche_code !== "") {
+                        $req_groupe_marche = $src_conn->query("SELECT groupe FROM $src_marche WHERE code = '$marche_code'")->fetch();
 
-                        $insert_into_query = "INSERT INTO $dest_abonnement (" . implode(", ", $dest_abonnement_cols) . ") VALUES (" . implode(", ", $dest_abonnement_values) . ")";
-                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                        if ($req_groupe_marche == null) {
+                            array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code n'est pas inséré pour la raison suivante :<br>Ce marché n'existe pas dans le fichier des marchés");
+                        } else {
+                            $groupe_marche = $req_groupe_marche["groupe"];
+                            // Continuer ssi les groupes du marché correspondent
+                            if (isset($row["groupe$num_groupe"]) && $row["groupe$num_groupe"] === $groupe_marche) {
+                                if (isset($row["abo$num_abo"])) {
+                                    $prefixes_days = ["l", "ma", "me", "je", "v", "s", "d"];
+                                    $type_abo = $row["abo$num_abo"];
+                                    
+                                    // Si l'exploitant est abonné à ce marché, regarder les jours où il y est abonné, et insérer un abonnement en conséquence
+                                    if ($type_abo !== "0") {
+                                        $sma_titulaire = 0;
+                                        $sma_abonne = 0;
+
+                                        switch ($type_abo) {
+                                            case "1":
+                                                $sma_abonne = 1;
+                                                break;
+                                            case "2":
+                                                $sma_titulaire = 1;
+                                                break;
+                                            case "3":
+                                                // TODO Voir à l'usage, pour l'instant 0 aux deux sma
+                                                break;
+                                            default:
+                                                array_push($warnings, "L'exploitant " . $row["nom_deb"] . " a un type d'abonnement au marché $marche_code qui est inconnu, il faut trouver une équivalence dibtic - GEODP v1 pour le type $type_abo");
+                                                break;
+                                        }
+
+                                        // Pour chaque colonne de jour 'l`i`/ma`i`/...', regarder si la cellule contient un 1 (abonnement) ou un 0 (non abonnement) au marché de la colonne 'm`i`'
+                                        // Récupérer le MAR_REF du marché correspondant et insérer l'abonnement pour ce marché (un abo pour un marché, un marché étant pour un code et jour)
+                                        foreach ($prefixes_days as $prefix_day) {
+                                            if ($row["$prefix_day$num_day"] === "1") {
+                                                $day = $usual_days[array_search($prefix_day, $prefixes_days)];
+
+                                                $req_mar_ref = $dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$marche_code' AND MAR_JOUR = '$day' OR MAR_CODE = '$marche_code' AND MAR_JOUR IS NULL", "", ""))->fetch();
+
+                                                if ($req_mar_ref == null) {
+                                                    array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code ouvert le $day n'est pas inséré pour la raison suivante :<br>Le marché $marche_code n'ouvre pas le $day d'après la table $dest_marche");
+                                                } else {
+                                                    $mar_ref = $req_mar_ref["MAR_REF"];
+
+                                                    $dest_abonnement_values = [$last_exp_ref, $mar_ref, $aco_ref, $sma_titulaire, $sma_abonne, "'$dest_dcreat'", "'$dest_ucreat'"];
+
+                                                    $insert_into_query = "INSERT INTO $dest_abonnement (" . implode(", ", $dest_abonnement_cols) . ") VALUES (" . implode(", ", $dest_abonnement_values) . ")";
+                                                    execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code n'est pas inséré pour la raison suivante :<br>La colonne 'abo$num_abo' n'existe pas dans le fichier des exploitants");
+                                }
+                            } else {
+                                $warning = "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code n'est pas inséré pour la raison suivante :<br>";
+                                if (!isset($row["groupe$num_groupe"])) $warning .= "La colonne 'groupe$num_groupe' n'existe pas alors que la colonne '$src_exploitant_marche_col' existe dans le fichier des exploitants";
+                                if (isset($row["groupe$num_groupe"]) && $row["groupe$num_groupe"] !== $groupe_marche) $warning .= "Pour le marché $marche_code, le groupe de l'exploitant (" . $row["groupe$num_groupe"] . ") ne correspond pas au groupe du marché ($groupe_marche) dans le fichier de l'exploitant";
+                                array_push($warnings, $warning);
+                            }
+                        } // Fin "si le marché n'existe pas"
                     }
+                }
+            } // Fin "pour chaque exploitant de la table source"
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
+
+            // Pièces justificatives / Pièces justificatives Langue / Pièces justificatives Valeur
+
+            echo "<h2 id=\"datas_pieces\">Pièces justificatives / Pièces justificatives Langue / Pièces justificatives Valeur</h2>";
+            fwrite($output_file, "\n-- Pièces justificatives / Pièces justificatives Langue / Pièces justificatives Valeur\n\n");
+
+            $nb_to_insert = 0;
+            $nb_inserted = 0;
+
+            $req_last_piece_ref = $dest_conn->query(build_query("SELECT PROP_REF FROM $dest_piece", "", "PROP_REF DESC", "1"))->fetch();
+            $last_piece_ref = ($req_last_piece_ref == null) ? 0 : $req_last_piece_ref["PROP_REF"];
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT * FROM $src_exploitant") as $row) {
+                foreach ($src_exploitant_piece_cols as $src_exploitant_piece_col) { // pour chaque colonne de pièce justificative possible, récupère la date d'échéance
+                    $piece_val = $row[$src_exploitant_piece_col];
+                    if ($piece_val !== "") {
+                        $matches = [];
+                        preg_match('/[0-9]+/', $src_exploitant_piece_col, $matches);
+                        $num_datech = ($matches[0] === "1") ? "" : $matches[0]; // pour les dates, la première colonne s'appelle juste 'datech'
+
+                        $piece_nom = "";
+                        switch ($src_exploitant_piece_col) {
+                            case "n1":
+                                $piece_nom = "Carte de commerçant";
+                                break;
+                            case "n2":
+                                $piece_nom = "Inscription RC";
+                                break;
+                            case "n3":
+                                $piece_nom = "Inscription RM";
+                                break;
+                            case "n4":
+                                $piece_nom = "Auto Entrepreneur";
+                                break;
+                            case "n5":
+                                $piece_nom = "RSI";
+                                break;
+                            case "n6":
+                                $piece_nom = "Caisse de maladie";
+                                break;
+                            case "n7":
+                                $piece_nom = "Assurance";
+                                break;
+                            case "n8":
+                                $piece_nom = "Protection juridique";
+                                break;
+                            case "n9":
+                                $piece_nom = "Mutuelle Sociale Agricole";
+                                break;
+                            case "n10":
+                                $piece_nom = "Agrément sanitaire";
+                                break;
+                            case "n11":
+                                $piece_nom = "Déclaration centre impôts";
+                                break;
+                            case "n12":
+                                $piece_nom = "Inscription registre Broc";
+                                break;
+                            case "":
+                                $piece_nom = "Pièce justificative de nature inconnue";
+                        }
+
+                        if (!isset($row["datech$num_datech"])) {
+                            array_push($warnings, "La pièce justificative $piece_nom n'est pas insérée pour la raison suivante :<br>La colonne 'datech$num_datech' n'existe pas alors que la colonne '$src_exploitant_piece_col' existe dans le fichier des exploitants");
+                        } else {
+                            $last_piece_ref += 1;
+
+
+                            // $dest_piece_lang_cols = ["PROP_REF", "LAN_REF", "PROP_NOM", "DCREAT", "UCREAT"];
+                            // $dest_piece_valeur_cols = ["EXP_REF", "PROP_REF", "PROP_VALEUR", "PROP_DATE", "PROP_DATE_VALIDITE", "DCREAT", "UCREAT"];
+
+                            // Pièces justificatives
+
+                            /*$dest_piece_values = [$last_piece_ref, $last_act_ref, $last_uti_ref, "'$dest_dcreat'", "'$dest_ucreat'"];
+                            
+                            $insert_into_query = "INSERT INTO $dest_piece (" . implode(", ", $dest_piece_cols) . ") VALUES (" . implode(", ", $dest_piece_values) . ")";
+                            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                            // Pièces justificatives langue
+
+                            $dest_piece_lang_values = [$last_piece_ref, 1, ];
+
+                            $insert_into_query = "INSERT INTO $dest_piece_lang (" . implode(", ", $dest_piece_lang_cols) . ") VALUES (" . implode(", ", $dest_piece_lang_values) . ")";
+                            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                            // Pièces justificatives langue
+
+                            $dest_piece_val_values = [];
+
+                            $insert_into_query = "INSERT INTO $dest_piece_val (" . implode(", ", $dest_piece_valeur_cols) . ") VALUES (" . implode(", ", $dest_piece_val_values) . ")";
+                            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);*/
+                        }
+                    } // Fin "si $piece_val pas vide"
                 }
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
 
-            // TODO pièces justificatives (table SOCIETE_PROPRIETE LANG et VALEUR)
-*/
+            /*N - Carte de commerçant
+            N2 - Inscription RC 
+            N3 - Inscription RM
+            N4 - Auto Entrepreneur
+            N5 - RSI
+            N6 - Caisse de Maladie
+            N7 - Assurance
+            N8 - Protection Juridique
+            N9 - Mutuelle Sociale Agricole
+            N10 - Agrément Sanitaire
+            N11 - Déclaration Centre impots
+            N12 - Inscription Registre Broc*/
 
             echo "</section>";
+
+            ?>
+
+            <script>
+                var dom_nb_errors = document.querySelector("#nb_errors");
+                var nb_errors = parseInt(<?php echo $nb_errors; ?>);
+                var nb_warnings = parseInt(<?php echo $nb_warnings; ?>);
+                dom_nb_errors.innerHTML = (nb_errors === 0) ? (nb_warnings === 0) ? "<ok></ok>" : "<mok></mok>" : "<nok></nok>";
+                dom_nb_errors.innerHTML += "<br><br>";
+                dom_nb_errors.innerHTML += "Reprise terminée avec " + nb_errors + " erreurs et " + nb_warnings + " conflits";
+            </script>
+
+            <?php
 
         } // Fin "si $get analyze = 1"
 
@@ -1233,6 +1513,10 @@ form field > * {
     padding: 5px 10px;
 }
 
+form field  label {
+    padding-left: 0;
+}
+
 form field input {
     text-align: right;
     border: 1px solid rgba(0, 0, 0, 0.4);
@@ -1257,7 +1541,7 @@ form field span {
 /* Autres */
 
 div.pre {
-    max-height: 300px;
+    max-height: 200px;
     padding: 10px;
     font-family: Consolas;
     color: rgba(255, 255, 255, 0.7);
@@ -1267,11 +1551,18 @@ div.pre {
 
 a.button, input[type=submit] {
     display: inline-block;
-    width: 50%;
+    max-width: 50%;
     margin: auto;
+    text-align: center;
     padding: 15px 20px;
     font-size: 104%;
-    text-align: center;
+}
+
+field a.button {
+    position: absolute;
+}
+
+input[type=submit] {
     text-decoration: none;
     color: rgba(255, 255, 255, 0.8);
     background: #343131;
@@ -1281,7 +1572,7 @@ a.button, input[type=submit] {
     cursor: pointer;
 }
 
-a.button:hover, input[type=submit]:hover {
+input[type=submit]:hover {
     color: #343131;
     box-shadow: 0 0 0 30px orange inset;
 }
@@ -1297,7 +1588,13 @@ input[type=submit][disabled]:hover {
     box-shadow: 0 0 0 transparent;
 }
 
-ok::before, nok::before {
+input[type=disabled] {
+    background: transparent;
+    border: none;
+    color: inherit;
+}
+
+ok::before, nok::before, mok::before {
     color: white;
     margin-right: 10px;
     padding: 2px 6px;
@@ -1313,6 +1610,11 @@ ok::before {
 nok::before {
     content: "✘";
     background: red;
+}
+
+mok::before {
+    content: "✔";
+    background: orange;
 }
 
 p.success, p.warning, p.danger {
@@ -1336,7 +1638,7 @@ p.warning {
 }
 
 p.danger {
-    background: rgba(240, 200, 200, 0.2);
+    background: rgb(240, 200, 200);
 }
 
 p + p {
@@ -1344,6 +1646,11 @@ p + p {
 }
 
 div.pre + p {
+    margin-top: 20px;
+}
+
+div.pre + p.success {
+    margin-top: 0;
     border-top-width: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
