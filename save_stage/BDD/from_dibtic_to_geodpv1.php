@@ -10,6 +10,10 @@
 // Ouvrir cette page avec le paramètre 'analyze=1' pour effectuer des tests en local, l'ouvrir normalement en situation réelle
 $test_mode = (isset($_POST["login"]) && isset($_POST["login"]) !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
 
+$php_required_version = "7.1.9";
+
+$client_name = (!$test_mode && isset($_POST["type"]) && $_POST["type"] !== "") ? $_POST["type"] : "[ MODE TEST ]";
+
 
 /*************************
  *        FICHIERS       *
@@ -39,6 +43,7 @@ $output_filename = "output.sql"; // Si un fichier avec le même nom existe déj�
  *    TABLES SOURCES     *
  *************************/
 
+$nb_content = []; // auto-computed from filenames and based on the same indexation as $expected_content and $keywords_files
 $src_tables = []; // auto-computed from filenames and based on the same indexation as $expected_content and $keywords_files
 $src_prefixe = "src_";
 
@@ -52,6 +57,8 @@ $display_source_files_contents = false; // true | false
 
 // Nom des tables de destination (GEODP v1)
 $dest_utilisateur = "dest_utilisateur";
+$dest_employe = "dest_employe";
+$dest_employe_marche = "dest_employe_marche";
 $dest_groupe_activite_lang = "dest_groupe_activite_langue";
 $dest_activite_lang = "dest_activite_langue";
 $dest_marche = "dest_marche";
@@ -69,6 +76,8 @@ $dest_compteur = "dest_compteur";
 
 if (!$test_mode) {
     $dest_utilisateur = "UTILISATEUR";
+    $dest_employe = "EMPLOYE";
+    $dest_employe_marche = "EMPLOYE_MARCHE";
     $dest_groupe_activite_lang = "GROUPE_ACTIVITE_LANGUE";
     $dest_activite_lang = "ACTIVITE_LANGUE";
     $dest_marche = "MARCHE";
@@ -107,7 +116,36 @@ $mysql_host = "localhost";
 $mysql_dbname = "reprise_dibtic";
 $mysql_login = "root";
 $mysql_password = "";
+
 $mysql_conn = new PDO("mysql:host=$mysql_host;dbname=$mysql_dbname", "$mysql_login", "$mysql_password");
+
+// Protection contre les utilisation simultanées du script (ressources communes : tables sources et tables de destination)
+$req_wip = $mysql_conn->query("SELECT COUNT(*) FROM reprise WHERE date_fin IS NULL")->fetch();
+if ($req_wip[0] !== "0") {
+    echo "Veuillez attendre la fin de la reprise en cours avant d'en commencer une autre.";
+    echo "<table>";
+    echo "<tr><th>Nom de la reprise</th><th>Date de début</th><th>Etat</th><th></th></tr>";
+    foreach ($mysql_conn->query("SELECT * FROM reprise WHERE date_fin IS NULL") as $row) {
+        $etat = "Etat inconnu";
+        switch ($row["etat"]) {
+            case "0":
+                $etat = "Initialisation en cours";
+                break;
+            case "1":
+                $etat = "Analyse en cours";
+                break;
+            case "2":
+                $etat = "Terminée";
+                break;
+            case "3":
+                $etat = "Interrompue";
+                break;
+        }
+        echo "<tr><td>" . $row["client"] . "</td><td>" . $row["date_debut"] . "</td><td>$etat</td><td>Interrompre</td></tr>";
+    }
+    echo "</table>";
+    return;
+}
 
 
 /*************************
@@ -121,7 +159,7 @@ $oracle_login = $test_mode ? "geodpthibaut" : $_POST["login"];
 $oracle_password = $test_mode ? "geodpthibaut" : $_POST["password"];
 
 if (!$test_mode && isset($_GET["analyze"]) && $_GET["analyze"] === "1") {
-    $oracle_conn = new PDO("oci:dbname=(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP) (Host = $oracle_host) (Port = $oracle_port))) (CONNECT_DATA = (SERVICE_NAME = ".$oracle_service.")))", $oracle_login, $oracle_password);
+    $oracle_conn = new PDO("oci:dbname=(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP) (Host = $oracle_host) (Port = $oracle_port))) (CONNECT_DATA = (SERVICE_NAME = ".$oracle_service.")));charset=UTF8", $oracle_login, $oracle_password);
 }
 
 
@@ -129,8 +167,10 @@ if (!$test_mode && isset($_GET["analyze"]) && $_GET["analyze"] === "1") {
  *    CHOIX CONNEXION    *
  *************************/
 
-$src_conn = $mysql_conn;
-$dest_conn = $test_mode ? $mysql_conn : $oracle_conn;
+if (isset($_GET["analyze"]) && $_GET["analyze"] === "1") {
+    $src_conn = $mysql_conn;
+    $dest_conn = $test_mode ? $mysql_conn : $oracle_conn;
+}
 
 
 /*************************
@@ -159,6 +199,10 @@ $usual_days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dim
 
 function yes_no($bool) {
     return $bool ? "Oui" : "Non";
+}
+
+function ok_nok($bool) {
+    return $bool ? "<ok></ok>" : "<nok></nok>";
 }
 
 function get_from_address($info, $address) {
@@ -254,7 +298,7 @@ function execute_query($query, &$nb_executed, &$nb_to_execute) {
             echo "<p class=\"danger\">".$dest_conn->errorInfo()[2]."</p>";
         } else {
             if ($req_res === 0) {
-                echo "<p class=\"warning\">0 lignes affectées</p>";
+                echo "<p class=\"warning\">0 lignes affectées par la requête</p>";
             }
             ++$nb_executed;
         }
@@ -267,8 +311,8 @@ function summarize_queries($nb_inserted, $nb_to_insert, &$nb_errors, $warnings, 
     }
     $nb_warnings += count($warnings);
 
-    $success_s = ($nb_inserted > 1) ? "s" : "";
-    $exec_s = ($nb_to_insert > 1) ? "s" : "";
+    $success_s = ($nb_inserted == 0 || $nb_inserted > 1) ? "s" : "";
+    $exec_s = ($nb_to_insert == 0 || $nb_to_insert > 1) ? "s" : "";
 
     $class = ($nb_inserted == $nb_to_insert) ? "success" : "danger";
     echo "<p class=\"$class\">$nb_inserted requête$success_s réussie$success_s sur $nb_to_insert requête$exec_s exécutée$exec_s</p>";
@@ -328,13 +372,13 @@ foreach ($detected_files as $file) {
                 echo "<h2>Fichiers dibtic à reprendre</h2>";
 
                     echo "<table>";
-                    echo "<tr><th>Contenu</th><th>Fichier correspondant</th><th>Informations transférables dans GEODP</th></tr>";
-                    for ($i = 0; $i < count($expected_content); ++$i) {
-                        echo "<tr><td>Liste des " . $expected_content[$i] . "</td><td>";
-                        echo (isset($files_to_convert[$i])) ? "<ok></ok>" . $files_to_convert[$i] : "<nok></nok>Fichier manquant";
-                        echo "</td><td>" . $extracted_files_content[$i];
-                        echo "</td></tr>";
-                    }
+                        echo "<tr><th>Contenu</th><th>Fichier correspondant</th><th>Informations transférables dans GEODP</th></tr>";
+                        for ($i = 0; $i < count($expected_content); ++$i) {
+                            echo "<tr><td>" . ucfirst($expected_content[$i]) . "</td><td>";
+                            echo (isset($files_to_convert[$i])) ? "<ok></ok>" . $files_to_convert[$i] : "<nok></nok>Fichier manquant";
+                            echo "</td><td>" . $extracted_files_content[$i];
+                            echo "</td></tr>";
+                        }
                     echo "</table>";
 
                     $button_disabled = "";
@@ -349,7 +393,9 @@ foreach ($detected_files as $file) {
                         $button_disabled = "disabled";
                     }
 
-                echo "<h2>Paramètres du client</h2>";
+                    echo "<p>Une table sera créée en local pour chaque fichier source. Lorsque la reprise est testée, des tables identiques aux tables GEODP sont utilisées en local et les paramètres du client ne sont pas pris en compte.</p>";
+
+                echo "<h2>Paramètres du client (pour reprise sur serveur uniquement)</h2>";
 
                     echo "<field><label for=\"servor\">Serveur de connexion Oracle</label><input id=\"servor\" type=\"disabled\" value=\"$oracle_host:$oracle_port/$oracle_service\" disabled /></field>";
                     echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_password(this)\" type=\"text\" placeholder=\"geodpville\" required /></field>";
@@ -358,13 +404,34 @@ foreach ($detected_files as $file) {
 
                 echo "<h2></h2>";
 
-                echo "<field>";
-                    echo "<a class=\"button\" href=\"?analyze=1\">Tester la reprise en local</a>";
-                    echo "<input type=\"submit\" value=\"Créer un client GEODP à partir de ces fichiers\" $button_disabled />";
-                echo "</field>";
+                    echo "<field>";
+                        echo "<a class=\"button\" href=\"?analyze=1\">Tester la reprise en local</a>";
+                        echo "<input type=\"submit\" value=\"Créer un client GEODP à partir de ces fichiers\" $button_disabled />";
+                    echo "</field>";
                 
-            echo "</form>";
+                echo "<h2>Autres paramètres</h2>";
 
+                    echo "<field><label>Vider les tables de destination en amont</label><input type=\"disabled\" value=\"".yes_no($erase_destination_tables)."\" disabled /></field>";
+                    echo "<field><label>Afficher les requêtes à exécuter</label><input type=\"disabled\" value=\"".yes_no($display_dest_requests)."\" disabled /></field>";
+                    echo "<field><label>Exécuter les requêtes</label><input type=\"disabled\" value=\"".yes_no($exec_dest_requests)."\" disabled /></field>";
+                    echo "<field><label>Fichier de sortie</label><input type=\"disabled\" value=\"$output_filename\" disabled /></field>";
+
+                echo "<h2>Configuration de <a href=\"http://www.wampserver.com/#download-wrapper\">WAMP</a></h2>";
+
+                    $version_ok = (phpversion() === $php_required_version) ? true : false;
+                    echo "<field><label>Version de PHP</label><input type=\"disabled\" value=\"$php_required_version\" disabled />" . ok_nok($version_ok) . "</field>";
+                    $version_ok = (phpversion('pdo_mysql') === phpversion()) ? true : false;
+                    echo "<field><label>Extension MySQL via PDO</label><input type=\"disabled\" value=\"php_pdo_mysql\" disabled />" . ok_nok($version_ok) . "</field>";
+                    $version_ok = (phpversion('pdo_oci') === phpversion()) ? true : false;
+                    echo "<field><label>Extension OCI via PDO</label><input type=\"disabled\" value=\"php_pdo_oci\" disabled />" . ok_nok($version_ok) . "</field>";
+
+                echo "<h2>Configuration de la BDD  (pour reprise en local uniquement)</h2>";
+
+                    echo "<field><label>Nom de la base de données</label><input type=\"disabled\" value=\"$mysql_dbname\" disabled /></field>";
+                    echo "<field><label>Contenu de la base de données (copie des tables GEODP v1 utilisées par la reprise)</label><input type=\"disabled\" value=\"FICHIER TODO\" disabled /></field>";
+
+            echo "</form>";
+            
             echo "</init>";
         }
 
@@ -373,12 +440,16 @@ foreach ($detected_files as $file) {
          *************************/
 
         if (isset($_GET["analyze"]) && $_GET["analyze"] === "1") {
+
+            $mysql_conn->exec("INSERT INTO reprise (client, etat) VALUES ('$client_name', 1)");
+            $reprise_id = $mysql_conn->lastInsertId();
             
             //// Sommaire
 
             echo "<aside>";
             echo "<h1>Reprise dibtic vers GEODP v1</h1>";
             echo "<ol id=\"sommaire\">";
+                echo "<h2>$client_name</h2>";
                 echo "<li><a href=\"#summary\">Résumé</a></li>";
                 echo "<li><a href=\"#parameters\">Paramètres</a>";
                     echo "<ol>";
@@ -396,7 +467,8 @@ foreach ($detected_files as $file) {
                 echo "</li>";
                 echo "<li><a href=\"#destination\">Insertion des données GEODP</a>";
                     echo "<ol>";
-                        echo "<li><a href=\"#dest_marches\">Marchés / Marchés Langue</a></li>";
+                        echo "<li><a href=\"#dest_utilisateur\">Utilisateur</a></li>";
+                        echo "<li><a href=\"#dest_marches\">Marchés / Marchés Langue / Employé Marché</a></li>";
                         echo "<li><a href=\"#dest_articles\">Articles / Articles Langue</a></li>";
                         echo "<li><a href=\"#dest_activites_comm\">Activités commerciales / Activités commerciales Langue</a></li>";
                         echo "<li><a href=\"#dest_pieces\">Pièces justificatives / Pièces justificatives Langue</a></li>";
@@ -404,13 +476,14 @@ foreach ($detected_files as $file) {
                         echo "<li><a href=\"#dest_compteurs\">Compteurs</a></li>";
                     echo "</ol>";
                 echo "</li>";
+            echo "<li><a href=\"from_dibtic_to_geodpv1.php\">Retour à l'accueil</a></li>";
             echo "</ol>";
             echo "</aside>";
 
             echo "<section>";
 
             echo "<summary id=\"summary\">";
-                echo $test_mode ? "<h1>[ MODE TEST ]</h1>" : "<h1>".$_POST["type"]."</h1>";
+                echo "<h1>$client_name</h1>";
                 echo "<p id=\"nb_errors\"></p>";
                 echo $test_mode ? "<div><a href=\"from_dibtic_to_geodpv1.php\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
@@ -431,6 +504,8 @@ foreach ($detected_files as $file) {
 
                 $dest_conn->exec("DELETE FROM $dest_article_lang");
                 $dest_conn->exec("DELETE FROM $dest_article");
+
+                $dest_conn->exec("DELETE FROM $dest_employe_marche WHERE MAR_REF IS NOT NULL");
 
                 $dest_conn->exec("DELETE FROM $dest_marche_lang");
                 $dest_conn->exec("DELETE FROM $dest_marche");
@@ -474,15 +549,16 @@ foreach ($detected_files as $file) {
             // Pour chaque fichier source (pour chaque fichier attendu, il y a le chemin du fichier en $_GET), lecture + table + insertions
             
             foreach ($expected_content as $exp) {
-                $file = $source_files[$exp];
+                $file_name = $source_files[$exp];
+                $table_name = $src_prefixe . prune($file_name);
 
-                echo "<h2 id=\"src_" . prune($file) . "\">Fichier des $exp</h2>";
+                echo "<h2 id=\"src_" . prune($file_name) . "\">Fichier des $exp<span><tt>$file_name</tt> vers <tt>$table_name</tt></span></h2>";
 
                 // Lecture du fichier (http://coursesweb.net/php-mysql/phpspreadsheet-read-write-excel-libreoffice-files)
 //
                 require 'spreadsheet/vendor/autoload.php';
 
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load("$directory/$file");
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load("$directory/$file_name");
 
                 $xls_data = $spreadsheet->getActiveSheet()->toArray(null, false, true, true);
                 // var_dump($xls_data);
@@ -495,10 +571,13 @@ foreach ($detected_files as $file) {
                     $html_tb .='</table>';
                     echo $html_tb;
                 }
+
+                if ($exp === "exploitants") {
+                    $mysql_conn->exec("UPDATE reprise SET token = '" . $xls_data[2] . "' WHERE id = $reprise_id");
+                }
 //
                 // Création de la table correspondant au fichier
 
-                $table_name = $src_prefixe . prune($file);
                 $src_tables[$exp] = $table_name;
 //
                 $src_conn->exec("DROP TABLE IF EXISTS $table_name");
@@ -512,7 +591,6 @@ foreach ($detected_files as $file) {
                     }
                 }
                 $create_table_query = "CREATE TABLE $table_name ($create_table_query)";
-
                 $src_conn->exec($create_table_query);
 
                 // Remplissage de la table créée avec les données du fichier
@@ -543,9 +621,16 @@ foreach ($detected_files as $file) {
                 }
                 // echo "</div>";
 
+                $nb_content[$exp] = $nb_inserted;
+
                 // Contrôle du nombre d'insertions faites par rapport au nombre de données du fichier
 
                 summarize_queries($nb_inserted, count($xls_data) - 1, $nb_errors, [], $nb_warnings);
+
+                $reprise_col = str_replace("é", "e", $exp);
+                var_dump($exp);
+                var_dump($reprise_col);
+                $mysql_conn->exec("UPDATE reprise SET $reprise_col = $nb_inserted WHERE id = $reprise_id");
 //
             }
 
@@ -590,10 +675,11 @@ foreach ($detected_files as $file) {
             echo "<h1 id=\"destination\">Insertion des données GEODP</h1>";
             fwrite($output_file, "\n---------------------------------------------\n-- Insertion des données GEODP\n--\n\n");
             
-            $dest_marche_cols = ["MAR_REF", "UTI_REF", "ACT_REF", "MAR_JOUR", "MAR_VISIBLE", "MAR_CODE", "DCREAT", "UCREAT", "MAR_VALIDE"];
+            $dest_marche_cols = ["MAR_REF", "UTI_REF", "ACT_REF", "MAR_JOUR", "MAR_CPTFACTURE", "MAR_VISIBLE", "MAR_CODE", "DCREAT", "UCREAT", "MAR_VALIDE"];
             $dest_marche_lang_cols = ["MAR_REF", "LAN_REF", "MAR_NOM", "DCREAT", "UCREAT"];
+            $dest_employe_marche_cols = ["EMA_REF", "EMP_REF", "MAR_REF", "DCREAT", "UCREAT", "ACT_REF"];
 
-            $dest_article_cols = ["ART_REF", "MAR_REF", "UTI_REF", "ART_PRIX_TTC", "ART_PRIX_HT", "ART_TAUX_TVA", "ART_COULEUR", "ART_VALIDE_DEPUIS", "ART_VALIDE_JUSQUA", "ART_VISIBLE", "DCREAT", "UCREAT"];
+            $dest_article_cols = ["ART_REF", "MAR_REF", "UTI_REF", "ART_CODE", "ART_PRIX_TTC", "ART_PRIX_HT", "ART_TAUX_TVA", "ART_ABO_PRIX_TTC", "ART_ABO_PRIX_HT", "ART_ABO_TAUX_TVA", "ART_COULEUR", "ART_ORDRE", "ART_VALIDE_DEPUIS", "ART_VALIDE_JUSQUA", "ART_VISIBLE", "DCREAT", "UCREAT"];
             $dest_article_lang_cols = ["ART_REF", "LAN_REF", "ART_NOM", "ART_UNITE", "DCREAT", "UCREAT"];
             
             $dest_activitecomm_cols = ["ACO_REF", "UTI_REF", "ACO_COULEUR", "DCREAT", "UCREAT"];
@@ -607,27 +693,51 @@ foreach ($detected_files as $file) {
             $dest_piece_lang_cols = ["PROP_REF", "LAN_REF", "PROP_NOM", "DCREAT", "UCREAT"];
             $dest_piece_valeur_cols = ["EXP_REF", "PROP_REF", "PROP_VALEUR", "PROP_DATE", "PROP_DATE_VALIDITE", "DCREAT", "UCREAT"];
 
-            $req_last_uti_ref = $dest_conn->query(build_query("SELECT UTI_REF FROM $dest_utilisateur", "", "UTI_REF DESC", "1"))->fetch();
-            $last_uti_ref = ($req_last_uti_ref == null) ? 0 : $req_last_uti_ref["UTI_REF"];
+            $req_uti_ref = $dest_conn->query(build_query("SELECT UTI_REF FROM $dest_utilisateur", "", "UTI_REF DESC", "1"))->fetch();
+            if ($req_uti_ref == null) {
+                echo "<p class=\"danger\">Impossible de continuer car il n'y a aucun utilisateur dans la table $dest_utilisateur</p>";
+                return;
+            }
+            $uti_ref = $req_uti_ref["UTI_REF"];
 
-            $req_last_gra_ref_lang = $dest_conn->query(build_query("SELECT GRA_REF FROM $dest_groupe_activite_lang", "GRA_NOM LIKE '_arch_s _unicipaux'", "GRA_REF DESC", "1"))->fetch();
-            if ($req_last_gra_ref_lang == null) {
+            $req_emp_ref = $dest_conn->query(build_query("SELECT EMP_REF FROM $dest_employe", "", "EMP_REF DESC", "1"))->fetch();
+            if ($req_emp_ref == null) {
+                echo "<p class=\"danger\">Impossible de continuer car il n'y a aucun employé dans la table $dest_employe</p>";
+                return;
+            }
+            $emp_ref = $req_emp_ref["EMP_REF"];
+
+            $req_gra_ref_lang = $dest_conn->query(build_query("SELECT GRA_REF FROM $dest_groupe_activite_lang", "GRA_NOM LIKE '_arch_s _unicipaux'", "GRA_REF DESC", "1"))->fetch();
+            if ($req_gra_ref_lang == null) {
                 echo "<p class=\"danger\">Impossible de continuer car le groupe d'activités 'Marchés municipaux' n'est pas présent dans la table $dest_groupe_activite_lang</p>";
                 return;
             }
-            $last_gra_ref = $req_last_gra_ref_lang["GRA_REF"];
+            $gra_ref = $req_gra_ref_lang["GRA_REF"];
 
-            $req_last_act_ref_lang = $dest_conn->query(build_query("SELECT ACT_REF FROM $dest_activite_lang", "ACT_NOM LIKE '_arch_s _unicipaux'", "ACT_REF DESC", "1"))->fetch();
-            if ($req_last_act_ref_lang == null) {
+            $req_act_ref_lang = $dest_conn->query(build_query("SELECT ACT_REF FROM $dest_activite_lang", "ACT_NOM LIKE '_arch_s _unicipaux'", "ACT_REF DESC", "1"))->fetch();
+            if ($req_act_ref_lang == null) {
                 echo "<p class=\"danger\">Impossible de continuer car l'activité 'Marchés municipaux' n'est pas présente dans la table $dest_activite_lang</p>";
                 return;
             }
-            $last_act_ref = $req_last_act_ref_lang["ACT_REF"];
+            $act_ref = $req_act_ref_lang["ACT_REF"];
 
-            // Marchés / Marchés Langue
+            // Utilisateur
 
-            echo "<h2 id=\"dest_marches\">Marchés / Marchés Langue</h2>";
-            fwrite($output_file, "\n-- Marchés / Marchés Langue\n\n");
+            echo "<h2 id=\"dest_utilisateur\">Utilisateur<span><tt>$dest_utilisateur</tt></span></h2>";
+            fwrite($output_file, "\n-- Utilisateur\n\n");
+
+            $nb_to_update = 0;
+            $nb_updated = 0;
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            $update_query = "UPDATE $dest_utilisateur SET UTI_NOM = '$client_name' WHERE UTI_REF = $uti_ref";
+            execute_query($update_query, $nb_updated, $nb_to_update);
+            if ($display_dest_requests) echo "<div>";
+
+            // Marchés / Marchés Langue / Employé Marché
+
+            echo "<h2 id=\"dest_marches\">Marchés / Marchés Langue / Employé Marché<span><tt>$dest_marche</tt> / <tt>$dest_marche_lang</tt> / <tt>$dest_employe_marche</tt></span></h2>";
+            fwrite($output_file, "\n-- Marchés / Marchés Langue / Employé Marché\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
@@ -635,6 +745,9 @@ foreach ($detected_files as $file) {
 
             $req_last_mar_ref = $dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "", "MAR_REF DESC", "1"))->fetch();
             $last_mar_ref = ($req_last_mar_ref == null) ? 0 : $req_last_mar_ref["MAR_REF"];
+
+            $req_last_ema_ref = $dest_conn->query(build_query("SELECT EMA_REF FROM $dest_employe_marche", "", "EMA_REF DESC", "1"))->fetch();
+            $last_ema_ref = ($req_last_ema_ref == null) ? 0 : $req_last_ema_ref["EMA_REF"];
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT * FROM $src_marche") as $row) {
@@ -644,16 +757,21 @@ foreach ($detected_files as $file) {
                 } else {
                     // Créer un marché pour chaque jour de la semaine où le marché est ouvert (il en résultera plusieurs lignes correspondant à un même marché mais associé à des jours différents)
                     // Si le marché est présent tous les jours, n'insérer qu'un seul jour et mettre à 'null' MAR_JOUR
+                    // Si le marché est présent un seul jour, n'insérer qu'un seul jour et mettre à 'nom_du_jour' MAR_JOUR
                     $all_the_week = true;
+                    $nb_jours = 0;
                     foreach ($usual_days as $mar_day) {
                         if ($row[$mar_day] === "0") {
                             $all_the_week = $all_the_week && false;
+                        } else {
+                            ++$nb_jours;
                         }
                     }
 
                     foreach ($usual_days as $mar_day) {
                         if ($row[$mar_day] === "1") {
                             $last_mar_ref += 1;
+                            $last_ema_ref += 1;
 
                             $dest_marche_values = [];
 
@@ -663,14 +781,17 @@ foreach ($detected_files as $file) {
                                         array_push($dest_marche_values, "$last_mar_ref");
                                         break;
                                     case "UTI_REF":
-                                        array_push($dest_marche_values, "$last_uti_ref");
+                                        array_push($dest_marche_values, "$uti_ref");
                                         break;
                                     case "ACT_REF":
-                                        array_push($dest_marche_values, "$last_act_ref");
+                                        array_push($dest_marche_values, "$act_ref");
                                         break;
                                     case "MAR_JOUR":
                                         if ($all_the_week) array_push($dest_marche_values, "NULL");
                                         else array_push($dest_marche_values, "'$mar_day'");
+                                        break;
+                                    case "MAR_CPTFACTURE":
+                                        array_push($dest_marche_values, "1");
                                         break;
                                     case "MAR_VISIBLE":
                                         array_push($dest_marche_values, "1");
@@ -698,10 +819,17 @@ foreach ($detected_files as $file) {
 
                             // Marché langue
 
-                            $completement_mar_nom = $all_the_week ? "" : " ".strtoupper($mar_day);
+                            $completement_mar_nom = ($all_the_week || $nb_jours === 1) ? "" : " ".strtoupper($mar_day);
                             $dest_marche_lang_values = [$last_mar_ref, 1, "'".addslashes($row["libelle"])."$completement_mar_nom'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
                             $insert_into_query = "INSERT INTO $dest_marche_lang (" . implode(", ", $dest_marche_lang_cols) . ") VALUES (" . implode(", ", $dest_marche_lang_values) . ")";
+                            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                            // Employé Marché
+
+                            $dest_employe_marche_values = [$last_ema_ref, $emp_ref, $last_mar_ref, "'$dest_dcreat'", "'$dest_ucreat'", $act_ref];
+
+                            $insert_into_query = "INSERT INTO $dest_employe_marche (" . implode(", ", $dest_employe_marche_cols) . ") VALUES (" . implode(", ", $dest_employe_marche_values) . ")";
                             execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
                         } // Fin "si $row[$mar_day] = 1"
                         if ($all_the_week) break; // Arrêter la boucle de parcours des jours si le marché est ouvert toute la semaine, car dans ce cas, une seule insertion est faite au lieu de 7
@@ -714,11 +842,12 @@ foreach ($detected_files as $file) {
 
             // Articles / Articles Langue
 
-            echo "<h2 id=\"dest_articles\">Articles / Articles Langue</h2>";
+            echo "<h2 id=\"dest_articles\">Articles / Articles Langue<span><tt>$dest_article</tt> / <tt>$dest_article_lang</tt></span></h2>";
             fwrite($output_file, "\n-- Articles / Articles Langue\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
+            $warnings = [];
             
             $req_last_art_ref = $dest_conn->query(build_query("SELECT ART_REF FROM $dest_article", "", "ART_REF DESC", "1"))->fetch();
             $last_art_ref = ($req_last_art_ref == null) ? 0 : $req_last_art_ref["ART_REF"];
@@ -761,6 +890,13 @@ foreach ($detected_files as $file) {
                     }
                 }
 
+                if ($row["abo"] !== "" && $row["abo"] !== "X") {
+                    array_push($warnings, "La valeur de la cellule 'abo' pour l'article " . $row["nom"] . " est non vide et différente de 'X'. L'article est quand même considéré comme un tarif d'abonnés.");
+                }
+                if (strlen($row["numc"]."-".$row["code"]) > 6) {
+                    array_push($warnings, "Le code de l'article " . $row["nom"] . ", " . $row["numc"]."-".$row["code"] . ", est supérieur à 6 caractères");
+                }
+
                 // Insérer un nouvel article pour chacun de ses marchés de référence
                 foreach ($dest_marches_ref as $mar_ref) {
                     $last_art_ref += 1;
@@ -773,34 +909,61 @@ foreach ($detected_files as $file) {
                                 array_push($dest_article_values, "$last_art_ref");
                                 break;
                             case "UTI_REF":
-                                array_push($dest_article_values, "$last_uti_ref");
+                                array_push($dest_article_values, "$uti_ref");
                                 break;
                             case "MAR_REF":
                                 array_push($dest_article_values, "$mar_ref");
                                 break;
+                            case "ART_CODE":
+                                array_push($dest_article_values, "'".$row["numc"]."-".$row["code"]."'");
+                                break;
                             case "ART_PRIX_TTC":
-                                if ($row["tva"] === "") {
+                                if ($row["abo"] === "" && $row["tva"] === "") {
                                     array_push($dest_article_values, str_replace(' ', '', $row["prix_unit"]));
                                 } else {
-                                    array_push($dest_article_values, "NULL");
+                                    array_push($dest_article_values, "0");
                                 }
                                 break;
                             case "ART_PRIX_HT":
-                                if ($row["tva"] !== "") {
+                                if ($row["abo"] === "" && $row["tva"] !== "") {
                                     array_push($dest_article_values, str_replace(' ', '', $row["prix_unit"]));
                                 } else {
-                                    array_push($dest_article_values, "NULL");
+                                    array_push($dest_article_values, "0");
                                 }
                                 break;
                             case "ART_TAUX_TVA":
-                                if ($row["tva"] !== "") {
+                                if ($row["abo"] === "" && $row["tva"] !== "") {
                                     array_push($dest_article_values, str_replace(' ', '', $row["tva"]));
                                 } else {
-                                    array_push($dest_article_values, "NULL");
+                                    array_push($dest_article_values, "0");
+                                }
+                                break;
+                            case "ART_ABO_PRIX_TTC":
+                                if ($row["abo"] !== "" && $row["tva"] === "") {
+                                    array_push($dest_article_values, str_replace(' ', '', $row["prix_unit"]));
+                                } else {
+                                    array_push($dest_article_values, "0");
+                                }
+                                break;
+                            case "ART_ABO_PRIX_HT":
+                                if ($row["abo"] !== "" && $row["tva"] !== "") {
+                                    array_push($dest_article_values, str_replace(' ', '', $row["prix_unit"]));
+                                } else {
+                                    array_push($dest_article_values, "0");
+                                }
+                                break;
+                            case "ART_ABO_TAUX_TVA":
+                                if ($row["abo"] !== "" && $row["tva"] !== "") {
+                                    array_push($dest_article_values, str_replace(' ', '', $row["tva"]));
+                                } else {
+                                    array_push($dest_article_values, "0");
                                 }
                                 break;
                             case "ART_COULEUR":
                                 array_push($dest_article_values, "'fff'");
+                                break;
+                            case "ART_ORDRE":
+                                array_push($dest_article_values, "0");
                                 break;
                             case "ART_VALIDE_DEPUIS":
                                 // 1 janvier de cette année
@@ -840,11 +1003,11 @@ foreach ($detected_files as $file) {
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
 
             // Activités
 
-            echo "<h2 id=\"dest_activites_comm\">Activités commerciales / Activités commerciales Langue</h2>";
+            echo "<h2 id=\"dest_activites_comm\">Activités commerciales / Activités commerciales Langue<span><tt>$dest_activitecomm</tt> / <tt>$dest_activitecomm_lang</tt></span></h2>";
             fwrite($output_file, "\n-- Activités commerciales / Activités commerciales Langue\n\n");
 
             $nb_to_insert = 0;
@@ -865,7 +1028,7 @@ foreach ($detected_files as $file) {
                             array_push($dest_activitecomm_values, "$last_aco_ref");
                             break;
                         case "UTI_REF":
-                            array_push($dest_activitecomm_values, "$last_uti_ref");
+                            array_push($dest_activitecomm_values, "$uti_ref");
                             break;
                         case "ACO_COULEUR":
                             array_push($dest_activitecomm_values, "'fff'");
@@ -898,7 +1061,7 @@ foreach ($detected_files as $file) {
 
             // Pièces justificatives / Pièces justificatives Langue / Pièces justificatives Valeur
 
-            echo "<h2 id=\"dest_pieces\">Pièces justificatives / Pièces justificatives Langue</h2>";
+            echo "<h2 id=\"dest_pieces\">Pièces justificatives / Pièces justificatives Langue<span><tt>$dest_piece</tt> / <tt>$dest_piece_lang</tt></span></h2>";
             fwrite($output_file, "\n-- Pièces justificatives / Pièces justificatives Langue\n\n");
 
             $nb_to_insert = 0;
@@ -918,7 +1081,7 @@ foreach ($detected_files as $file) {
 
                 // Pièces justificatives
 
-                $dest_piece_values = [$last_piece_ref, $last_act_ref, $last_uti_ref, "'$dest_dcreat'", "'$dest_ucreat'"];
+                $dest_piece_values = [$last_piece_ref, $act_ref, $uti_ref, "'$dest_dcreat'", "'$dest_ucreat'"];
                 
                 $insert_into_query = "INSERT INTO $dest_piece (" . implode(", ", $dest_piece_cols) . ") VALUES (" . implode(", ", $dest_piece_values) . ")";
                 execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
@@ -981,7 +1144,7 @@ foreach ($detected_files as $file) {
 
             // Exploitants / Abonnements / Pièces justificatives
 
-            echo "<h2 id=\"dest_exploitants\">Exploitants / Abonnements / Pièces justificatives Valeur</h2>";
+            echo "<h2 id=\"dest_exploitants\">Exploitants / Abonnements / Pièces justificatives Valeur<span><tt>$dest_exploitant</tt> / <tt>$dest_abonnement</tt> / <tt>$dest_piece_val</tt></span></h2>";
             fwrite($output_file, "\n-- Exploitants / Abonnements / Pièces justificatives Valeur\n\n");
 
             $nb_to_insert = 0;
@@ -989,6 +1152,7 @@ foreach ($detected_files as $file) {
             $warnings = [];
 
             $req_last_exp_ref = $dest_conn->query(build_query("SELECT EXP_REF FROM $dest_exploitant", "", "EXP_REF DESC", "1"))->fetch();
+            echo build_query("SELECT EXP_REF FROM $dest_exploitant", "", "EXP_REF DESC", "1");
             $last_exp_ref = ($req_last_exp_ref == null) ? 0 : $req_last_exp_ref["EXP_REF"];
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
@@ -1006,10 +1170,10 @@ foreach ($detected_files as $file) {
                             array_push($dest_exploitant_values, "'".$row["ntiers"]."'");
                             break;
                         case "UTI_REF":
-                            array_push($dest_exploitant_values, "$last_uti_ref");
+                            array_push($dest_exploitant_values, "$uti_ref");
                             break;
                         case "GRA_REF":
-                            array_push($dest_exploitant_values, "$last_gra_ref");
+                            array_push($dest_exploitant_values, "$gra_ref");
                             break;
                         case "LAN_REF":
                             array_push($dest_exploitant_values, "1");
@@ -1031,7 +1195,7 @@ foreach ($detected_files as $file) {
 
                                     // Activité
 
-                                    $dest_activitecomm_values = [$last_aco_ref, $last_uti_ref, "'fff'", "'$dest_dcreat'", "'$dest_ucreat'"];
+                                    $dest_activitecomm_values = [$last_aco_ref, $uti_ref, "'fff'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
                                     $insert_into_query = "INSERT INTO $dest_activitecomm (" . implode(", ", $dest_activitecomm_cols) . ") VALUES (" . implode(", ", $dest_activitecomm_values) . ")";
                                     if ($display_dest_requests) echo "-- Correctif appliqué à la table $dest_activitecomm :<br>";
@@ -1240,24 +1404,19 @@ foreach ($detected_files as $file) {
 
             // Compteurs
 
-            echo "<h2 id=\"dest_compteurs\">Compteurs</h2>";
+            echo "<h2 id=\"dest_compteurs\">Compteurs<span><tt>$dest_compteur</tt></span></h2>";
             fwrite($output_file, "\n-- Compteurs\n\n");
 
-            $nb_to_insert = 0;
-            $nb_inserted = 0;
+            $nb_to_update = 0;
+            $nb_updated = 0;
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
-            $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(MAR_REF) + 1 FROM $dest_marche) where CPT_TABLE = 'actreffacture'";
-            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+            $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(MAR_REF) + 1 FROM $dest_marche) WHERE CPT_TABLE = 'actreffacture'";
+            execute_query($update_query, $nb_updated, $nb_to_update);
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
+            summarize_queries($nb_updated, $nb_to_update, $nb_errors, [], $nb_warnings);
 
-// STILL TODO
-/*
-update marche set mar_cptfacture = 1;
-update article set art_prix_ht = 0, art_abo_prix_ht = 0, art_abo_prix_ttc  = 0, art_abo_taux_tva = 0, art_taux_tva = 0, art_ordre = 0;
-*/
 
             echo "</section>";
 
@@ -1273,6 +1432,8 @@ update article set art_prix_ht = 0, art_abo_prix_ht = 0, art_abo_prix_ttc  = 0, 
             </script>
 
             <?php
+
+            $mysql_conn->exec("UPDATE reprise SET date_fin = '" . time() . "', conflits = $nb_warnings, erreurs = $nb_errors, etat = 2 WHERE id = $reprise_id");
 
         } // Fin "si $get analyze = 1"
 
@@ -1324,6 +1485,7 @@ h1 {
 
 init h1 {
     margin-top: 0;
+    padding-top: 2vh;
 }
 
 aside h1 {
@@ -1350,12 +1512,29 @@ h2 {
     border-top: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-h3 {
+aside h2 {
+    margin: 30px 25px;
+    margin-top: 0;
+    color: white;
+    text-align: center;
+    border-color: rgba(255, 255, 255, 0.5);
+    opacity: 0.7;
+}
+
+h2 a {
+    font-size: inherit;
+}
+
+h2 span {
+    float: right;
+}
+
+/*h3 {
     margin: 20px 0;
     padding-left: 10px;
     font-size: 110%;
     border-left: 10px solid orange;
-}
+}*/
 
 /* Liens */
 
@@ -1375,7 +1554,7 @@ init {
     flex: 0.75;
     display: flex;
     margin: 0 auto;
-    padding: 20px;
+    padding: 30px 20px;
 }
 
 init table th, init table td {
@@ -1413,7 +1592,7 @@ aside a:hover {
 aside ol {
     display: flex;
     position: sticky;
-    top: 20px;
+    top: -1px;
     flex-direction: column;
     list-style-type: none;
 }
@@ -1547,8 +1726,12 @@ form field > * {
 
 form field span {
     position: absolute;
-    right: 50%;
+    right: 50.5%;
     cursor: pointer;
+}
+
+form field ok, form field nok {
+    flex: 0;
 }
 
 /* Autres */
@@ -1654,11 +1837,7 @@ p.danger {
     background: rgb(240, 200, 200);
 }
 
-p + p {
-    margin-top: 20px;
-}
-
-div.pre + p {
+p + p, div.pre + p, table + p {
     margin-top: 20px;
 }
 
@@ -1673,6 +1852,13 @@ div.pre p {
     margin: -18px 0 0 0;
     padding: 2px;
     float: right;
+}
+
+tt {
+    margin: 0 3px;
+    font-family: Courier;
+    font-size: 95%;
+    opacity: 0.8;
 }
 
 </style>
