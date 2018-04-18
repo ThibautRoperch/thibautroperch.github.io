@@ -655,7 +655,7 @@ CREATE TABLE IF NOT EXISTS `reprise`
 (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `token` varchar(250) DEFAULT NULL COMMENT 'md5 de la première ligne des données du fichier des marchés',
-  `client` varchar(50) NOT NULL,
+  `nom` varchar(50) NOT NULL,
   `date_debut` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_fin` timestamp NULL DEFAULT NULL,
   `etat` int(2) NOT NULL COMMENT '0 = Initialisation en cours, 1 = Analyse en cours, 2 = Terminée, 3 = Interrompue',
