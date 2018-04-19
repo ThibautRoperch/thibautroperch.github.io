@@ -107,7 +107,7 @@ init {
     flex: 0.75;
     display: flex;
     margin: 0 auto;
-    padding: 60px 20px;
+    padding: 40px 20px 60px 20px;
 }
 
 init table th, init table td {
@@ -212,6 +212,7 @@ summary {
     height: 100vh;
     flex-direction: column;
     justify-content: center;
+    color: rgba(0, 0, 0, 0.8);
 }
 
 summary * {
@@ -219,8 +220,27 @@ summary * {
 }
 
 summary > * {
-    margin: 35px 0;
+    margin: 35px auto;
     padding: 0;
+    text-align: center;
+}
+
+summary table {
+    width: auto;
+    border-collapse: separate;
+    border-spacing: 50px 0;
+}
+
+summary table tr {
+    border: 0;
+}
+
+summary table th {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+summary table th, summary table td {
+    padding: 5px 0;
     text-align: center;
 }
 

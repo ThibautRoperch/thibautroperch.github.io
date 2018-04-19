@@ -651,17 +651,35 @@ CREATE TABLE IF NOT EXISTS `dest_societe_propriete_valeur`
     UCREAT VARCHAR(250)
 );
 
-CREATE TABLE IF NOT EXISTS `reprise`
+CREATE TABLE IF NOT EXISTS `reprise_placier`
 (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `token` varchar(250) DEFAULT NULL COMMENT 'md5 de la première ligne des données du fichier des marchés',
-  `nom` varchar(50) NOT NULL,
+  `nom` varchar(50) DEFAULT NULL,
   `date_debut` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_fin` timestamp NULL DEFAULT NULL,
   `etat` int(2) NOT NULL COMMENT '0 = Initialisation en cours, 1 = Analyse en cours, 2 = Terminée, 3 = Interrompue',
-  `marches` int(11) NOT NULL DEFAULT '0',
-  `articles` int(11) NOT NULL DEFAULT '0',
-  `exploitants` int(11) NOT NULL DEFAULT '0',
+  `marches_src` int(11) NOT NULL DEFAULT '0',
+  `articles_src` int(11) NOT NULL DEFAULT '0',
+  `exploitants_src` int(11) NOT NULL DEFAULT '0',
+  `marches_dest` int(11) NOT NULL DEFAULT '0',
+  `articles_dest` int(11) NOT NULL DEFAULT '0',
+  `exploitants_dest` int(11) NOT NULL DEFAULT '0',
+  `conflits` int(11) NOT NULL DEFAULT '0',
+  `erreurs` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `reprise_odp`
+(
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `token` varchar(250) DEFAULT NULL COMMENT 'md5 de la première ligne des données du fichier des marchés',
+  `nom` varchar(50) DEFAULT NULL,
+  `date_debut` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `date_fin` timestamp NULL DEFAULT NULL,
+  `etat` int(2) NOT NULL COMMENT '0 = Initialisation en cours, 1 = Analyse en cours, 2 = Terminée, 3 = Interrompue',
+  `instructions_src` int(11) NOT NULL DEFAULT '0',
+  `instructions_dest` int(11) NOT NULL DEFAULT '0',
   `conflits` int(11) NOT NULL DEFAULT '0',
   `erreurs` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
