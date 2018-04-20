@@ -59,9 +59,9 @@ $keywords_files = ["marche/marché", "classe/article/tarif", "exploitant/assujet
 
 // Données extraites des fichiers sources (dibtic)
 $extracted_files_content = [
-    "Libellé du marché, jours des marchés.",
-    "Nom de l’article, unité, prix unitaire, taxe, marchés associés à l’article. Les articles qui ont le même nom seront fusionnés s'ils sont complémentaires au niveau du tarif (passagers et abonnés), ignorés sinon. Un <tt>X</tt> dans la colonne <tt>abo</tt> indique que le tarif est un tarif d'abonnés. Une colonne <tt>code_pda</tt> doit être rajoutée.",
-    "Code de l’exploitant, nom, prénom, raison sociale, adresse (rue/CP/ville), date de suppression s’il a été supprimé, numéro de téléphone et de portable, adresse mail, type d’activité et abonnements aux marchés associés à l’exploitant, pièces justificatives avec date d'échéance."
+    "Libellé et jour(s) de chaque marché.",
+    "Les articles qui ont le même nom seront fusionnés s'ils sont complémentaires au niveau du tarif (passagers et abonnés), ignorés sinon. Un <tt>X</tt> dans la colonne <tt>abo</tt> indique que le tarif est un tarif d'abonnés. Les codes PDA des tarifs passagers doivent être renseignés dans une colonne <tt>code_pda</tt>. Des colonnes <tt>date_debut</tt> et <tt>date_fin</tt> peuvent être ajoutées afin d'expliciter la période de validité de l'article (sur l'année en cours par défaut). Une colonne <tt>marches</tt> peut être ajoutée pour spécifier le ou les codes des marchés (en les séparant par une virgule) associé(s) à l'article (par défaut, les articles sont ajoutés aux marchés appartenant à leur groupe <tt>numc</tt>).",
+    "Code de l’exploitant, raison sociale, nom/prénom, adresse, numéro de tel, mail, activité, abonnements aux marchés associés à l’exploitant, pièces justificatives avec date d'échéance. Les exploitants sans nom ou possédant une date de suppression non vide ne seront pas repris."
     ];
 
 // Nom du fichier de sortie contenant les requêtes SQL à envoyer (GEODP v1)
@@ -294,6 +294,20 @@ function string_to_date($string, $invert_day_month) {
     return $test_mode ? "$year/$month/$day" : "$day/$month/$year";
 }
 
+function reformate_date($string) {
+    $matches = [];
+    preg_match('/([0-9]+).([0-9]+).([0-9]+)/', $string, $matches); // array(4) { [0]=> string(9) "6/12/2018" [1]=> string(1) "6" [2]=> string(2) "12" [3]=> string(4) "2018" }
+    if (count($matches) < 4) return NULL;
+
+    // dd/mm/aa ou dd/mm/aaaa
+
+    $day = (strlen($matches[1]) < 2) ? "0".$matches[1] : $matches[1];
+    $month = (strlen($matches[2]) < 2) ? "0".$matches[2] : $matches[2];
+    $year = substr($matches[3], -2);
+
+    return "$day/$month/$year";
+}
+
 function build_query($main, $where, $order, $limit) {
     global $test_mode;
 
@@ -412,7 +426,6 @@ if (isset($_FILES) && count($_FILES) > 0) {
         echo "</ul>";
         echo "</alert>";
         if (isset($_GET["confirm"]) && $_GET["confirm"] === "1") {
-            var_dump($_FILES);
             foreach ($_FILES as $file) {
                 copy($file["tmp_name"], "$directory_name/" . $file["name"]);
             }
@@ -436,7 +449,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             echo "<init>";
             echo "<h1>$title</h1>";
 
-            echo "<form action=\"placier.php?analyze=1\" method=\"POST\">";
+            echo "<form action=\"placier.php?analyze=1\" method=\"POST\" onsubmit=\"loading()\" >";
 
                 echo "<h2>Fichiers dibtic à reprendre</h2>";
 
@@ -453,7 +466,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     $button_disabled = (count($files_to_convert) != count($expected_content)) ? "disabled" : "";
 
-                    echo "<p>Les fichiers doivent être pré-traités dans le but d'enlever des marchés, modifier les articles pour corriger leurs tarifs, leur nom, leur code PDA, ...</p>";
+                    echo "<p>Les fichiers doivent être pré-traités dans le but d'enlever des marchés, modifier les articles pour corriger leurs tarifs, leurs noms, leurs codes PDA, leurs périodes de validité et leurs unités.</p>";
 
                     if ($button_disabled === "") echo "<a class=\"button\" href=\"?analyze=1\" onclick=\"loading()\">Tester la reprise en local</a>";
 
@@ -465,7 +478,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo "<field><label for=\"type\">Type de client</label><input id=\"type\" name=\"type\" type=\"text\" placeholder=\"A définir\"/></field>";
 
                     echo "<field>";
-                        echo "<input type=\"submit\" onclick=\"loading()\" value=\"Effectuer la reprise\" $button_disabled />";
+                        echo "<input type=\"submit\" value=\"Effectuer la reprise\" $button_disabled />";
                     echo "</field>";
                 
                 echo "<h2>Autres paramètres</h2>";
@@ -495,7 +508,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     echo "<table>";
                     echo "<tr><th>Nom de la reprise</th><th>Date</th><th>Durée (secondes)</th><th>Etat</th></th><th>Conflits</th><th>Erreurs</th></tr>";
-                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table") as $row) {
+                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table WHERE nom != '[ MODE TEST ]'") as $row) {
                         $duree = strtotime($row["date_fin"]) - strtotime($row["date_debut"]);
                         $etat = "Etat inconnu";
                         switch ($row["etat"]) {
@@ -528,7 +541,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
         if ($analyse_mode) {
 
             $nom_reprise = (!$test_mode && $client_name === "") ? $oracle_login : $client_name;
-            $mysql_conn->exec("INSERT INTO reprise (nom, etat) VALUES ('$nom_reprise', 'placier', 1)");
+            $mysql_conn->exec("INSERT INTO $reprise_table (nom, etat) VALUES ('$nom_reprise', 1)");
             $reprise_id = $mysql_conn->lastInsertId();
             
             //// Sommaire
@@ -925,7 +938,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
 
-            $nb_marches = $mysql_conn->query("SELECT COUNT(*) FROM $dest_marche")->fetch()[0] - $nb_marches;
+            $nb_marches = $dest_conn->query("SELECT COUNT(*) FROM $dest_marche")->fetch()[0] - $nb_marches;
             $mysql_conn->exec("UPDATE $reprise_table SET marches_dest = $nb_marches WHERE id = $reprise_id");
 
             // Articles / Articles Langue
@@ -945,6 +958,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT * FROM $src_article WHERE nom != ''") as $row) {
                 $src_art_numc = $row["numc"];
+                $src_art_code = $row["code"];
                 $src_art_abo = ($row["abo"] === "") ? false : true;
 
                 if ($src_art_abo && $row["abo"] !== "X") {
@@ -995,24 +1009,63 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 } else {
                     $dest_marches_ref = [];
                     // Pour obtenir les marchés de référence de cet article (une insertion de cet article pour chaque marché de ref trouvé, il en résultera plusieurs lignes correspondant à un même article mais associé à des marchés différents) :
-                    //   Regarder le `groupe` des marchés identique au `numc` de l'article
-                    //   Considérer comme marchés de référence tous les marchés ayant pour groupe le `numc` de l'article
-                    foreach ($src_conn->query("SELECT code FROM $src_marche WHERE groupe = '$src_art_numc'") as $m1) {
-                        $marche_code = $m1["code"];
+                    //   Regarder la colonne `marches` si elle existe et si elle est non vide, sinon :
+                    //     Regarder le `groupe` des marchés identique au `numc` de l'article
+                    //     Considérer comme marchés de référence tous les marchés ayant pour groupe le `numc` de l'article
+                    if (isset($row["marches"]) && $row["marches"] !== "") {
+                        // Si cette colonne existe dans le fichier des articles, elle contient les codes des marchés à prendre en compte plutôt que les marchés du groupe `numc` de l'article
+                        // Les codes sont normalement séparés par une virgule
+                        $str_marches_codes = str_replace(" ", "", $row["marches"]);
+                        $marches_codes = explode(",", $str_marches_codes);
                         // Il y a potentiellement plusieurs marché qui ont le même code (un marché est ouvert x jours -> x marchés insérés, qui ont tous les même code de marché)
                         // Il faut donc récupérer dans la table de destination des marchés toutes les MAR_REF où il y a ce code et les ajouter au tableau pour que l'article soit associé à tous les marchés portant ce code
-                        foreach ($dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$marche_code'", "", "")) as $m2) {
-                            $marche_ref = $m2["MAR_REF"];
-                            array_push($dest_marches_ref, $marche_ref);
+                        foreach ($marches_codes as $marche_code) {
+                            foreach ($dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$marche_code'", "", "")) as $m2) {
+                                $marche_ref = $m2["MAR_REF"];
+                                array_push($dest_marches_ref, $marche_ref);
+                            }
+                        }
+                        if (count($dest_marches_ref) === 0) {
+                            array_push($warnings, "Le(s) codes de marché(s) associé(s) à l'article " . $row["nom"] . " n'existe(nt) pas ($str_marches_codes), il n'est donc pas inséré");
+                        }
+                    } else {
+                        foreach ($src_conn->query("SELECT code FROM $src_marche WHERE groupe = '$src_art_numc'") as $m1) {
+                            $marche_code = $m1["code"];
+                            // Il y a potentiellement plusieurs marché qui ont le même code (un marché est ouvert x jours -> x marchés insérés, qui ont tous les même code de marché)
+                            // Il faut donc récupérer dans la table de destination des marchés tous les MAR_REF où il y a ce code et les ajouter au tableau pour que l'article soit associé à tous les marchés portant ce code
+                            foreach ($dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$marche_code'", "", "")) as $m2) {
+                                $marche_ref = $m2["MAR_REF"];
+                                array_push($dest_marches_ref, $marche_ref);
+                            }
+                        }
+                        if (count($dest_marches_ref) === 0) {
+                            array_push($warnings, "L'article " . $row["nom"] . " a un numc qui ne correspond à aucun groupe de marché ($src_art_numc), il n'est donc pas inséré");
                         }
                     }
 
-                    if (count($dest_marches_ref) === 0) {
-                        array_push($warnings, "L'article " . $row["nom"] . " a un numc qui ne correspond à aucun groupe de marché ($src_art_numc), il n'est donc pas inséré");
-                    } else {
-                        $dest_art_code = $row["code_pda"]; // NULL si tarif d'abonnés
+                    if (count($dest_marches_ref) !== 0) {
+                        // $date_debut = $test_mode ? date("y/01/01", time()) : date("01/01/y", time()); // 1 janvier de cette année
+                        $date_debut = string_to_date(date("01/01/y", time()), false); // 1 janvier de cette année
+                        if (!isset($row["date_debut"]) || string_to_date($row["date_debut"], true) === NULL) {
+                            // array_push($warnings, "La colonne 'date_debut' n'existe pas ou la date n'est pas au format dd/yy/aaaa dans le fichier des articles " . $source_files["articles"] . " pour l'article " . $row["nom"] . ", la date de début de validité de l'article sera donc mise au 1er janvier de cette année");
+                        } else {
+                            $date_debut = string_to_date($row["date_debut"], true);
+                        }
+                        
+                        // $date_fin = $test_mode ? date("y/12/31", time()) : date("31/12/y", time()); // 31 décembre de cette année
+                        $date_fin = string_to_date(date("31/12/y", time()), false); // 31 décembre de cette année
+                        if (!isset($row["date_fin"]) || string_to_date($row["date_fin"], true) === NULL) {
+                            // array_push($warnings, "La colonne 'date_fin' n'existe pas ou la date n'est pas au format dd/yy/aaaa dans le fichier des articles " . $source_files["articles"] . " pour l'article " . $row["nom"] . ", la date de fin de validité de l'article sera donc mise au 31 décembre de cette année");
+                        } else {
+                            $date_fin = string_to_date($row["date_fin"], true);
+                        }
+
+                        $dest_art_code = $row["code_pda"]; // sera NULL si l'article est un tarif d'abonnés
                         if (!$src_art_abo && strlen($dest_art_code) > 6) {
                             array_push($warnings, "Le code de l'article " . $row["nom"] . ", $dest_art_code, est supérieur à 6 caractères");
+                        }
+                        if (!$src_art_abo && strlen($dest_art_code) === "") {
+                            array_push($warnings, "Le code de l'article " . $row["nom"] . " est vide");
                         }
 
                         // Insérer un nouvel article pour chacun de ses marchés de référence
@@ -1088,17 +1141,14 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                         array_push($dest_article_values, "0");
                                         break;
                                     case "ART_COMMENTAIRE":
-                                        array_push($dest_article_values, "'$dest_art_code'");
+                                        $dest_numc_code = "$src_art_numc-$src_art_code";
+                                        array_push($dest_article_values, "'$dest_numc_code'");
                                         break;
                                     case "ART_VALIDE_DEPUIS":
-                                        // 1 janvier de cette année
-                                        $first_jan = $test_mode ? date("y/01/01", time()) : date("01/01/y", time());
-                                        array_push($dest_article_values, "'$first_jan'");
+                                        array_push($dest_article_values, "'$date_debut'");
                                         break;
                                     case "ART_VALIDE_JUSQUA":
-                                        // 31 décembre de cette année
-                                        $last_dec = $test_mode ? date("y/12/31", time()) : date("31/12/y", time());
-                                        array_push($dest_article_values, "'$last_dec'");
+                                        array_push($dest_article_values, "'$date_fin'");
                                         break;
                                     case "ART_VISIBLE":
                                         array_push($dest_article_values, "1");
@@ -1132,7 +1182,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
 
-            $nb_articles = $mysql_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0] - $nb_articles;
+            $nb_articles = $dest_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0] - $nb_articles;
             $mysql_conn->exec("UPDATE $reprise_table SET articles_dest = $nb_articles WHERE id = $reprise_id");
 
             // Activités
@@ -1507,7 +1557,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
 
-            $nb_exploitants = $mysql_conn->query("SELECT COUNT(*) FROM $dest_exploitant")->fetch()[0] - $nb_exploitants;
+            $nb_exploitants = $dest_conn->query("SELECT COUNT(*) FROM $dest_exploitant")->fetch()[0] - $nb_exploitants;
             $mysql_conn->exec("UPDATE $reprise_table SET exploitants_dest = $nb_exploitants WHERE id = $reprise_id");
 
             // Compteurs
@@ -1569,104 +1619,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 <layer><message></message></layer>
 
 </body>
+
+<script src="js/script.js"></script>
+
 </html>
-
-<script>
-
-// Accueil
-
-function autocomplete_password(user_input) {
-    document.querySelector("#password").value = user_input.value;
-}
-
-function show_password(show) {
-    var password_input = document.querySelector("#password");
-    if (show) {
-        password_input.type = "text";
-    } else {
-        password_input.type = "password";
-    }
-}
-
-function loading() {
-    display_message("Reprise en cours", false);
-}
-
-function display_message(message, popup_mode) {
-    var new_class_name = "displayed";
-    new_class_name += popup_mode ? " popup" : "";
-    document.querySelector("layer").className = new_class_name;
-    document.querySelector("layer").querySelector("message").innerHTML = message;
-}
-
-function hide_message() {
-    document.querySelector("layer").className = "";
-}
-
-// https://script-tutorials.developpez.com/tutoriels/html5/drag-drop-file-upload-html5/
-var droparea = document.querySelector(".droparea");
-if (droparea) {
-    droparea.addEventListener("dragover", drag_over, false);
-}
-
-function drag_over(event) { // survol
-    event.stopPropagation();
-    event.preventDefault();
-
-    display_message("Glisser-déposer les fichiers", false);
-
-    var layer = document.querySelector("layer");
-    layer.addEventListener("drop", drop, false);
-}
-
-var form_data = new FormData();
-
-function drop(event) { // glisser deposer
-    event.stopPropagation();
-    event.preventDefault();
-
-    dropped_files = event.dataTransfer.files;
-    if (!dropped_files || !dropped_files.length) return;
-
-    for (var i = 0; i < dropped_files.length; ++i) {
-        form_data.append(""+i, dropped_files[i]);
-    }
-
-    upload_files(false);
-}
-
-function upload_files(confirm_erase) {
-    var get_confirm = confirm_erase ? "?confirm=1" : "";
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "placier.php" + get_confirm);
-    xhr.onload = function() {
-        if (!confirm_erase) {
-            var parser = new DOMParser();
-            var alert = parser.parseFromString(xhr.response, "text/html").querySelector("alert");
-            var message = alert.innerHTML + "<buttons><a class=\"button\" onclick=\"hide_message()\" href=\"#\">Annuler</a><button onclick=\"upload_files(true)\">Confirmer</button></buttons>";
-            display_message(message, true);
-        } else {
-            display_message("Importation des fichiers", false);
-            location.reload();
-        }
-    };
-    xhr.send(form_data);
-}
-
-// Analyse
-
-summary_li = (document.querySelector("#sommaire")) ? document.querySelector("#sommaire").querySelectorAll("li") : [];
-for (li of summary_li) {
-    li.onclick = function() { clicked_link(this); }
-}
-
-function clicked_link(clicked_li) {
-    var new_class_name = (clicked_li.className === "") ? "active" : "";
-    for (li of summary_li) {
-        li.className = "";
-    }
-    clicked_li.className = new_class_name;
-}
-
-</script>

@@ -685,6 +685,33 @@ CREATE TABLE IF NOT EXISTS `reprise_odp`
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE IF NOT EXISTS `dest_dossier_instruction`
+(
+    DI_REF      INT,
+    DOS_REF     INT,
+    DET_REF     INT,
+    EXP_REF     INT,
+    DI_NUMERO   VARCHAR(250),
+    DI_DATE_DEPOT   DATE,
+    DI_MOYEN_DEPOT  VARCHAR(250),
+    DI_NRUE     INT,
+    DI_NRUE_ALPHA VARCHAR(250),
+    RUE_REF     INT,
+    DI_ADRESSE  VARCHAR(250),
+    DI_CP       VARCHAR(250),
+    DI_VILLE    VARCHAR(250),
+    DI_COMPLEMENTADRESSE    VARCHAR(250),
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250),
+    DI_CONTACT  INT,
+    DI_ARCHIVE  INT,
+    DI_ARCHIVE_DATE DATE,
+    ITP_REF     INT,
+    DI_CODE     VARCHAR(250),
+    DI_DATE_MOD_TABLETTE    DATE,
+    DI_EMP_MOD_TABLETTE INT
+);
+
 
 -- DELETE FROM dest_marche;
 -- DELETE FROM dest_marche_langue;

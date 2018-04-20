@@ -42,9 +42,10 @@ init h1 {
 }
 
 aside h1 {
-    margin: 30px 0;
-    padding: 0;
+    margin: 0;
+    padding: 30px 0;
     color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /*h2 {
@@ -66,11 +67,11 @@ h2 {
 }
 
 aside h2 {
-    margin: 30px 25px;
-    margin-top: 0;
+    margin: 30px 0;
+    padding: 0;
     color: white;
     text-align: center;
-    border-color: rgba(255, 255, 255, 0.5);
+    border: 0;
     opacity: 0.7;
 }
 
@@ -166,7 +167,7 @@ aside ol li ol {
 }
 
 aside ol li ol li a {
-    padding: 10px 35px;
+    padding: 11px 35px;
     border: none;
     color: rgba(0, 0, 0, 0.5);
 }

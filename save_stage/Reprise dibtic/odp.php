@@ -46,7 +46,7 @@ $directory_name = "./dibtic_odp";
 $expected_content = ["instructions"];
 
 // Noms possibles des fichiers sources (dibtic)
-$keywords_files = ["instruction/evenement", "exploitant/tier"];
+$keywords_files = ["instruction/evenement", "exploitant/tier/assujet"];
 
 // Données extraites des fichiers sources (dibtic)
 $extracted_files_content = [
@@ -76,8 +76,8 @@ $display_source_files_contents = false; // true | false
 
 // Nom des tables de destination (GEODP v1)
 $dest_dossier = "dest_dossier";
-$dest_instruction = "dest_instruction";
-$dest_instruction_event = "dest_instruction_evenement";
+$dest_instruction = "dest_dossier_instruction";
+$dest_instruction_event = "dest_dossier_instruction_evenement";
 $dest_exploitant = "dest_exploitant";
 
 if (!$test_mode) {
@@ -256,6 +256,20 @@ function string_to_date($string, $invert_day_month) {
     }
 
     return $test_mode ? "$year/$month/$day" : "$day/$month/$year";
+}
+
+function reformate_date($string) {
+    $matches = [];
+    preg_match('/([0-9]+).([0-9]+).([0-9]+)/', $string, $matches); // array(4) { [0]=> string(9) "6/12/2018" [1]=> string(1) "6" [2]=> string(2) "12" [3]=> string(4) "2018" }
+    if (count($matches) < 4) return NULL;
+
+    // dd/mm/aa ou dd/mm/aaaa
+
+    $day = (strlen($matches[1]) < 2) ? "0".$matches[1] : $matches[1];
+    $month = (strlen($matches[2]) < 2) ? "0".$matches[2] : $matches[2];
+    $year = substr($matches[3], -2);
+
+    return "$day/$month/$year";
 }
 
 function build_query($main, $where, $order, $limit) {
@@ -457,7 +471,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     echo "<table>";
                     echo "<tr><th>Nom de la reprise</th><th>Date</th><th>Durée (secondes)</th><th>Etat</th></th><th>Conflits</th><th>Erreurs</th></tr>";
-                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table") as $row) {
+                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table WHERE nom != '[ MODE TEST ]'") as $row) {
                         $duree = strtotime($row["date_fin"]) - strtotime($row["date_debut"]);
                         $etat = "Etat inconnu";
                         switch ($row["etat"]) {
@@ -490,7 +504,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
         if ($analyse_mode) {
 
             $nom_reprise = (!$test_mode && $client_name === "") ? $oracle_login : $client_name;
-            $mysql_conn->exec("INSERT INTO reprise (nom, etat) VALUES ('$nom_reprise', 'odp', 1)");
+            $mysql_conn->exec("INSERT INTO $reprise_table (nom, etat) VALUES ('$nom_reprise', 1)");
             $reprise_id = $mysql_conn->lastInsertId();
             
             //// Sommaire
@@ -671,7 +685,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             echo "<h1 id=\"src_formatted_instructions\">Formatage des instructions</h1>";
 
-            echo "<h2><span><tt>$src_formatted_instruction</tt></span></h2>";
+            echo "<h2><span><tt>$src_instruction</tt> vers <tt>$src_formatted_instruction</tt></span></h2>";
+            fwrite($output_file, "\n-- Formatage des instructions\n\n");
 
             $nb_to_format = 0;
             $nb_formatted = 0;
@@ -686,6 +701,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $create_table_query = "CREATE TABLE $src_formatted_instruction (`" . implode("` VARCHAR(250), `", $src_instruction_cols) . "` VARCHAR(250))";
             $src_conn->exec($create_table_query);
 
+            if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT * FROM $src_instruction") as $row) {
                 $instruction_num = $row["N° d'instruction"];
 
@@ -696,22 +712,141 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     foreach ($src_instruction_cols as $col) {
                         $value = $row[$col];
+                        $new_value = $value;
 
                         switch ($col) {
-                            case "zefzef":
-                                // CHANGE RLA VLAUE
+                            case "N° d'instruction":
+                                $value = str_replace(" ", "", $value);
+                                if ($value === "") {
+                                    $new_value = "999999";
+                                    array_push($warnings, "Le numéro d'instruction est vide, il est donc changé en $new_value");
+                                }
+                                break;
+                            case "Date du dépôt":
+                                $depot_date = date_create_from_format("d/m/Y", $value);
+                                if ($depot_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        $new_value = "";
+                                        array_push($warnings, "La date du dépôt ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date du dépôt ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                }
+                                break;
+                            case "Numéro tiers": // exp_code_comptable
+                                $value = str_replace(" ", "", $value);
+                                $new_value = $value;
+                                while (strlen($new_value) < 6) {
+                                    $new_value = "0$new_value";
+                                }
+                                if (strlen($value) < 6) {
+                                    array_push($warnings, "Le numéro tiers $value fait moins de 6 caractères, il est donc changé en $new_value");
+                                }
+                                break;
+                            case "Date de notification de l'arrêté": // non utilisé dans les requêtes du fichier des instructions TODO
+                                $notif_arrete_date = date_create_from_format("d/m/Y", $value);
+                                if ($notif_arrete_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        $new_value = "";
+                                        array_push($warnings, "La date de notification de l'arrêté ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date de notification de l'arrêté ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                }
+                                break;
+                            case "Date du dossier complet":
+                                $dossier_complet_date = date_create_from_format("d/m/Y", $value);
+                                if ($dossier_complet_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        $new_value = "";
+                                        array_push($warnings, "La date de dossier complet ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date de dossier complet ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                }
+                                break;
+                            case "Date de transmission à l'inspection":
+                                $transmission_date = date_create_from_format("d/m/Y", $value);
+                                if ($transmission_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        $new_value = "";
+                                        array_push($warnings, "La date de transmission à l'inspection ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date de transmission à l'inspection ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                    $value = $new_value;
+                                }
+                                break;
+                            case "Date d'envoi des avis":
+                                $envoi_avis_date = date_create_from_format("d/m/Y", $value);
+                                if ($envoi_avis_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        $new_value = "";
+                                        array_push($warnings, "La date d'envoi des avis ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date d'envoi des avis ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                }
+                                break;
+                            case "Date d'envoi de l'arrêté à la signature":
+                                $envoi_arrete_signature_date = date_create_from_format("d/m/Y", $value);
+                                if ($envoi_arrete_signature_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        $new_value = "";
+                                        array_push($warnings, "La date d'envoi de l'arrêté à la signature ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date d'envoi de l'arrêté à la signature ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                }
+                                break;
+                            case "Date de retour de l'arrêté en signature":
+                                $retour_arrete_signature_date = date_create_from_format("d/m/Y", $value);
+                                if ($retour_arrete_signature_date === false) {
+                                    $new_value = reformate_date($value);
+                                    if ($new_value === NULL) {
+                                        array_push($warnings, "La date de retour de l'arrêté en signature ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa et ne peut être convertie, elle est donc nullifiée");
+                                    } else {
+                                        array_push($warnings, "La date de retour de l'arrêté en signature ($value) de l'instruction $instruction_num n'est pas au format jj/mm/aaaa, elle est donc changée en $new_value");
+                                    }
+                                }
+                                break;
+                            case "Objet de la demande":
+                                $new_value = $value;
+
+                                $eventaire = []; preg_match('/.ventaire/', $value, $eventaire);
+                                $terrasse = []; preg_match('/.errasse/', $value, $terrasse);
+                                $jardinieres = []; preg_match('/.ardini.re/', $value, $jardinieres);
+
+                                if (isset($eventaire[0])) {
+                                    $new_value = "Etalage";
+                                    array_push($warnings, "L'objet de la demande ($value) de l'instruction $instruction_num correspond au domaine $new_value de GEODP, il est donc changé");
+                                } else if (isset($terrasse[0])) {
+                                    $new_value = "Terrasse";
+                                } else if (isset($jardinieres[0])) {
+                                    $new_value = "Jardinières";
+                                } else {
+                                    $new_value = NULL;
+                                    array_push($warnings, "L'objet de la demande ($value) de l'instruction $instruction_num ne correspond a aucun domaine de GEODP, il est donc nullifié");
+                                }
                                 break;
                             default:
                                 break;
                         }
 
-                        array_push($dest_marche_values, addslashes($value));
+                        array_push($dest_marche_values, addslashes_nullify($new_value));
                     }
 
-                    $insert_into_query = "INSERT INTO $src_formatted_instruction (`" . implode("`, `", $src_instruction_cols) . "`) VALUES ('" . implode("', '", $dest_marche_values) . "')";
+                    $insert_into_query = "INSERT INTO $src_formatted_instruction (`" . implode("`, `", $src_instruction_cols) . "`) VALUES (" . implode(", ", $dest_marche_values) . ")";
                     execute_query($insert_into_query, $nb_formatted, $nb_to_format);
                 }
             }
+            if ($display_dest_requests) echo "</div>";
 
             summarize_queries($nb_formatted, $nb_to_format, $nb_errors, $warnings, $nb_warnings);
 
@@ -720,6 +855,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
             echo "<h1 id=\"destination\">Insertion des données GEODP</h1>";
             fwrite($output_file, "\n---------------------------------------------\n-- Insertion des données GEODP\n--\n\n");
 
+            $dest_dossier_cols = ["DI_NUMERO", "DI_DATE", ""];
+            
             // Instructions
 
             echo "<h2 id=\"dest_instructions\">Instructions<span><tt>$dest_instruction</tt></span></h2>";
@@ -728,7 +865,57 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $nb_to_insert = 0;
             $nb_inserted = 0;
 
+            $req_last_di_ref = $dest_conn->query(build_query("SELECT MAX(DI_REF) FROM $dest_instruction", "", "", ""))->fetch()[0];
+
+            // if (!$req_last_di_ref) {
+            //     echo "C NULL";
+            // }
+
+            $nb_instruction = $dest_conn->query("SELECT COUNT(*) FROM $dest_instruction")->fetch()[0];
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT * FROM $src_formatted_instruction") as $row) {
+                $last_exp_ref += 1;
+
+                $dest_instruction_values = [];
+
+                foreach ($dest_exploitant_cols as $col) {
+                    switch ($col) {
+                        case "DI_REF":
+                            break;
+                        case "DOS_REF":
+                            break;
+                        case "DET_REF":
+                            break;
+                        case "EXP_REF":
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                $insert_into_query = "INSERT INTO $dest_exploitant (" . implode(", ", $dest_exploitant_cols) . ") VALUES (" . implode(", ", $dest_exploitant_values) . ")";
+                execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+            }
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
+
+            $nb_exploitants = $dest_conn->query("SELECT COUNT(*) FROM $dest_exploitant")->fetch()[0] - $nb_exploitants;
+            $mysql_conn->exec("UPDATE $reprise_table SET exploitants_dest = $nb_exploitants WHERE id = $reprise_id");
+
+            // Compteurs
+
+            echo "<h2 id=\"dest_compteurs\">Compteurs<span><tt>$dest_compteur</tt></span></h2>";
+            fwrite($output_file, "\n-- Compteurs\n\n");
+
             // TODO
+
+            // dossier_instruction
+            // dossier_instruction_evenement
+            // dossier_document
+
+            // NE PAS OUBLIER D'UTILISER string_to_date() dans les requêtes d'insertion dans les tables de destination, pour que la data ait la valeur d'un champ DATE relatif à la BDD de destination
 
 
             $mysql_conn->exec("UPDATE $reprise_table SET date_fin = '$timestamp', conflits = $nb_warnings, erreurs = $nb_errors, etat = 2 WHERE id = $reprise_id");
@@ -758,104 +945,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 <layer><message></message></layer>
 
 </body>
+
+<script src="js/script.js"></script>
+
 </html>
-
-<script>
-
-// Accueil
-
-function autocomplete_password(user_input) {
-    document.querySelector("#password").value = user_input.value;
-}
-
-function show_password(show) {
-    var password_input = document.querySelector("#password");
-    if (show) {
-        password_input.type = "text";
-    } else {
-        password_input.type = "password";
-    }
-}
-
-function loading() {
-    display_message("Reprise en cours", false);
-}
-
-function display_message(message, popup_mode) {
-    var new_class_name = "displayed";
-    new_class_name += popup_mode ? " popup" : "";
-    document.querySelector("layer").className = new_class_name;
-    document.querySelector("layer").querySelector("message").innerHTML = message;
-}
-
-function hide_message() {
-    document.querySelector("layer").className = "";
-}
-
-// https://script-tutorials.developpez.com/tutoriels/html5/drag-drop-file-upload-html5/
-var droparea = document.querySelector(".droparea");
-if (droparea) {
-    droparea.addEventListener("dragover", drag_over, false);
-}
-
-function drag_over(event) { // survol
-    event.stopPropagation();
-    event.preventDefault();
-
-    display_message("Glisser-déposer les fichiers", false);
-
-    var layer = document.querySelector("layer");
-    layer.addEventListener("drop", drop, false);
-}
-
-var form_data = new FormData();
-
-function drop(event) { // glisser deposer
-    event.stopPropagation();
-    event.preventDefault();
-
-    dropped_files = event.dataTransfer.files;
-    if (!dropped_files || !dropped_files.length) return;
-
-    for (var i = 0; i < dropped_files.length; ++i) {
-        form_data.append(""+i, dropped_files[i]);
-    }
-
-    upload_files(false);
-}
-
-function upload_files(confirm_erase) {
-    var get_confirm = confirm_erase ? "?confirm=1" : "";
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "odp.php" + get_confirm);
-    xhr.onload = function() {
-        if (!confirm_erase) {
-            var parser = new DOMParser();
-            var alert = parser.parseFromString(xhr.response, "text/html").querySelector("alert");
-            var message = alert.innerHTML + "<buttons><a class=\"button\" onclick=\"hide_message()\" href=\"#\">Annuler</a><button onclick=\"upload_files(true)\">Confirmer</button></buttons>";
-            display_message(message, true);
-        } else {
-            display_message("Importation des fichiers", false);
-            location.reload();
-        }
-    };
-    xhr.send(form_data);
-}
-
-// Analyse
-
-summary_li = (document.querySelector("#sommaire")) ? document.querySelector("#sommaire").querySelectorAll("li") : [];
-for (li of summary_li) {
-    li.onclick = function() { clicked_link(this); }
-}
-
-function clicked_link(clicked_li) {
-    var new_class_name = (clicked_li.className === "") ? "active" : "";
-    for (li of summary_li) {
-        li.className = "";
-    }
-    clicked_li.className = new_class_name;
-}
-
-</script>
