@@ -8,6 +8,7 @@
 
 <?php
 
+$script_file_name = "placier.php";
 $title = "Reprise dibtic vers GEODP v1<br>Placier";
 
 // Génère des tables à partir des fichiers lus, extrait les informations voulues et exécute + donne les requêtes SQL
@@ -60,7 +61,7 @@ $keywords_files = ["marche/marché", "classe/article/tarif", "exploitant/assujet
 // Données extraites des fichiers sources (dibtic)
 $extracted_files_content = [
     "Libellé et jour(s) de chaque marché.",
-    "Les articles qui ont le même nom seront fusionnés s'ils sont complémentaires au niveau du tarif (passagers et abonnés), ignorés sinon. Un <tt>X</tt> dans la colonne <tt>abo</tt> indique que le tarif est un tarif d'abonnés. Les codes PDA des tarifs passagers doivent être renseignés dans une colonne <tt>code_pda</tt>. Des colonnes <tt>date_debut</tt> et <tt>date_fin</tt> peuvent être ajoutées afin d'expliciter la période de validité de l'article (sur l'année en cours par défaut). Une colonne <tt>marches</tt> peut être ajoutée pour spécifier le ou les codes des marchés (en les séparant par une virgule) associé(s) à l'article (par défaut, les articles sont ajoutés aux marchés appartenant à leur groupe <tt>numc</tt>).",
+    "Les articles qui ont le même nom seront fusionnés s'ils sont complémentaires au niveau du tarif (passagers et abonnés), ignorés sinon. Un <tt>X</tt> dans la colonne <tt>abo</tt> indique que le tarif est un tarif d'abonnés. Les codes PDA des tarifs passagers doivent être renseignés dans une colonne <tt>code_pda</tt>. Des colonnes <tt>date_debut</tt> et <tt>date_fin</tt> peuvent être ajoutées afin d'expliciter la période de validité de l'article (sur l'année en cours par défaut). Une colonne <tt>marches</tt> peut être ajoutée pour spécifier le(s) code(s) marché (en les séparant par une virgule) associé(s) à l'article (par défaut, les articles sont ajoutés aux marchés appartenant à leur groupe <tt>numc</tt>).",
     "Code de l’exploitant, raison sociale, nom/prénom, adresse, numéro de tel, mail, activité, abonnements aux marchés associés à l’exploitant, pièces justificatives avec date d'échéance. Les exploitants sans nom ou possédant une date de suppression non vide ne seront pas repris."
     ];
 
@@ -99,7 +100,7 @@ $dest_activitecomm_lang = "dest_activitecommerciale_langue";
 $dest_piece = "dest_societe_propriete";
 $dest_piece_lang = "dest_societe_propriete_langue";
 $dest_exploitant = "dest_exploitant";
-$dest_abonnement = "dest_societe_marche";
+$dest_abonnement_marche = "dest_societe_marche";
 $dest_piece_val = "dest_societe_propriete_valeur";
 $dest_compteur = "dest_compteur";
 
@@ -118,7 +119,7 @@ if (!$test_mode) {
     $dest_piece = "SOCIETE_PROPRIETE";
     $dest_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
     $dest_exploitant = "EXPLOITANT";
-    $dest_abonnement = "SOCIETE_MARCHE";
+    $dest_abonnement_marche = "SOCIETE_MARCHE";
     $dest_piece_val = "SOCIETE_PROPRIETE_VALEUR";
     $dest_compteur = "COMPTEUR";
 }
@@ -449,7 +450,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             echo "<init>";
             echo "<h1>$title</h1>";
 
-            echo "<form action=\"placier.php?analyze=1\" method=\"POST\" onsubmit=\"loading()\" >";
+            echo "<form action=\"$script_file_name?analyze=1\" method=\"POST\" onsubmit=\"loading()\" >";
 
                 echo "<h2>Fichiers dibtic à reprendre</h2>";
 
@@ -576,7 +577,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         echo "<li><a href=\"#dest_compteurs\">Compteurs</a></li>";
                     echo "</ol>";
                 echo "</li>";
-            echo "<li><a href=\"placier.php\">Retour à l'accueil</a></li>";
+            echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
             echo "</ol>";
             echo "</aside>";
 
@@ -586,7 +587,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 echo "<h1>$nom_reprise</h1>";
                 echo "<p id=\"nb_errors\"></p>";
                 echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Articles</th><th>Exploitants</th></tr></table>";
-                echo $test_mode ? "<div><a href=\"placier.php\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
+                echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
 
             $nb_errors = 0;
@@ -594,7 +595,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             
             if ($erase_destination_tables) {
                 $dest_conn->exec("DELETE FROM $dest_piece_val");
-                $dest_conn->exec("DELETE FROM $dest_abonnement");
+                $dest_conn->exec("DELETE FROM $dest_abonnement_marche");
                 $dest_conn->exec("DELETE FROM $dest_exploitant");
 
                 $dest_conn->exec("DELETE FROM $dest_piece_lang");
@@ -779,7 +780,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             
             $dest_exploitant_cols = ["EXP_REF", "EXP_CODE", "UTI_REF", "GRA_REF", "LAN_REF", "ACO_REF", "EXP_NOM_PERS_PHYSIQUE", "EXP_PRENOM_PERS_PHYSIQUE", "EXP_RAISON_SOCIALE", "EXP_NOM", "EXP_VISIBLE", "EXP_VALIDE", "EXP_NRUE", "EXP_ADRESSE", "EXP_CP", "EXP_VILLE", "EXP_TELEPHONE", "EXP_PORTABLE", "EXP_FAX", "EXP_EMAIL", "DCREAT", "UCREAT"];
             
-            $dest_abonnement_cols = ["EXP_REF", "MAR_REF", "ACO_REF", "SMA_TITULAIRE", "SMA_ABONNE", "DCREAT", "UCREAT"];
+            $dest_abonnement_marche_cols = ["EXP_REF", "MAR_REF", "ACO_REF", "SMA_TITULAIRE", "SMA_ABONNE", "DCREAT", "UCREAT"];
 
             $dest_piece_cols = ["PROP_REF", "ACT_REF", "UTI_REF", "DCREAT", "UCREAT"];
             $dest_piece_lang_cols = ["PROP_REF", "LAN_REF", "PROP_NOM", "DCREAT", "UCREAT"];
@@ -1328,7 +1329,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             // Exploitants / Abonnements / Pièces justificatives
 
-            echo "<h2 id=\"dest_exploitants\">Exploitants / Abonnements / Pièces justificatives Valeur<span><tt>$dest_exploitant</tt> / <tt>$dest_abonnement</tt> / <tt>$dest_piece_val</tt></span></h2>";
+            echo "<h2 id=\"dest_exploitants\">Exploitants / Abonnements / Pièces justificatives Valeur<span><tt>$dest_exploitant</tt> / <tt>$dest_abonnement_marche</tt> / <tt>$dest_piece_val</tt></span></h2>";
             fwrite($output_file, "\n-- Exploitants / Abonnements / Pièces justificatives Valeur\n\n");
 
             $nb_to_insert = 0;
@@ -1431,7 +1432,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 $insert_into_query = "INSERT INTO $dest_exploitant (" . implode(", ", $dest_exploitant_cols) . ") VALUES (" . implode(", ", $dest_exploitant_values) . ")";
                 execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
-                // Abonnements
+                // Abonnements aux marchés
 
                 $aco_ref = $dest_exploitant_values[array_search("ACO_REF", $dest_exploitant_cols)];
 
@@ -1492,13 +1493,13 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                                 } else {
                                                     $mar_ref = $req_mar_ref["MAR_REF"];
 
-                                                    $dest_abonnement_values = [$last_exp_ref, $mar_ref, $aco_ref, $sma_titulaire, $sma_abonne, "'$dest_dcreat'", "'$dest_ucreat'"];
+                                                    $dest_abonnement_marche_values = [$last_exp_ref, $mar_ref, $aco_ref, $sma_titulaire, $sma_abonne, "'$dest_dcreat'", "'$dest_ucreat'"];
 
-                                                    $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_abonnement WHERE EXP_REF = $last_exp_ref AND MAR_REF = $mar_ref")->fetch();
+                                                    $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_abonnement_marche WHERE EXP_REF = $last_exp_ref AND MAR_REF = $mar_ref")->fetch();
                                                     if ($verif_query[0] !== "0") {
-                                                        array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code ouvert le $day n'est pas inséré pour la raison suivante :<br>Cet abonnement est déjà présent dans la table $dest_abonnement");
+                                                        array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code ouvert le $day n'est pas inséré pour la raison suivante :<br>Cet abonnement est déjà présent dans la table $dest_abonnement_marche");
                                                     } else {
-                                                        $insert_into_query = "INSERT INTO $dest_abonnement (" . implode(", ", $dest_abonnement_cols) . ") VALUES (" . implode(", ", $dest_abonnement_values) . ")";
+                                                        $insert_into_query = "INSERT INTO $dest_abonnement_marche (" . implode(", ", $dest_abonnement_marche_cols) . ") VALUES (" . implode(", ", $dest_abonnement_marche_values) . ")";
                                                         execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
                                                     }
                                                 }
@@ -1552,6 +1553,12 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         }
                     } // Fin "si $piece_val pas vide"
                 } // Fin "pièces justificatives de l'exploitant"
+
+                // Abonnements aux articles
+
+                // TODO
+                // uniquement les articles de type tarif abonné
+                
             } // Fin "pour chaque exploitant de la table source"
             if ($display_dest_requests) echo "</div>";
 
@@ -1619,6 +1626,12 @@ if (isset($_FILES) && count($_FILES) > 0) {
 <layer><message></message></layer>
 
 </body>
+
+<script>
+
+var script_file_name = "<?php echo $script_file_name; ?>";
+
+</script>
 
 <script src="js/script.js"></script>
 

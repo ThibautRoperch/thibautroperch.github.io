@@ -65,7 +65,7 @@ function upload_files(confirm_erase) {
     var get_confirm = confirm_erase ? "?confirm=1" : "";
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "odp.php" + get_confirm);
+    xhr.open("POST", script_file_name + get_confirm);
     xhr.onload = function() {
         if (!confirm_erase) {
             var parser = new DOMParser();
