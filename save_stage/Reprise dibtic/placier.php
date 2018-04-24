@@ -306,7 +306,7 @@ function reformate_date($string) {
     $month = (strlen($matches[2]) < 2) ? "0".$matches[2] : $matches[2];
     $year = substr($matches[3], -2);
 
-    return "$day/$month/$year";
+    return "$month/$day/$year";
 }
 
 function build_query($main, $where, $order, $limit) {
