@@ -12,11 +12,11 @@ $script_file_name = "placier.php";
 $title = "Reprise dibtic vers GEODP v1<br>Placier";
 
 // Génère des tables à partir des fichiers lus, extrait les informations voulues et exécute + donne les requêtes SQL
-// Entrée : Fichiers Excel dibtic définis dans common.php et récupérés par le script index.php
+// Entrée : Fichiers Excel dibtic placier
 // Sortie : Fichier SQL contenant les requêtes SQL à envoyer dans la base de données GEODP v1
 
 /**
- * VERSION 2 - 2ème semaine
+ * VERSION 2.0 - 25/04/2018
  * 
  * Marchés      Ils sont tous ajoutés en conservant leur code, identifiant unique dans dibtic.
  * Articles     Tous les articles sont ajoutés, mêmes si non utilisés.
@@ -30,6 +30,7 @@ $title = "Reprise dibtic vers GEODP v1<br>Placier";
  * Gestion de la multi utilisation du script
  * Glisser-déposer des fichiers sources dibtic
  * 
+ * @author Thibaut ROPERCH
  */
 
 
@@ -38,8 +39,6 @@ $analyse_mode = (isset($_GET["analyze"]) && $_GET["analyze"] === "1");
 $test_mode = ($analyse_mode && isset($_POST["login"]) && isset($_POST["login"]) !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
 
 $php_required_version = "7.1.9";
-
-$client_name = (!$test_mode && isset($_POST["type"])) ? $_POST["type"] : "[ MODE TEST ]";
 
 date_default_timezone_set("Europe/Paris");
 $timestamp = date("Y-m-d H:i:s", time());
@@ -95,8 +94,8 @@ $dest_marche = "dest_marche";
 $dest_marche_lang = "dest_marche_langue";
 $dest_article = "dest_article";
 $dest_article_lang = "dest_article_langue";
-$dest_activitecomm = "dest_activitecommerciale";
-$dest_activitecomm_lang = "dest_activitecommerciale_langue";
+$dest_activite_commerciale = "dest_activitecommerciale";
+$dest_activite_commerciale_lang = "dest_activitecommerciale_langue";
 $dest_piece = "dest_societe_propriete";
 $dest_piece_lang = "dest_societe_propriete_langue";
 $dest_exploitant = "dest_exploitant";
@@ -114,8 +113,8 @@ if (!$test_mode) {
     $dest_marche_lang = "MARCHE_LANGUE";
     $dest_article = "ARTICLE";
     $dest_article_lang = "ARTICLE_LANGUE";
-    $dest_activitecomm = "ACTIVITECOMMERCIALE";
-    $dest_activitecomm_lang = "ACTIVITECOMMERCIALE_LANGUE";
+    $dest_activite_commerciale = "ACTIVITECOMMERCIALE";
+    $dest_activite_commerciale_lang = "ACTIVITECOMMERCIALE_LANGUE";
     $dest_piece = "SOCIETE_PROPRIETE";
     $dest_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
     $dest_exploitant = "EXPLOITANT";
@@ -128,14 +127,17 @@ if (!$test_mode) {
 $dest_dcreat = $test_mode ? date("y/m/d", time()) : date("d/m/y", time());
 $dest_ucreat = "ILTR";
 
-// Mettre à vrai pour supprimer les données des tables de destination avant l'insertion des nouvelles, mettre à faux sinon
-$erase_destination_tables = true; // true | false
+// Mettre à vrai pour supprimer les données des tables de destination avant l'insertion des nouvelles, mettre à faux sinon (automatiquement calculé lors de la reprise sur serveur)
+$erase_destination_tables = (!$test_mode && isset($_POST["erase_destination_tables"])) ? true_false($_POST["erase_destination_tables"]) : true; // true | false
 
 // Mettre à vrai pour afficher les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
 $display_dest_requests = false; // true | false
 
 // Mettre à vrai pour exécuter les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
 $exec_dest_requests = true; // true | false
+
+// Nom du client (automatiquement calculé lors de la reprise sur serveur)
+$client_name = (!$test_mode && isset($_POST["type"])) ? $_POST["type"] : "[ MODE TEST ]";
 
 
 /*************************
@@ -239,6 +241,10 @@ $usual_days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dim
 
 function yes_no($bool) {
     return $bool ? "Oui" : "Non";
+}
+
+function true_false($string) {
+    return ($string === "true") ? true : false;
 }
 
 function ok_nok($bool) {
@@ -477,14 +483,18 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_password(this)\" type=\"text\" placeholder=\"geodpville\" required /></field>";
                     echo "<field><label for=\"password\">Mot de passe de connexion Oracle</label><input id=\"password\" name=\"password\" type=\"password\"/><span onmousedown=\"show_password(true)\" onmouseup=\"show_password(false) \">&#128065;</span></field>";
                     echo "<field><label for=\"type\">Type de client</label><input id=\"type\" name=\"type\" type=\"text\" placeholder=\"A définir\"/></field>";
+                    echo "<field><label for=\"erase_destination_tables\">Vider les tables de destination en amont</label>";
+                        $yes_selected = $erase_destination_tables ? "selected" : "";
+                        $no_selected = !$erase_destination_tables ? "selected" : "";
+                        echo "<select id=\"erase_destination_tables\" name=\"erase_destination_tables\"><option value=\"true\" $yes_selected>Oui</option><option value=\"false\" $no_selected>Non</option></select>";
+                    echo "</field>";
 
                     echo "<field>";
-                        echo "<input type=\"submit\" value=\"Effectuer la reprise\" $button_disabled />";
+                        echo "<input type=\"submit\" value=\"Effectuer la reprise sur serveur\" $button_disabled />";
                     echo "</field>";
                 
                 echo "<h2>Autres paramètres</h2>";
 
-                    echo "<field><label>Vider les tables de destination en amont</label><input type=\"disabled\" value=\"".yes_no($erase_destination_tables)."\" disabled /></field>";
                     echo "<field><label>Afficher les requêtes à exécuter</label><input type=\"disabled\" value=\"".yes_no($display_dest_requests)."\" disabled /></field>";
                     echo "<field><label>Exécuter les requêtes</label><input type=\"disabled\" value=\"".yes_no($exec_dest_requests)."\" disabled /></field>";
                     echo "<field><label>Fichier de sortie</label><input type=\"disabled\" value=\"$output_filename\" disabled /></field>";
@@ -493,9 +503,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     $version_ok = (phpversion() === $php_required_version) ? true : false;
                     echo "<field><label>Version de PHP</label><input type=\"disabled\" value=\"$php_required_version\" disabled />" . ok_nok($version_ok) . "</field>";
-                    $version_ok = (phpversion('pdo_mysql') === phpversion()) ? true : false;
+                    $version_ok = (phpversion('pdo_mysql') !== "") ? true : false;
                     echo "<field><label>Extension MySQL via PDO</label><input type=\"disabled\" value=\"php_pdo_mysql\" disabled />" . ok_nok($version_ok) . "</field>";
-                    $version_ok = (phpversion('pdo_oci') === phpversion()) ? true : false;
+                    $version_ok = (phpversion('pdo_oci') !== "") ? true : false;
                     echo "<field><label>Extension OCI via PDO</label><input type=\"disabled\" value=\"php_pdo_oci\" disabled />" . ok_nok($version_ok) . "</field>";
 
                 echo "<h2>Configuration de la BDD</h2>";
@@ -509,8 +519,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     echo "<table>";
                     echo "<tr><th>Nom de la reprise</th><th>Date</th><th>Durée (secondes)</th><th>Etat</th></th><th>Conflits</th><th>Erreurs</th></tr>";
-                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table WHERE nom != '[ MODE TEST ]'") as $row) {
+                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table ORDER BY date_debut DESC") as $row) {
                         $duree = strtotime($row["date_fin"]) - strtotime($row["date_debut"]);
+                        if ($duree < 0) $duree = 0;
                         $etat = "Etat inconnu";
                         switch ($row["etat"]) {
                             case "0":
@@ -526,7 +537,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                 $etat = "Interrompue";
                                 break;
                         }
-                        echo "<tr><td>" . $row["nom"] . "</td><td>" . $row["date_debut"] . "</td><td>$duree</td><td>$etat</td><td>" . $row["conflits"] . "</td><td>" . $row["erreurs"] . "</td></tr>";
+                        echo "<tr><td>" . $row["nom"] . "</td><td>" . date("d/m/Y à H:i:s", strtotime($row["date_debut"])) . "</td><td>$duree</td><td>$etat</td><td>" . $row["conflits"] . "</td><td>" . $row["erreurs"] . "</td></tr>";
                     }
                     echo "</table>";
 
@@ -566,6 +577,17 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         }
                     echo "</ol>";
                 echo "</li>";
+                if ($erase_destination_tables) {
+                    echo "<li><a href=\"#erase\">Vidage des tables de destination</a>";
+                        echo "<ol>";
+                            echo "<li><a href=\"#erase_exploitants\">Pièces justificatives Valeur / Abonnements / Exploitants</a></li>";
+                            echo "<li><a href=\"#erase_pices\">Pièces justificatives Langue / Pièces justificatives</a></li>";
+                            echo "<li><a href=\"#erase_activites_comm\">Activités commerciales Langue / Activités commerciales</a></li>";
+                            echo "<li><a href=\"#erase_articles\">Articles Langue / Articles</a></li>";
+                            echo "<li><a href=\"#erase_marches\">Employé Marché / Marchés Langue / Marchés</a></li>";
+                        echo "</ol>";
+                    echo "</li>";
+                }
                 echo "<li><a href=\"#destination\">Insertion des données GEODP</a>";
                     echo "<ol>";
                         echo "<li><a href=\"#dest_utilisateur\">Utilisateur</a></li>";
@@ -592,26 +614,6 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             $nb_errors = 0;
             $nb_warnings = 0;
-            
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_piece_val");
-                $dest_conn->exec("DELETE FROM $dest_abonnement_marche");
-                $dest_conn->exec("DELETE FROM $dest_exploitant");
-
-                $dest_conn->exec("DELETE FROM $dest_piece_lang");
-                $dest_conn->exec("DELETE FROM $dest_piece");
-
-                $dest_conn->exec("DELETE FROM $dest_activitecomm_lang");
-                $dest_conn->exec("DELETE FROM $dest_activitecomm");
-
-                $dest_conn->exec("DELETE FROM $dest_article_lang");
-                $dest_conn->exec("DELETE FROM $dest_article");
-
-                $dest_conn->exec("DELETE FROM $dest_employe_marche WHERE MAR_REF IS NOT NULL");
-
-                $dest_conn->exec("DELETE FROM $dest_marche_lang");
-                $dest_conn->exec("DELETE FROM $dest_marche");
-            }
 
             //// Paramètres
 
@@ -708,18 +710,19 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 // echo "<div class=\"pre\">";
                 for ($i = 2; $i <= count($xls_data); $i++) {
                     $insert_into_query = "";
+
                     foreach ($xls_data[$i] as $cel) {
                         if ($insert_into_query !== "") {
                             $insert_into_query .= ", ";
                         }
                         $insert_into_query .= "'".addslashes($cel)."'";
                     }
-                    $insert_into_query = "INSERT INTO $table_name VALUES ($insert_into_query)";
 
+                    $insert_into_query = "INSERT INTO $table_name VALUES ($insert_into_query)";
                     // echo "$insert_into_query<br>";
                     $req_res = $src_conn->exec($insert_into_query);
                     if ($req_res === false) {
-                        echo "<p class=\"danger\">".$dest_conn->errorInfo()[2]."</p>";
+                        echo "<p class=\"danger\">".$src_conn->errorInfo()[2]."</p>";
                     } else {
                         if ($req_res === 0) {
                             echo "<p class=\"warning\">0 lignes affectées</p>";
@@ -763,6 +766,39 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 }
             }
 
+            //// Vidage des tables de destination
+            
+            if ($erase_destination_tables) {
+                echo "<h1 id=\"erase\">Vidage des tables de destination</h1>";
+
+                echo "<h2 id=\"erase_exploitants\">Pièces justificatives Valeur / Abonnements / Exploitants<span><tt>$dest_piece_val</tt> / <tt>$dest_abonnement_marche</tt> / <tt>$dest_exploitant</tt></span></h2>";
+
+                $dest_conn->exec("DELETE FROM $dest_piece_val");
+                $dest_conn->exec("DELETE FROM $dest_abonnement_marche");
+                $dest_conn->exec("DELETE FROM $dest_exploitant");
+
+                echo "<h2 id=\"erase_pieces\">Pièces justificatives Langue / Pièces justificatives<span><tt>$dest_piece_lang</tt> / <tt>$dest_piece</tt></span></h2>";
+
+                $dest_conn->exec("DELETE FROM $dest_piece_lang");
+                $dest_conn->exec("DELETE FROM $dest_piece");
+
+                echo "<h2 id=\"erase_activites_comm\">Activités commerciales Langue / Activités commerciales<span><tt>$dest_activite_commerciale_lang</tt> / <tt>$dest_activite_commerciale</tt></span></h2>";
+
+                $dest_conn->exec("DELETE FROM $dest_activite_commerciale_lang");
+                $dest_conn->exec("DELETE FROM $dest_activite_commerciale");
+
+                echo "<h2 id=\"erase_articles\">Articles Langue / Articles<span><tt>$dest_article_lang</tt> / <tt>$dest_article</tt></span></h2>";
+
+                $dest_conn->exec("DELETE FROM $dest_article_lang");
+                $dest_conn->exec("DELETE FROM $dest_article");
+
+                echo "<h2 id=\"erase_marches\">Employé Marché / Marchés Langue / Marchés<span><tt>$dest_employe_marche</tt> / <tt>$dest_marche_lang</tt> / <tt>$dest_marche</tt></span></h2>";
+
+                $dest_conn->exec("DELETE FROM $dest_employe_marche WHERE MAR_REF IS NOT NULL");
+                $dest_conn->exec("DELETE FROM $dest_marche_lang");
+                $dest_conn->exec("DELETE FROM $dest_marche");
+            }
+
             //// Insertion des données GEODP
 
             echo "<h1 id=\"destination\">Insertion des données GEODP</h1>";
@@ -775,8 +811,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $dest_article_cols = ["ART_REF", "MAR_REF", "UTI_REF", "ART_CODE", "ART_PRIX_TTC", "ART_PRIX_HT", "ART_TAUX_TVA", "ART_ABO_PRIX_TTC", "ART_ABO_PRIX_HT", "ART_ABO_TAUX_TVA", "ART_COULEUR", "ART_ORDRE", "ART_COMMENTAIRE", "ART_VALIDE_DEPUIS", "ART_VALIDE_JUSQUA", "ART_VISIBLE", "DCREAT", "UCREAT"];
             $dest_article_lang_cols = ["ART_REF", "LAN_REF", "ART_NOM", "ART_UNITE", "DCREAT", "UCREAT"];
             
-            $dest_activitecomm_cols = ["ACO_REF", "UTI_REF", "ACO_COULEUR", "DCREAT", "UCREAT"];
-            $dest_activitecomm_lang_cols = ["ACO_REF", "LAN_REF", "ACO_NOM", "DCREAT", "UCREAT"];
+            $dest_activite_commerciale_cols = ["ACO_REF", "UTI_REF", "ACO_COULEUR", "DCREAT", "UCREAT"];
+            $dest_activite_commerciale_lang_cols = ["ACO_REF", "LAN_REF", "ACO_NOM", "DCREAT", "UCREAT"];
             
             $dest_exploitant_cols = ["EXP_REF", "EXP_CODE", "UTI_REF", "GRA_REF", "LAN_REF", "ACO_REF", "EXP_NOM_PERS_PHYSIQUE", "EXP_PRENOM_PERS_PHYSIQUE", "EXP_RAISON_SOCIALE", "EXP_NOM", "EXP_VISIBLE", "EXP_VALIDE", "EXP_NRUE", "EXP_ADRESSE", "EXP_CP", "EXP_VILLE", "EXP_TELEPHONE", "EXP_PORTABLE", "EXP_FAX", "EXP_EMAIL", "DCREAT", "UCREAT"];
             
@@ -1188,55 +1224,55 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             // Activités
 
-            echo "<h2 id=\"dest_activites_comm\">Activités commerciales / Activités commerciales Langue<span><tt>$dest_activitecomm</tt> / <tt>$dest_activitecomm_lang</tt></span></h2>";
+            echo "<h2 id=\"dest_activites_comm\">Activités commerciales / Activités commerciales Langue<span><tt>$dest_activite_commerciale</tt> / <tt>$dest_activite_commerciale_lang</tt></span></h2>";
             fwrite($output_file, "\n-- Activités commerciales / Activités commerciales Langue\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
             
-            $req_last_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm", "", "ACO_REF DESC", "1"))->fetch();
+            $req_last_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activite_commerciale", "", "ACO_REF DESC", "1"))->fetch();
             $last_aco_ref = ($req_last_aco_ref == null) ? 0 : $req_last_aco_ref["ACO_REF"];
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT type FROM $src_exploitant WHERE type != ''") as $row) {
                 // Parmi les exploitants qui ont une activité renseignée, l'ajouter à la table des activités si elle n'y est pas déjà
-                $req_aco = $dest_conn->query(build_query("SELECT COUNT(*) FROM $dest_activitecomm_lang", "ACO_NOM = '".addslashes(strtoupper($row["type"]))."'", "", ""))->fetch();
+                $req_aco = $dest_conn->query(build_query("SELECT COUNT(*) FROM $dest_activite_commerciale_lang", "ACO_NOM = '".addslashes(strtoupper($row["type"]))."'", "", ""))->fetch();
                 if ($req_aco[0] === "0") {
                     $last_aco_ref += 1;
 
-                    $dest_activitecomm_values = [];
+                    $dest_activite_commerciale_values = [];
                     
-                    foreach ($dest_activitecomm_cols as $col) {
+                    foreach ($dest_activite_commerciale_cols as $col) {
                         switch ($col) {
                             case "ACO_REF":
-                                array_push($dest_activitecomm_values, "$last_aco_ref");
+                                array_push($dest_activite_commerciale_values, "$last_aco_ref");
                                 break;
                             case "UTI_REF":
-                                array_push($dest_activitecomm_values, "$uti_ref");
+                                array_push($dest_activite_commerciale_values, "$uti_ref");
                                 break;
                             case "ACO_COULEUR":
-                                array_push($dest_activitecomm_values, "'fff'");
+                                array_push($dest_activite_commerciale_values, "'fff'");
                                 break;
                             case "DCREAT":
-                                array_push($dest_activitecomm_values, "'$dest_dcreat'");
+                                array_push($dest_activite_commerciale_values, "'$dest_dcreat'");
                                 break;
                             case "UCREAT":
-                                array_push($dest_activitecomm_values, "'$dest_ucreat'");
+                                array_push($dest_activite_commerciale_values, "'$dest_ucreat'");
                                 break;
                             default:
-                                array_push($dest_activitecomm_values, "'TODO'");
+                                array_push($dest_activite_commerciale_values, "'TODO'");
                                 break;
                         }
                     }
 
-                    $insert_into_query = "INSERT INTO $dest_activitecomm (" . implode(", ", $dest_activitecomm_cols) . ") VALUES (" . implode(", ", $dest_activitecomm_values) . ")";
+                    $insert_into_query = "INSERT INTO $dest_activite_commerciale (" . implode(", ", $dest_activite_commerciale_cols) . ") VALUES (" . implode(", ", $dest_activite_commerciale_values) . ")";
                     execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
                     // Activité langue
 
-                    $dest_activitecomm_lang_values = [$last_aco_ref, 1, "'".addslashes($row["type"])."'", "'$dest_dcreat'", "'$dest_ucreat'"];
+                    $dest_activite_commerciale_lang_values = [$last_aco_ref, 1, "'".addslashes($row["type"])."'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
-                    $insert_into_query = "INSERT INTO $dest_activitecomm_lang (" . implode(", ", $dest_activitecomm_lang_cols) . ") VALUES (" . implode(", ", $dest_activitecomm_lang_values) . ")";
+                    $insert_into_query = "INSERT INTO $dest_activite_commerciale_lang (" . implode(", ", $dest_activite_commerciale_lang_cols) . ") VALUES (" . implode(", ", $dest_activite_commerciale_lang_values) . ")";
                     execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
                 } // Fin "si l'activité n'existe pas déjà"
             }
@@ -1367,10 +1403,10 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         case "ACO_REF":
                             $aco_ref = "NULL";
                             if ($row["type"] !== "") {
-                                $req_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activitecomm_lang", "ACO_NOM = '".addslashes(strtoupper($row["type"]))."'", "", ""))->fetch();
+                                $req_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activite_commerciale_lang", "ACO_NOM = '".addslashes(strtoupper($row["type"]))."'", "", ""))->fetch();
                                 $aco_ref = ($req_aco_ref == null) ? NULL : $req_aco_ref["ACO_REF"];
                                 if ($aco_ref === NULL) {
-                                    array_push($warnings, "L'activité " . addslashes(strtoupper($row["type"])) . " de l'exploitant " . $row["nom_deb"] . " n'existe pas dans la table $dest_activitecomm, l'exploitant est donc considéré sans activité");
+                                    array_push($warnings, "L'activité " . addslashes(strtoupper($row["type"])) . " de l'exploitant " . $row["nom_deb"] . " n'existe pas dans la table $dest_activite_commerciale, l'exploitant est donc considéré sans activité");
                                 }
                             }
                             array_push($dest_exploitant_values, $aco_ref);
@@ -1586,6 +1622,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 $dest_compteur_values = [$last_cpt_ref, "'article'", "(SELECT MAX(ART_REF) + 1 FROM $dest_article)", "'$dest_dcreat'", "'$dest_ucreat'"];
                 $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
                 execute_query($insert_into_query, $nb_updated, $nb_to_update);
+            } else {
+                $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(ART_REF) + 1 FROM $dest_article) WHERE CPT_TABLE = 'article'";
+                execute_query($update_query, $nb_updated, $nb_to_update);
             }
 
             if ($display_dest_requests) echo "</div>";

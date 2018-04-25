@@ -1,0 +1,13 @@
+
+Fichiers à mettre en prod :
+
+css/*
+js/*
+placier.php     # pour reprise Placier
+odp.php         # pour reprise ODP
+
+
+
+Changer le mot de passe de la connexion MySQL :
+
+$mysql_password = "rtli";

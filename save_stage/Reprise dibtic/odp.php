@@ -12,15 +12,16 @@ $script_file_name = "odp.php";
 $title = "Reprise dibtic vers GEODP v1<br>ODP";
 
 // Génère des tables à partir des fichiers lus, extrait les informations voulues et exécute + donne les requêtes SQL
-// Entrée : Fichiers Excel dibtic définis dans common.php et récupérés par le script index.php
+// Entrée : Fichiers Excel dibtic ODP (seulement le fichier des instructions, le seul ne venant pas de dibtic)
 // Sortie : Fichier SQL contenant les requêtes SQL à envoyer dans la base de données GEODP v1
 
 /**
- * VERSION ODP - 3ème semaine
+ * VERSION 1.0 - 25/04/2018
  * 
  * Instructions Fichier écrit à la main, non dibtic
  * Exploitants  
  * 
+ * @author Thibaut ROPERCH
  */
 
 
@@ -29,8 +30,6 @@ $analyse_mode = (isset($_GET["analyze"]) && $_GET["analyze"] === "1");
 $test_mode = ($analyse_mode && isset($_POST["login"]) && isset($_POST["login"]) !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
 
 $php_required_version = "7.1.9";
-
-$client_name = (!$test_mode && isset($_POST["type"])) ? $_POST["type"] : "[ MODE TEST ]";
 
 date_default_timezone_set("Europe/Paris");
 $timestamp = date("Y-m-d H:i:s", time());
@@ -47,12 +46,11 @@ $directory_name = "./dibtic_odp";
 $expected_content = ["instructions"];
 
 // Noms possibles des fichiers sources (dibtic)
-$keywords_files = ["instruction/evenement", "exploitant/tier/assujet"];
+$keywords_files = ["instruction/evenement"];
 
 // Données extraites des fichiers sources (dibtic)
 $extracted_files_content = [
-    "Instructions",
-    ""
+    "Instructions"
     ];
 
 // Nom du fichier de sortie contenant les requêtes SQL à envoyer (GEODP v1)
@@ -85,6 +83,7 @@ $dest_dossier_etat = "dest_dossier_etat";
 $dest_dossier_etat_lang = "dest_dossier_etat_langue";
 $dest_instruction = "dest_dossier_instruction";
 $dest_instruction_evenement = "dest_dossier_instruction_evenement";
+$dest_commentaire_type_lang = "dest_dossier_commentaire_type_langue";
 $dest_dossier_document = "dest_dossier_document";
 $dest_compteur = "dest_compteur";
 
@@ -97,7 +96,8 @@ if (!$test_mode) {
     $dest_dossier_etat = "DOSSIER_ETAT";
     $dest_dossier_etat_lang = "DOSSIER_ETAT_LANGUE";
     $dest_instruction = "DOSSIER_INSTRUCTION";
-    $dest_evenement = "DOSSIER_INSTRUCTION_EVENEMENT";
+    $dest_instruction_evenement = "DOSSIER_INSTRUCTION_EVENEMENT";
+    $dest_commentaire_type_lang = "DOSSIER_COMMENTAIRE_TYPE_LANG";
     $dest_dossier_document = "DOSSIER_DOCUMENT";
     $dest_compteur = "COMPTEUR";
 }
@@ -106,14 +106,17 @@ if (!$test_mode) {
 $dest_dcreat = $test_mode ? date("y/m/d", time()) : date("d/m/y", time());
 $dest_ucreat = "ILTR";
 
-// Mettre à vrai pour supprimer les données des tables de destination avant l'insertion des nouvelles, mettre à faux sinon
-$erase_destination_tables = true; // true | false
+// Mettre à vrai pour supprimer les données des tables de destination avant l'insertion des nouvelles, mettre à faux sinon (automatiquement calculé lors de la reprise sur serveur)
+$erase_destination_tables = (!$test_mode && isset($_POST["erase_destination_tables"])) ? true_false($_POST["erase_destination_tables"]) : true; // true | false
 
 // Mettre à vrai pour afficher les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
 $display_dest_requests = true; // true | false
 
 // Mettre à vrai pour exécuter les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
 $exec_dest_requests = true; // true | false
+
+// Nom du client (automatiquement calculé lors de la reprise sur serveur)
+$client_name = (!$test_mode && isset($_POST["type"])) ? $_POST["type"] : "[ MODE TEST ]";
 
 
 /*************************
@@ -217,6 +220,10 @@ $usual_days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dim
 
 function yes_no($bool) {
     return $bool ? "Oui" : "Non";
+}
+
+function true_false($string) {
+    return ($string === "true") ? true : false;
 }
 
 function ok_nok($bool) {
@@ -454,6 +461,11 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_password(this)\" type=\"text\" placeholder=\"geodpville\" required /></field>";
                     echo "<field><label for=\"password\">Mot de passe de connexion Oracle</label><input id=\"password\" name=\"password\" type=\"password\"/><span onmousedown=\"show_password(true)\" onmouseup=\"show_password(false) \">&#128065;</span></field>";
                     echo "<field><label for=\"type\">Type de client</label><input id=\"type\" name=\"type\" type=\"text\" placeholder=\"A définir\"/></field>";
+                    echo "<field><label for=\"erase_destination_tables\">Vider les tables de destination en amont</label>";
+                        $yes_selected = $erase_destination_tables ? "selected" : "";
+                        $no_selected = !$erase_destination_tables ? "selected" : "";
+                        echo "<select id=\"erase_destination_tables\" name=\"erase_destination_tables\"><option value=\"true\" $yes_selected>Oui</option><option value=\"false\" $no_selected>Non</option></select>";
+                    echo "</field>";
 
                     echo "<field>";
                         echo "<input type=\"submit\" onclick=\"loading()\" value=\"Effectuer la reprise\" $button_disabled />";
@@ -461,7 +473,6 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 
                 echo "<h2>Autres paramètres</h2>";
 
-                    echo "<field><label>Vider les tables de destination en amont</label><input type=\"disabled\" value=\"".yes_no($erase_destination_tables)."\" disabled /></field>";
                     echo "<field><label>Afficher les requêtes à exécuter</label><input type=\"disabled\" value=\"".yes_no($display_dest_requests)."\" disabled /></field>";
                     echo "<field><label>Exécuter les requêtes</label><input type=\"disabled\" value=\"".yes_no($exec_dest_requests)."\" disabled /></field>";
                     echo "<field><label>Fichier de sortie</label><input type=\"disabled\" value=\"$output_filename\" disabled /></field>";
@@ -470,9 +481,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     $version_ok = (phpversion() === $php_required_version) ? true : false;
                     echo "<field><label>Version de PHP</label><input type=\"disabled\" value=\"$php_required_version\" disabled />" . ok_nok($version_ok) . "</field>";
-                    $version_ok = (phpversion('pdo_mysql') === phpversion()) ? true : false;
+                    $version_ok = (phpversion('pdo_mysql') !== "") ? true : false;
                     echo "<field><label>Extension MySQL via PDO</label><input type=\"disabled\" value=\"php_pdo_mysql\" disabled />" . ok_nok($version_ok) . "</field>";
-                    $version_ok = (phpversion('pdo_oci') === phpversion()) ? true : false;
+                    $version_ok = (phpversion('pdo_oci') !== "") ? true : false;
                     echo "<field><label>Extension OCI via PDO</label><input type=\"disabled\" value=\"php_pdo_oci\" disabled />" . ok_nok($version_ok) . "</field>";
 
                 echo "<h2>Configuration de la BDD</h2>";
@@ -486,8 +497,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                     echo "<table>";
                     echo "<tr><th>Nom de la reprise</th><th>Date</th><th>Durée (secondes)</th><th>Etat</th></th><th>Conflits</th><th>Erreurs</th></tr>";
-                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table WHERE nom != '[ MODE TEST ]'") as $row) {
+                    foreach ($mysql_conn->query("SELECT * FROM $reprise_table ORDER BY date_debut DESC") as $row) {
                         $duree = strtotime($row["date_fin"]) - strtotime($row["date_debut"]);
+                        if ($duree < 0) $duree = 0;
                         $etat = "Etat inconnu";
                         switch ($row["etat"]) {
                             case "0":
@@ -503,7 +515,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                 $etat = "Interrompue";
                                 break;
                         }
-                        echo "<tr><td>" . $row["nom"] . "</td><td>" . $row["date_debut"] . "</td><td>$duree</td><td>$etat</td><td>" . $row["conflits"] . "</td><td>" . $row["erreurs"] . "</td></tr>";
+                        echo "<tr><td>" . $row["nom"] . "</td><td>" . date("d/m/Y à H:i:s", strtotime($row["date_debut"])) . "</td><td>$duree</td><td>$etat</td><td>" . $row["conflits"] . "</td><td>" . $row["erreurs"] . "</td></tr>";
                     }
                     echo "</table>";
 
@@ -544,9 +556,16 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo "</ol>";
                 echo "</li>";
                 echo "<li><a href=\"#src_formatted_instructions\">Formatage des instructions</a></li>";
+                if ($erase_destination_tables) {
+                    echo "<li><a href=\"#erase\">Vidage des tables de destination</a>";
+                        echo "<ol>";
+                            echo "<li><a href=\"#erase_instructions\">Dossier Document / Instructions Évènements / Instructions</a></li>";
+                        echo "</ol>";
+                    echo "</li>";
+                }
                 echo "<li><a href=\"#destination\">Insertion des données GEODP</a>";
                     echo "<ol>";
-                        echo "<li><a href=\"#dest_instructions\">Instructions / Instructions évènements / Dossier document</a></li>";
+                        echo "<li><a href=\"#dest_instructions\">Instructions / Instructions Évènements / Dossier Document</a></li>";
                     echo "</ol>";
                 echo "</li>";
             echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
@@ -558,16 +577,12 @@ if (isset($_FILES) && count($_FILES) > 0) {
             echo "<summary id=\"summary\">";
                 echo "<h1>$nom_reprise</h1>";
                 echo "<p id=\"nb_errors\"></p>";
-                echo "<table id=\"nb_content\"><tr><th></th></tr></table>";
+                echo "<table id=\"nb_content\"><tr><th>Instructions</th></tr></table>";
                 echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
 
             $nb_errors = 0;
             $nb_warnings = 0;
-            
-            if ($erase_destination_tables) {
-                $dest_conn->exec("DELETE FROM $dest_instruction");
-            }
 
             //// Paramètres
 
@@ -630,7 +645,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo $html_tb;
                 }
 
-                if ($exp === "exploitants") { // TODO définir le token de la table des rperises pour ODP
+                if ($exp === "exploitants") { // TODO définir le token de la table des reprises pour ODP
                     $mysql_conn->exec("UPDATE $reprise_table SET token = '" . substr(implode("", $xls_data[2]), 0, 250) . "' WHERE id = $reprise_id");
                 }
 
@@ -668,6 +683,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         if ($insert_into_query !== "") {
                             $insert_into_query .= ", ";
                         }
+                        $cel = str_replace("\n", " ", $cel);
                         $insert_into_query .= "'".addslashes($cel)."'";
                     }
                     $insert_into_query = "INSERT INTO $table_name VALUES ($insert_into_query)";
@@ -706,7 +722,6 @@ if (isset($_FILES) && count($_FILES) > 0) {
             echo "<h1 id=\"src_formatted_instructions\">Formatage des instructions</h1>";
 
             echo "<h2><span><tt>$src_instruction</tt> vers <tt>$src_formatted_instruction</tt></span></h2>";
-            fwrite($output_file, "\n-- Formatage des instructions\n\n");
 
             $nb_to_format = 0;
             $nb_formatted = 0;
@@ -728,6 +743,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 if (strlen($instruction_num) > 13) {
                     array_push($warnings, "Le numéro de l'instruction $instruction_num est supérieur à 13 caractères, l'instruction n'est donc pas insérée");
                 } else {
+                    $nb_to_format += 1;
+
                     $dest_marche_values = [];
 
                     foreach ($src_instruction_cols as $col) {
@@ -764,7 +781,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                     array_push($warnings, "Le numéro tiers $value fait moins de 6 caractères, il est donc changé en $new_value");
                                 }
                                 break;
-                            case "Date de notification de l'arrêté": // non utilisé dans les requêtes du fichier des instructions TODO
+                            case "Date de notification de l'arrêté":
                                 $notif_arrete_date = date_create_from_format("d/m/Y", $value);
                                 if ($notif_arrete_date === false) {
                                     $new_value = reformate_date($value);
@@ -863,12 +880,33 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     }
 
                     $insert_into_query = "INSERT INTO $src_formatted_instruction (`" . implode("`, `", $src_instruction_cols) . "`) VALUES (" . implode(", ", $dest_marche_values) . ")";
-                    execute_query($insert_into_query, $nb_formatted, $nb_to_format);
+                    if ($display_dest_requests) echo "$insert_into_query<br>";
+                    $req_res = $src_conn->exec($insert_into_query);
+                    if ($req_res === false) {
+                        echo "<p class=\"danger\">".$src_conn->errorInfo()[2]."</p>";
+                    } else {
+                        if ($req_res === 0) {
+                            echo "<p class=\"warning\">0 lignes affectées</p>";
+                        }
+                        ++$nb_formatted;
+                    }
                 }
             }
             if ($display_dest_requests) echo "</div>";
 
             summarize_queries($nb_formatted, $nb_to_format, $nb_errors, $warnings, $nb_warnings);
+
+            //// Vidage des tables de destination
+            
+            if ($erase_destination_tables) {
+                echo "<h1 id=\"erase\">Vidage des tables de destination</h1>";
+
+                echo "<h2 id=\"erase_instructions\">Dossier Document / Instructions Évènements / Instructions<span><tt>$dest_dossier_document</tt> / <tt>$dest_instruction_evenement</tt> / <tt>$dest_instruction</tt></span></h2>";
+                
+                $dest_conn->exec("DELETE FROM $dest_dossier_document");
+                $dest_conn->exec("DELETE FROM $dest_instruction_evenement");
+                $dest_conn->exec("DELETE FROM $dest_instruction");
+            }
 
             //// Insertion des données GEODP
 
@@ -877,11 +915,14 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             $dest_instruction_cols = ["DI_REF", "DOS_REF", "DET_REF", "EXP_REF", "DI_NUMERO", "DI_DATE_DEPOT", "DCREAT", "UCREAT"];
             $dest_instruction_evenement_cols = ["DIE_REF", "DI_REF", "EVE_REF", "DIE_DATE_CREATION", "DCREAT", "UCREAT", "DIE_COMMENTAIRE"];
+            $dest_dossier_document_cols = ["DD_REF", "DOS_REF", "DCT_REF", "DD_AUTEUR", "DD_NOM", "DD_DATE", "DD_COMMENTAIRE", "DCREAT", "UCREAT"];
 
-            // Instructions / Instructions évènements / Dossier document
+            $dest_compteur_cols = ["CPT_REF", "CPT_TABLE", "CPT_VAL", "DCREAT", "UCREAT"];
+            
+            // Instructions / Instructions Évènements / Dossier Document
 
-            echo "<h2 id=\"dest_instructions\">Instructions / Instructions évènements / Dossier document<span><tt>$dest_instruction</tt> / <tt>$dest_instruction_evenement</tt> / <tt>$dest_dossier_document</tt></span></h2>";
-            fwrite($output_file, "\n-- Instructions / Instructions évènements / Dossier document\n\n");
+            echo "<h2 id=\"dest_instructions\">Instructions / Instructions Évènements / Dossier Document<span><tt>$dest_instruction</tt> / <tt>$dest_instruction_evenement</tt> / <tt>$dest_dossier_document</tt></span></h2>";
+            fwrite($output_file, "\n-- Instructions / Instructions Évènements / Dossier Document\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
@@ -898,233 +939,321 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $last_eve_ref = $dest_conn->query("SELECT MAX(EVE_REF) FROM $dest_evenement")->fetch()[0];
             $last_die_ref = $dest_conn->query("SELECT MAX(DIE_REF) FROM $dest_instruction_evenement")->fetch()[0];
 
+            $last_dct_ref = $dest_conn->query("SELECT MAX(DCT_REF) FROM $dest_commentaire_type_lang")->fetch()[0];
+            $last_dd_ref = $dest_conn->query("SELECT MAX(DD_REF) FROM $dest_dossier_document")->fetch()[0];
+
             $nb_instructions = $dest_conn->query("SELECT COUNT(*) FROM $dest_instruction")->fetch()[0];
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
-            foreach ($src_conn->query("SELECT * FROM $src_formatted_instruction WHERE `Objet de la demande` IS NOT NULL") as $row) {
+            foreach ($src_conn->query("SELECT * FROM $src_formatted_instruction") as $row) {
                 $di_numero = $row["N° d'instruction"];
                 $di_code_comptable = $row["Numéro tiers"];
                 $di_domaine = $row["Objet de la demande"];
 
                 $header_err_message = "L'instruction $di_numero n'est pas insérée pour la raison suivante :<br>";
 
-                $req_exp_ref = $dest_conn->query("SELECT EXP_REF FROM $dest_exploitant WHERE EXP_CODE_COMPTABLE = $di_code_comptable")->fetch();
-                $req_dom_ref = $dest_conn->query("SELECT DOM_REF FROM $dest_domaine_lang WHERE DOM_NOM = '$di_domaine'")->fetch();
-
-                if (!$req_exp_ref) {
-                    if ($test_mode) {
-                        $last_exp_ref += 1;
-                        $dest_conn->exec("INSERT INTO $dest_exploitant (EXP_REF, EXP_CODE_COMPTABLE) VALUES ($last_exp_ref, $di_code_comptable)");
-                        array_push($warnings, "Aucun exploitant avec le code comptable $di_code_comptable n'existe dans la table $dest_exploitant ; un tel exploitant est inséré pour le mode test (F5)");
-                    } else {
-                        array_push($warnings, $header_err_message . "Aucun exploitant avec le code comptable $di_code_comptable n'existe dans la table $dest_exploitant");
-                    }
-                } else if (!$req_dom_ref) {
-                    if ($test_mode) {
-                        $last_dom_ref += 1;
-                        $dest_conn->exec("INSERT INTO $dest_domaine_lang (DOM_REF, DOM_NOM) VALUES ($last_dom_ref, '$di_domaine')");
-                        array_push($warnings, "Aucun domaine appelé '$di_domaine' n'existe dans la table $dest_domaine_lang ; un tel domaine est inséré pour le mode test (F5)");
-                    } else {
-                        array_push($warnings, $header_err_message . "Aucun domaine appelé '$di_domaine' n'existe dans la table $dest_domaine_lang");
-                    }
+                if (!$di_domaine) {
+                    array_push($warnings, $header_err_message . "L'objet de la demande n'est pas renseigné");
                 } else {
-                    $exp_ref = $req_exp_ref[0];
-                    $dom_ref = $req_dom_ref[0];
 
-                    $det_designation = "Inspection dossier";
-                    $req_det_ref = $dest_conn->query("SELECT del.DET_REF FROM $dest_dossier_etat_lang del JOIN $dest_dossier_etat det ON det.DET_REF = del.DET_REF WHERE DET_VISIBLE = 1 AND DET_DESIGNATION = '$det_designation' AND DOM_REF = $dom_ref")->fetch();
-                    $req_dos_ref = $dest_conn->query("SELECT DOS_REF FROM $dest_dossier WHERE EXP_REF = $exp_ref AND DOM_REF = $dom_ref")->fetch();
+                    $req_exp_ref = $dest_conn->query("SELECT EXP_REF FROM $dest_exploitant WHERE EXP_CODE_COMPTABLE = $di_code_comptable")->fetch();
+                    $req_dom_ref = $dest_conn->query("SELECT DOM_REF FROM $dest_domaine_lang WHERE DOM_NOM = '$di_domaine'")->fetch();
 
-                    if (!$req_det_ref) {
+                    if (!$req_exp_ref) {
                         if ($test_mode) {
-                            $last_det_ref += 1;
-                            $dest_conn->exec("INSERT INTO $dest_dossier_etat (DET_REF, DOM_REF, DET_VISIBLE) VALUES ($last_det_ref, $dom_ref, 1)");
-                            $dest_conn->exec("INSERT INTO $dest_dossier_etat_lang (DET_REF, DET_DESIGNATION) VALUES ($last_det_ref, '$det_designation')");
-                            array_push($warnings, "Aucun état de dossier visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang ; un tel état de dossier est inséré pour le mode test (F5)");
+                            $last_exp_ref += 1;
+                            $dest_conn->exec("INSERT INTO $dest_exploitant (EXP_REF, EXP_CODE_COMPTABLE) VALUES ($last_exp_ref, '$di_code_comptable')");
+                            array_push($warnings, "Aucun exploitant avec le code comptable '$di_code_comptable' n'existe dans la table $dest_exploitant ; un tel exploitant est inséré pour le mode test (F5)");
                         } else {
-                            array_push($warnings, $header_err_message . "Aucun état de dossier visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang");
+                            array_push($warnings, $header_err_message . "Aucun exploitant avec le code comptable '$di_code_comptable' n'existe dans la table $dest_exploitant");
                         }
-                    } else if (!$req_dos_ref) {
+                    } else if (!$req_dom_ref) {
                         if ($test_mode) {
-                            $last_dos_ref += 1;
-                            $dest_conn->exec("INSERT INTO $dest_dossier (DOS_REF, EXP_REF, DOM_REF) VALUES ($last_dos_ref, $exp_ref, $dom_ref)");
-                            array_push($warnings, "Aucun dossier associé à l'exploitant $exp_ref pour le domaine $di_domaine n'existe dans la table $dest_dossier ; un tel dossier est inséré pour le mode test (F5)");
+                            $last_dom_ref += 1;
+                            $dest_conn->exec("INSERT INTO $dest_domaine_lang (DOM_REF, DOM_NOM) VALUES ($last_dom_ref, '$di_domaine')");
+                            array_push($warnings, "Aucun domaine appelé '$di_domaine' n'existe dans la table $dest_domaine_lang ; un tel domaine est inséré pour le mode test (F5)");
                         } else {
-                            array_push($warnings, $header_err_message . "Aucun dossier associé à l'exploitant $exp_ref pour le domaine $di_domaine n'existe dans la table $dest_dossier");
+                            array_push($warnings, $header_err_message . "Aucun domaine appelé '$di_domaine' n'existe dans la table $dest_domaine_lang");
                         }
                     } else {
-                        $det_ref = $req_det_ref[0];
-                        $dos_ref = $req_dos_ref[0];
+                        $exp_ref = $req_exp_ref[0];
+                        $dom_ref = $req_dom_ref[0];
 
-                        $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_instruction WHERE DOS_REF = $dos_ref AND DI_NUMERO = '$di_numero'")->fetch();
-                        if ($verif_query[0] !== "0") {
-                            array_push($warnings, $header_err_message . "Une instruction associée au dossier $dos_ref et portant le numéro '$di_numero' est déjà présente dans la table $dest_instruction");
+                        $det_designation = "Inspection dossier";
+                        $req_det_ref = $dest_conn->query("SELECT del.DET_REF FROM $dest_dossier_etat_lang del JOIN $dest_dossier_etat det ON det.DET_REF = del.DET_REF WHERE DET_VISIBLE = 1 AND DET_DESIGNATION = '$det_designation' AND DOM_REF = $dom_ref")->fetch();
+                        $req_dos_ref = $dest_conn->query("SELECT DOS_REF FROM $dest_dossier WHERE EXP_REF = $exp_ref AND DOM_REF = $dom_ref")->fetch();
+
+                        if (!$req_det_ref) {
+                            if ($test_mode) {
+                                $last_det_ref += 1;
+                                $dest_conn->exec("INSERT INTO $dest_dossier_etat (DET_REF, DOM_REF, DET_VISIBLE) VALUES ($last_det_ref, $dom_ref, 1)");
+                                $dest_conn->exec("INSERT INTO $dest_dossier_etat_lang (DET_REF, DET_DESIGNATION) VALUES ($last_det_ref, '$det_designation')");
+                                array_push($warnings, "Aucun état de dossier visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang ; un tel état de dossier est inséré pour le mode test (F5)");
+                            } else {
+                                array_push($warnings, $header_err_message . "Aucun état de dossier visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang");
+                            }
+                        } else if (!$req_dos_ref) {
+                            if ($test_mode) {
+                                $last_dos_ref += 1;
+                                $dest_conn->exec("INSERT INTO $dest_dossier (DOS_REF, EXP_REF, DOM_REF) VALUES ($last_dos_ref, $exp_ref, $dom_ref)");
+                                array_push($warnings, "Aucun dossier associé à l'exploitant $exp_ref pour le domaine $di_domaine n'existe dans la table $dest_dossier ; un tel dossier est inséré pour le mode test (F5)");
+                            } else {
+                                array_push($warnings, $header_err_message . "Aucun dossier associé à l'exploitant $exp_ref pour le domaine $di_domaine n'existe dans la table $dest_dossier");
+                            }
                         } else {
-                            $last_di_ref += 1;
+                            $det_ref = $req_det_ref[0];
+                            $dos_ref = $req_dos_ref[0];
 
-                            $dest_instruction_values = [];
+                            $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_instruction WHERE DOS_REF = $dos_ref AND DI_NUMERO = '$di_numero'")->fetch();
+                            if ($verif_query[0] !== "0") {
+                                array_push($warnings, $header_err_message . "Une instruction associée au dossier $dos_ref et portant le numéro '$di_numero' est déjà présente dans la table $dest_instruction");
+                            } else {
+                                $last_di_ref += 1;
 
-                            foreach ($dest_instruction_cols as $col) {
-                                switch ($col) {
-                                    case "DI_REF":
-                                        array_push($dest_instruction_values, $last_di_ref);
-                                        break;
-                                    case "DOS_REF":
-                                        array_push($dest_instruction_values, $dos_ref);
-                                        break;
-                                    case "DET_REF":
-                                        array_push($dest_instruction_values, $det_ref);
-                                        break;
-                                    case "EXP_REF":
-                                        array_push($dest_instruction_values, $exp_ref);
-                                        break;
-                                    case "DI_NUMERO":
-                                        array_push($dest_instruction_values, "'$di_numero'");
-                                        break;
-                                    case "DI_DATE_DEPOT":
-                                        array_push($dest_instruction_values, "'".string_to_date($row["Date du dépôt"], true)."'");
-                                        break;
-                                    case "DCREAT":
-                                        array_push($dest_instruction_values, "'$dest_dcreat'");
-                                        break;
-                                    case "UCREAT":
-                                        array_push($dest_instruction_values, "'$dest_ucreat'");
-                                        break;
-                                    default:
-                                        array_push($dest_instruction_values, "'TODO'");
-                                        break;
-                                }
-                            }
+                                $dest_instruction_values = [];
 
-                            $insert_into_query = "INSERT INTO $dest_instruction (" . implode(", ", $dest_instruction_cols) . ") VALUES (" . implode(", ", $dest_instruction_values) . ")";
-                            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
-
-                            // Instruction évènements
-
-                            $src_evenement_values = [];
-                            foreach ($src_evenement_cols as $col) {
-                                $src_evenement_values[$col] = $row[$col];
-                            }
-
-                            // D.I.E. "Réception de la demande"
-                            // D.I.E. "Transmission inspection"
-                            // D.I.E. "Demande d'avis"
-                            // D.I.E. "Envoi du parapheur en signature"
-                            // D.I.E. "Retour du parapheur"
-                            // D.I.E. "Transmission au service administratif" et "Résultat du dossier"
-                            foreach ($src_evenement_values as $event => $event_value) {
-                                if ($event_value && (
-                                    $event === "Date du dossier complet" || $event === "Date de transmission à l'inspection" || $event === "Date d'envoi des avis" || $event === "Date d'envoi de l'arrêté à la signature" || $event === "Date de retour de l'arrêté en signature"
-                                    || $event === "Date de transmission au service administratif" || $event === "")
-                                ) {
-                                    $eve_designation = "Désignation d'évènement inconnue";
-                                    $det_designation = "Désignation d'état de dossier inconnue";
-                                    switch ($event) {
-                                        case "Date du dossier complet":
-                                            $eve_designation = "Réception de la demande";
-                                            $det_designation = "Administratif";
+                                foreach ($dest_instruction_cols as $col) {
+                                    switch ($col) {
+                                        case "DI_REF":
+                                            array_push($dest_instruction_values, $last_di_ref);
                                             break;
-                                        case "Date de transmission à l'inspection":
-                                            $eve_designation = "Transmission inspection";
-                                            $det_designation = "Administratif";
+                                        case "DOS_REF":
+                                            array_push($dest_instruction_values, $dos_ref);
                                             break;
-                                        case "Date d'envoi des avis":
-                                            $eve_designation = "Demande d'avis";
-                                            $det_designation = "Administratif";
+                                        case "DET_REF":
+                                            array_push($dest_instruction_values, $det_ref);
                                             break;
-                                        case "Date d'envoi de l'arrêté à la signature":
-                                            $eve_designation = "Envoi du parapheur en signature";
-                                            $det_designation = "Administratif";
+                                        case "EXP_REF":
+                                            array_push($dest_instruction_values, $exp_ref);
                                             break;
-                                        case "Date de retour de l'arrêté en signature":
-                                            $eve_designation = "Retour du parapheur";
-                                            $det_designation = "Administratif";
+                                        case "DI_NUMERO":
+                                            array_push($dest_instruction_values, "'$di_numero'");
                                             break;
-                                        case "Date de transmission au service administratif":
-                                            $eve_designation = "Transmission au service administratif";
-                                            $det_designation = "Inspection dossier";
+                                        case "DI_DATE_DEPOT":
+                                            array_push($dest_instruction_values, "'".string_to_date($row["Date du dépôt"], true)."'");
+                                            break;
+                                        case "DCREAT":
+                                            array_push($dest_instruction_values, "'$dest_dcreat'");
+                                            break;
+                                        case "UCREAT":
+                                            array_push($dest_instruction_values, "'$dest_ucreat'");
+                                            break;
+                                        default:
+                                            array_push($dest_instruction_values, "'TODO'");
                                             break;
                                     }
-                                    $eve_designation = addslashes($eve_designation);
-                                    $det_designation = addslashes($det_designation);
-                                    $req_eve_ref = $dest_conn->query(build_query("SELECT evl.eve_ref FROM $dest_evenement_lang evl JOIN $dest_evenement eve ON eve.EVE_REF = evl.EVE_REF JOIN $dest_dossier_etat de ON de.DET_REF = eve.DET_REF JOIN $dest_dossier_etat_lang del ON del.DET_REF = de.DET_REF", "EVE_DESIGNATION = '$eve_designation' AND EVE_VISIBLE = 1 AND DET_VISIBLE = 1 AND DOM_REF = $dom_ref AND DET_DESIGNATION = '$det_designation'", "", ""))->fetch();
-    
-                                    if (!$req_eve_ref) {
-                                        $req_det_ref = $dest_conn->query("SELECT del.DET_REF FROM $dest_dossier_etat_lang del JOIN $dest_dossier_etat de ON de.DET_REF = del.DET_REF WHERE DET_VISIBLE = 1 AND DOM_REF = $dom_ref AND DET_DESIGNATION = '$det_designation'")->fetch();
-                                        if (!$req_det_ref) {
-                                            if ($test_mode) {
-                                                $last_det_ref += 1;
-                                                $dest_conn->exec("INSERT INTO $dest_dossier_etat (DET_REF, DOM_REF, DET_VISIBLE) VALUES ($last_det_ref, $dom_ref, 1)");
-                                                $dest_conn->exec("INSERT INTO $dest_dossier_etat_lang (DET_REF, DET_DESIGNATION) VALUES ($last_det_ref, '$det_designation')");
-                                                array_push($warnings, "Aucun état de dossier associé visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang ; un tel état de dossier est inséré pour le mode test (F5)");
-                                            } else {
-                                                array_push($warnings, $header_err_message . "Aucun état de dossier associé visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang");
-                                            }
-                                        }
-                                        $req_count_eve = $dest_conn->query("SELECT COUNT(*) FROM $dest_evenement_lang evl JOIN $dest_evenement eve ON eve.EVE_REF = evl.EVE_REF WHERE EVE_DESIGNATION = '$eve_designation' AND EVE_VISIBLE = 1 AND DET_REF = " . $req_det_ref[0])->fetch();
-                                        if ($req_count_eve[0] === "0") {
-                                            if ($test_mode) {
-                                                $last_eve_ref += 1;
-                                                $dest_conn->exec("INSERT INTO $dest_evenement (EVE_REF, DET_REF, EVE_VISIBLE) VALUES ($last_eve_ref, " . $req_det_ref[0] . ", 1)");
-                                                $dest_conn->exec("INSERT INTO $dest_evenement_lang (EVE_REF, EVE_DESIGNATION) VALUES ($last_eve_ref, '$eve_designation')");
-                                                array_push($warnings, "Aucun évènement visible désigné '$eve_designation' n'existe dans la table $dest_evenement_lang ; un tel évènement est inséré pour le mode test (F5)");
-                                            } else {
-                                                array_push($warnings, $header_err_message . "Aucun évènement visible désigné '$eve_designation' n'existe dans la table $dest_evenement_lang");
-                                            }
-                                        }
-                                    } else {
-                                        $last_die_ref += 1;
-                                        $die_commentaire = ($event === "Date de retour de l'arrêté en signature") ? $row["Résultat de la décision"] : "";
-    
-                                        $dest_instruction_evenement_values = [$last_die_ref, $last_di_ref, $req_eve_ref[0], "'" . string_to_date($event_value, true) . "'" , "'$dest_dcreat'", "'$dest_ucreat'", "'$die_commentaire'"];
-    
-                                        $insert_into_query = "INSERT INTO $dest_instruction_evenement (" . implode(", ", $dest_instruction_evenement_cols) . ") VALUES (" . implode(", ", $dest_instruction_evenement_values) . ")";
-                                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                                }
 
-                                        if ($event === "Date de transmission au service administratif") {
+                                $insert_into_query = "INSERT INTO $dest_instruction (" . implode(", ", $dest_instruction_cols) . ") VALUES (" . implode(", ", $dest_instruction_values) . ")";
+                                execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                                // Instruction évènements
+
+                                $src_evenement_values = [];
+                                foreach ($src_evenement_cols as $col) {
+                                    $src_evenement_values[$col] = $row[$col];
+                                }
+
+                                // D.I.E. "Réception de la demande"
+                                // D.I.E. "Transmission inspection"
+                                // D.I.E. "Demande d'avis"
+                                // D.I.E. "Envoi du parapheur en signature"
+                                // D.I.E. "Retour du parapheur"
+                                // D.I.E. "Instruction n°"
+                                // D.I.E. "Transmission au service administratif" et "Résultat du dossier"
+                                foreach ($src_evenement_values as $event => $event_value) {
+                                    if ($event_value && (
+                                        $event === "Date du dossier complet" || $event === "Date de transmission à l'inspection" || $event === "Date d'envoi des avis" || $event === "Date d'envoi de l'arrêté à la signature" || $event === "Résultat de la décision"
+                                        || $event === "Date retour instruction" || $event === "Date de transmission au service administratif")
+                                    ) {
+                                        $eve_designation = "Désignation d'évènement inconnue";
+                                        $det_designation = "Désignation d'état de dossier inconnue";
+                                        switch ($event) {
+                                            // "Réception de la demande"
+                                            case "Date du dossier complet":
+                                                $eve_designation = "Réception de la demande";
+                                                $det_designation = "Administratif";
+                                                break;
+                                            // "Transmission inspection"
+                                            case "Date de transmission à l'inspection":
+                                                $eve_designation = "Transmission inspection";
+                                                $det_designation = "Administratif";
+                                                break;
+                                            // "Demande d'avis"
+                                            case "Date d'envoi des avis":
+                                                $eve_designation = "Demande d'avis";
+                                                $det_designation = "Administratif";
+                                                break;
+                                            // "Envoi du parapheur en signature"
+                                            case "Date d'envoi de l'arrêté à la signature":
+                                                $eve_designation = "Envoi du parapheur en signature";
+                                                $det_designation = "Administratif";
+                                                break;
+                                            // "Retour du parapheur"
+                                            case "Résultat de la décision": // la colonne "Date de retour de l'arrêté en signature parfois vide", contraitement à la colonne "Résultat de la décision" (si cette dernière est vide, alors la première en rapport avec cet évènement aussi)
+                                                $eve_designation = "Retour du parapheur";
+                                                $det_designation = "Administratif";
+                                                break;
+                                            // "Instruction n°"
+                                            case "Date retour instruction": // si cette colonne est vide, les autres en rapport avec cet évènement aussi
+                                                $eve_designation = "Instruction n°";
+                                                $det_designation = "Inspection dossier";
+                                                break;
+                                            // "Transmission au service administratif" et "Résultat du dossier"
+                                            case "Date de transmission au service administratif":
+                                                $eve_designation = "Transmission au service administratif";
+                                                $det_designation = "Inspection dossier";
+                                                break;
+                                        }
+                                        $eve_designation = addslashes($eve_designation);
+                                        $det_designation = addslashes($det_designation);
+                                        $req_eve_ref = $dest_conn->query(build_query("SELECT evl.eve_ref FROM $dest_evenement_lang evl JOIN $dest_evenement eve ON eve.EVE_REF = evl.EVE_REF JOIN $dest_dossier_etat de ON de.DET_REF = eve.DET_REF JOIN $dest_dossier_etat_lang del ON del.DET_REF = de.DET_REF", "EVE_DESIGNATION = '$eve_designation' AND EVE_VISIBLE = 1 AND DET_VISIBLE = 1 AND DOM_REF = $dom_ref AND DET_DESIGNATION = '$det_designation'", "", ""))->fetch();
+        
+                                        if (!$req_eve_ref) {
+                                            $req_det_ref = $dest_conn->query("SELECT del.DET_REF FROM $dest_dossier_etat_lang del JOIN $dest_dossier_etat de ON de.DET_REF = del.DET_REF WHERE DET_VISIBLE = 1 AND DOM_REF = $dom_ref AND DET_DESIGNATION = '$det_designation'")->fetch();
+                                            if (!$req_det_ref) {
+                                                if ($test_mode) {
+                                                    $last_det_ref += 1;
+                                                    $dest_conn->exec("INSERT INTO $dest_dossier_etat (DET_REF, DOM_REF, DET_VISIBLE) VALUES ($last_det_ref, $dom_ref, 1)");
+                                                    $dest_conn->exec("INSERT INTO $dest_dossier_etat_lang (DET_REF, DET_DESIGNATION) VALUES ($last_det_ref, '$det_designation')");
+                                                    array_push($warnings, "Aucun état de dossier associé visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang ; un tel état de dossier est inséré pour le mode test (F5)");
+                                                } else {
+                                                    array_push($warnings, $header_err_message . "Aucun état de dossier associé visible désigné '$det_designation' pour le domaine $di_domaine n'existe dans la table $dest_dossier_etat_lang");
+                                                }
+                                            }
+                                            $req_count_eve = $dest_conn->query("SELECT COUNT(*) FROM $dest_evenement_lang evl JOIN $dest_evenement eve ON eve.EVE_REF = evl.EVE_REF WHERE EVE_DESIGNATION = '$eve_designation' AND EVE_VISIBLE = 1 AND DET_REF = " . $req_det_ref[0])->fetch();
+                                            if ($req_count_eve[0] === "0") {
+                                                if ($test_mode) {
+                                                    $last_eve_ref += 1;
+                                                    $dest_conn->exec("INSERT INTO $dest_evenement (EVE_REF, DET_REF, EVE_VISIBLE) VALUES ($last_eve_ref, " . $req_det_ref[0] . ", 1)");
+                                                    $dest_conn->exec("INSERT INTO $dest_evenement_lang (EVE_REF, EVE_DESIGNATION) VALUES ($last_eve_ref, '$eve_designation')");
+                                                    array_push($warnings, "Aucun évènement visible désigné '$eve_designation' n'existe dans la table $dest_evenement_lang ; un tel évènement est inséré pour le mode test (F5)");
+                                                } else {
+                                                    array_push($warnings, $header_err_message . "Aucun évènement visible désigné '$eve_designation' n'existe dans la table $dest_evenement_lang");
+                                                }
+                                            }
+                                        } else {
                                             $last_die_ref += 1;
-                                            $die_commentaire = $row["Résultat du dossier"];
+                                            $die_date_creation = string_to_date($event_value, true);
+                                            $die_commentaire = "";
 
-                                            $dest_instruction_evenement_values = [$last_die_ref, $last_di_ref, $req_eve_ref[0], "'" . string_to_date($event_value, true) . "'" , "'$dest_dcreat'", "'$dest_ucreat'", "'$die_commentaire'"];
-                                            
+                                            if ($event === "Résultat de la décision") {
+                                                $die_date_creation = string_to_date($row["Date de retour de l'arrêté en signature"], true);
+                                                $die_commentaire = $event_value;
+                                            }
+
+                                            if ($event === "Date retour instruction") {
+                                                $die_date_creation = "";
+                                                $die_commentaire = "";
+                                                $die_commentaire .= "Agent en charge : " . $row["Agent en charge du dossier bis"] . " ; ";
+                                                $die_commentaire .= "Date de transmission à l'agent : " . $row["Date transmission inspecteur"] . " ; ";
+                                                $die_commentaire .= "Date retour instruction : " . string_to_date($row["Date retour instruction"], true) . " ; ";
+                                                $die_commentaire .= "Date retour après avis : " . string_to_date($row["Date de retour après avis"], true) . " ; ";
+                                                $die_commentaire .= "Motif du retour : " . string_to_date($row["Motif du retour"], true) . " ; ";
+                                                $die_commentaire .= "Date second retour instruction : " . string_to_date($row["Date second retour instruction"], true) . " ; ";
+                                                $die_commentaire .= "Date retour après avis : " . string_to_date($row["Date de retour après avis bis"], true) . " ;";
+                                            }
+
+                                            $die_date_creation = (!$die_date_creation) ? "NULL" : "'$die_date_creation'"; // !die_date_creation <=> === NULL || === ""
+                                            $dest_instruction_evenement_values = [$last_die_ref, $last_di_ref, $req_eve_ref[0], $die_date_creation, "'$dest_dcreat'", "'$dest_ucreat'", addslashes_nullify($die_commentaire)];
+        
                                             $insert_into_query = "INSERT INTO $dest_instruction_evenement (" . implode(", ", $dest_instruction_evenement_cols) . ") VALUES (" . implode(", ", $dest_instruction_evenement_values) . ")";
                                             execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                                            if ($event === "Date de transmission au service administratif") {
+                                                $last_die_ref += 1;
+                                                $die_commentaire = $row["Résultat du dossier"];
+
+                                                $dest_instruction_evenement_values = [$last_die_ref, $last_di_ref, $req_eve_ref[0], $die_date_creation, "'$dest_dcreat'", "'$dest_ucreat'", addslashes_nullify($die_commentaire)];
+                                                
+                                                $insert_into_query = "INSERT INTO $dest_instruction_evenement (" . implode(", ", $dest_instruction_evenement_cols) . ") VALUES (" . implode(", ", $dest_instruction_evenement_values) . ")";
+                                                execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                                            }
                                         }
+                                    } // Fin "si la valeur est non nulle et la colonne est traitable automatiquement"
+                                } // Fin "pour chaque colonne traitant d'un instructions évènement"
+                                
+                                // Document
+
+                                if ($row["N° d'Arrêté"]) {
+                                    $dct_nom = "Arrêté";
+                                    $req_dct_ref = $dest_conn->query("SELECT DCT_REF FROM $dest_commentaire_type_lang WHERE DCT_NOM = '$dct_nom'")->fetch();
+                                    if (!$req_dct_ref) {
+                                        if ($test_mode) {
+                                            $last_dct_ref += 1;
+                                            $dest_conn->exec("INSERT INTO $dest_commentaire_type_lang (DCT_REF, DCT_NOM) VALUES ($last_det_ref, '$dct_nom')");
+                                            array_push($warnings, "Aucun commentaire type de dossier nommé '$dct_nom' n'existe dans la table $dest_commentaire_type_lang ; un tel commentaire type de dossier est inséré pour le mode test (F5)");
+                                        } else {
+                                            array_push($warnings, $header_err_message . "Aucun commentaire type de dossier nommé '$dct_nom' n'existe dans la table $dest_commentaire_type_lang");
+                                        }
+                                    } else {
+                                        $last_dd_ref += 1;
+
+                                        $dest_dossier_document_values = [$last_dd_ref, $dos_ref, $req_dct_ref[0], "'$dest_ucreat'", "'Reprise VOIRIE'", "'$dest_dcreat'", addslashes_nullify($row["N° d'Arrêté"]), "'$dest_dcreat'", "'$dest_ucreat'"];
+
+                                        $insert_into_query = "INSERT INTO $dest_dossier_document (" . implode(", ", $dest_dossier_document_cols) . ") VALUES (" . implode(", ", $dest_dossier_document_values) . ")";
+                                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
                                     }
-                                } // Fin "si la valeur est non nulle et la colonne est traitable automatiquement"
-                            } // Fin "pour chaque colonne traitant d'un instructions évènement"
-
-                            // TODO /*DOSSIER_INSTRUCTION_EVENEMENT Transmission au service administratif */
-
-                            // Document
-
-                            // TODO LE DOCUMENT DU DOSSIER
-
-                        } // Fin "si il n'existe pas déjà une instruction avec ce dossier et ce numéro"
-                    } // Fin "si l'état du dossier ou le dossier n'existe pas"
-                } // Fin "si le code comptable ou le domaine n'existe pas"
+                                }
+                            } // Fin "si il n'existe pas déjà une instruction avec ce dossier et ce numéro"
+                        } // Fin "si l'état du dossier ou le dossier n'existe pas"
+                    } // Fin "si le code comptable ou le domaine n'existe pas"
+                } // Fin "si l'objet de la demande n'est pas renseigné"
             }
             if ($display_dest_requests) echo "</div>";
 
             summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
 
-            // $nb_instructions = $dest_conn->query("SELECT COUNT(*) FROM $dest_instruction")->fetch()[0] - $nb_instructions;
-            // $mysql_conn->exec("UPDATE $reprise_table SET instructions_dest = $nb_instructions WHERE id = $reprise_id");
+            $nb_instructions = $dest_conn->query("SELECT COUNT(*) FROM $dest_instruction")->fetch()[0] - $nb_instructions;
+            $mysql_conn->exec("UPDATE $reprise_table SET instructions_dest = $nb_instructions WHERE id = $reprise_id");
 
             // Compteurs
 
             echo "<h2 id=\"dest_compteurs\">Compteurs<span><tt>$dest_compteur</tt></span></h2>";
             fwrite($output_file, "\n-- Compteurs\n\n");
 
-            // TODO LES COMPTEURS
+            $nb_to_update = 0;
+            $nb_updated = 0;
 
-            // dossier_instruction
-            // dossier_instruction_evenement
-            // dossier_document
+            if ($display_dest_requests) echo "<div class=\"pre\">";
 
-            // APRES CA SERA FINI
-            // MONTRER A THOMAS (uniquement traitement du dossier écrit main, automatiser les fichiers qui viennent de dibtic ?)
-            // ATTAQUER LES ABONNEMENTS DE PLACIER MERCREDI APREM SI POSSIBLE (changer l'edt)
+            $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_compteur WHERE CPT_TABLE = 'dossier_instruction'")->fetch();
+            if ($verif_query[0] === "0") {
+                $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0];
+                $dest_compteur_values = [$last_cpt_ref, "'dossier_instruction'", "(SELECT MAX(DI_REF) + 1 FROM $dest_instruction)", "'$dest_dcreat'", "'$dest_ucreat'"];
+                $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
+                execute_query($insert_into_query, $nb_updated, $nb_to_update);
+            } else {
+                $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(DI_REF) + 1 FROM $dest_instruction) WHERE CPT_TABLE = 'dossier_instruction'";
+                execute_query($update_query, $nb_updated, $nb_to_update);
+            }
+
+            $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_compteur WHERE CPT_TABLE = 'dossier_instruction_evenement'")->fetch();
+            if ($verif_query[0] === "0") {
+                $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0];
+                $dest_compteur_values = [$last_cpt_ref, "'dossier_instruction_evenement'", "(SELECT MAX(DIE_REF) + 1 FROM $dest_instruction_evenement)", "'$dest_dcreat'", "'$dest_ucreat'"];
+                $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
+                execute_query($insert_into_query, $nb_updated, $nb_to_update);
+            } else {
+                $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(DIE_REF) + 1 FROM $dest_instruction_evenement) WHERE CPT_TABLE = 'dossier_instruction_evenement'";
+                execute_query($update_query, $nb_updated, $nb_to_update);
+            }
+
+            $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_compteur WHERE CPT_TABLE = 'dossier_document'")->fetch();
+            if ($verif_query[0] === "0") {
+                $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0];
+                $dest_compteur_values = [$last_cpt_ref, "'dossier_document'", "(SELECT MAX(DD_REF) + 1 FROM $dest_dossier_document)", "'$dest_dcreat'", "'$dest_ucreat'"];
+                $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
+                execute_query($insert_into_query, $nb_updated, $nb_to_update);
+            } else {
+                $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(DD_REF) + 1 FROM $dest_dossier_document) WHERE CPT_TABLE = 'dossier_document'";
+                execute_query($update_query, $nb_updated, $nb_to_update);
+            }
+
+            
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_updated, $nb_to_update, $nb_errors, [], $nb_warnings);
 
 
             $mysql_conn->exec("UPDATE $reprise_table SET date_fin = '$timestamp', conflits = $nb_warnings, erreurs = $nb_errors, etat = 2 WHERE id = $reprise_id");
@@ -1142,7 +1271,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 dom_nb_errors.innerHTML += "Reprise terminée avec " + nb_errors + " erreurs et " + nb_warnings + " conflits";
 
                 var dom_nb_content = document.querySelector("#nb_content");
-                dom_nb_content.innerHTML += "<tr><td></td></tr>";
+                var nb_instructions_src = parseInt(<?php echo $nb_content["instructions"]; ?>);
+                var nb_instructions_dest = parseInt(<?php echo $nb_instructions; ?>);
+                dom_nb_content.innerHTML += "<tr><td>" + nb_instructions_dest + "/" + nb_instructions_src + "</td></tr>";
             </script>
 
             <?php
