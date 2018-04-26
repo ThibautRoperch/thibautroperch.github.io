@@ -3,6 +3,7 @@ Fichiers à mettre en prod :
 
 css/*
 js/*
+index.html
 placier.php     # pour reprise Placier
 odp.php         # pour reprise ODP
 
@@ -11,3 +12,17 @@ odp.php         # pour reprise ODP
 Changer le mot de passe de la connexion MySQL :
 
 $mysql_password = "rtli";
+
+
+
+Créer les bases de données :
+
+reprise_dibtic_placier      # pour reprise Placier
+reprise_dibtic_odp          # pour reprise ODP
+
+
+
+Importer les tables dans phpMyAdmin (glisser-déposer) :
+
+reprise_dibtic_placier.sql      # pour reprise Placier
+reprise_dibtic_odp.sql          # pour reprise ODP

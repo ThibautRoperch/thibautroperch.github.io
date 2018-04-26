@@ -102,6 +102,22 @@ a:hover {
     color: #343131;
 }
 
+a.big {
+    padding: 4vh 0;
+    line-height: 28px;
+    text-align: center;
+    font-size: 16px;
+    color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+a.big:hover {
+    color: white;
+    border-color: transparent;
+    background: rgba(0, 0, 0, 0.7);
+}
+
 /* Init */
 
 init {
@@ -201,7 +217,28 @@ section {
     padding-bottom: 3%;
 }
 
+section.row {
+    padding: 3% 0;
+    flex-direction: row;
+}
+
 section > * {
+    flex: 1;
+}
+
+/* Article */
+
+article.square {
+    display: flex;
+    flex-direction: column;
+    margin: 0 22%;
+}
+
+article.square + article.square {
+    margin-left: 0;
+}
+
+article.square > * {
     flex: 1;
 }
 

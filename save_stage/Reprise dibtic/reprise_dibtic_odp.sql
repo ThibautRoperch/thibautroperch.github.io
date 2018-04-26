@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS `reprise_odp`
+CREATE TABLE IF NOT EXISTS `reprise`
 (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `token` varchar(250) DEFAULT NULL COMMENT 'md5 de la première ligne des données du fichier des marchés',
@@ -12,6 +12,77 @@ CREATE TABLE IF NOT EXISTS `reprise_odp`
   `conflits` int(11) NOT NULL DEFAULT '0',
   `erreurs` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `dest_exploitant`
+(
+    EXP_REF                   INT,
+    UTI_REF                   INT,
+    GRA_REF                   INT,
+    CAT_REF                   INT,
+    NAT_REF                   INT,
+    CIV_REF                   INT,
+    LAN_REF                   INT,
+    ETP_REF                   INT,
+    ACO_REF                   INT,
+    ACOO_REF                  INT,
+    EXP_NOM_PERS_PHYSIQUE     VARCHAR(250),
+    EXP_PRENOM_PERS_PHYSIQUE  VARCHAR(250),
+    EXP_RAISON_SOCIALE        VARCHAR(250),
+    EXP_NOM                   VARCHAR(250),
+    EXP_ENSEIGNE              VARCHAR(250),
+    EXP_SIRET                 VARCHAR(250),
+    EXP_CODE                  VARCHAR(250),
+    EXP_CODE_COMPTABLE        VARCHAR(250),
+    EXP_APE                   VARCHAR(250),
+    EXP_TVAINTRACOMMUNAUTAIRE VARCHAR(250),
+    EXP_VISIBLE               INT,
+    EXP_VALIDE                INT,
+    EXP_DATE_CESSATION DATE,
+    EXP_NRUE              INT,
+    EXP_NRUE_ALPHA        VARCHAR(250),
+    EXP_ADRESSE           VARCHAR(250),
+    EXP_CP                VARCHAR(250),
+    EXP_VILLE             VARCHAR(250),
+    PA_REF                INT,
+    RUE_REF               INT,
+    EXP_COMPLEMENTADRESSE VARCHAR(250),
+    EXP_TELEPHONE         VARCHAR(250),
+    EXP_PORTABLE          VARCHAR(250),
+    EXP_FAX               VARCHAR(250),
+    EXP_COMMENTAIRE       VARCHAR(250),
+    EXP_EMAIL             VARCHAR(250),
+    EXP_TITULAIRECOMPTE   VARCHAR(250),
+    EXP_IBAN              VARCHAR(250),
+    EXP_BIC               VARCHAR(250),
+    EXP_SEPA_NUMERO_RUM   VARCHAR(250),
+    EXP_SEPA_SIGNATURE_MANDAT DATE,
+    EXP_PRODUCTEUR INT,
+    EXP_DATE_NAISSANCE DATE,
+    EXP_PHOTO_IDENTITE VARCHAR(250),
+    EXP_CODERUEGDA     VARCHAR(250),
+    EXP_CREATION DATE,
+    EXP_MODIFICATION DATE,
+    DCREAT DATE,
+    UCREAT                    VARCHAR(250),
+    ANC_EXP_REF               INT,
+    EXP_LIEU_NAISSANCE        VARCHAR(250),
+    EXP_DEPARTEMENT_NAISSANCE VARCHAR(250),
+    PAN_REF                   INT,
+    EXP_NUM_AGREMENT          VARCHAR(250),
+    EXP_REFERENCE_RCS         VARCHAR(250),
+    EXP_PERMIS_DATE DATE,
+    EXP_PERMIS_LIEU           VARCHAR(250),
+    EXP_PERMIS_AUT_DELIVRANCE VARCHAR(250),
+    EXP_PERMIS_DATE_FIN DATE,
+    EXP_CARTE_PRO_NUMERO VARCHAR(250),
+    EXP_CARTE_PRO_DATE DATE,
+    EXP_CARTE_PRO_DATE_FIN DATE,
+    EXP_FORMATION_CONT_DATE_FIN DATE,
+    EXP_TYPE_TAXIS      INT,
+    EXP_COMPLEMENT_NOM  VARCHAR(250),
+    EXP_TIERS_A_VALIDER INT,
+    EXP_TIERS_VALIDE    INT
 );
 
 CREATE TABLE IF NOT EXISTS `dest_domaine_langue`
@@ -217,7 +288,16 @@ CREATE TABLE IF NOT EXISTS `dest_dossier_document`
     DD_ANCIEN_EXP   VARCHAR(250)
 );
 
+CREATE TABLE IF NOT EXISTS `dest_compteur`
+(
+    CPT_REF           INT,
+    CPT_TABLE         VARCHAR(250),
+    CPT_VAL           INT,
+    DCREAT            DATE,
+    UCREAT            VARCHAR(250)
+);
 
+-- DELETE FROM dest_exploitant;
 -- DELETE FROM dest_domaine_langue;
 -- DELETE FROM dest_dossier;
 -- DELETE FROM dest_dossier_etat;
@@ -226,3 +306,4 @@ CREATE TABLE IF NOT EXISTS `dest_dossier_document`
 -- DELETE FROM dest_evenement;
 -- DELETE FROM dest_evenement_langue;
 -- DELETE FROM dest_dossier_document;
+-- DELETE FROM dest_compteur;

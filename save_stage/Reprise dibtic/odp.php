@@ -9,7 +9,7 @@
 <?php
 
 $script_file_name = "odp.php";
-$title = "Reprise dibtic vers GEODP v1<br>ODP";
+$title = "Reprise dibtic vers GEODP v1<br>ODP NICE";
 
 // Génère des tables à partir des fichiers lus, extrait les informations voulues et exécute + donne les requêtes SQL
 // Entrée : Fichiers Excel dibtic ODP (seulement le fichier des instructions, le seul ne venant pas de dibtic)
@@ -19,7 +19,6 @@ $title = "Reprise dibtic vers GEODP v1<br>ODP";
  * VERSION 1.0 - 25/04/2018
  * 
  * Instructions Fichier écrit à la main, non dibtic
- * Exploitants  
  * 
  * @author Thibaut ROPERCH
  */
@@ -124,7 +123,7 @@ $client_name = (!$test_mode && isset($_POST["type"])) ? $_POST["type"] : "[ MODE
  *************************/
 
 $mysql_host = "localhost";
-$mysql_dbname = "reprise_dibtic";
+$mysql_dbname = "reprise_dibtic_odp";
 $mysql_login = "root";
 $mysql_password = "";
 
@@ -160,7 +159,7 @@ if ($analyse_mode) {
  *  MULTI-UTILISATIONS   *
  *************************/
 
-$reprise_table = "reprise_odp";
+$reprise_table = "reprise";
 
 // Protection contre les utilisations simultanées du script (ressources communes : fichiers, tables sources et tables de destination)
 if (isset($_GET["shutdown"]) && $_GET["shutdown"] !== "") {
@@ -252,7 +251,7 @@ function addslashes_nullify($string) {
         return "NULL";
     } else if ($string === NULL) {
         return "NULL";
-    }else {
+    } else {
         return "'".addslashes($string)."'";
     }
 }
@@ -729,7 +728,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             $src_instruction_cols = [];
             foreach ($src_conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$src_instruction'") as $row) {
-                array_push($src_instruction_cols, $row["COLUMN_NAME"]);
+                if (!in_array($row["COLUMN_NAME"], $src_instruction_cols)) {
+                    array_push($src_instruction_cols, $row["COLUMN_NAME"]);
+                }
             }
 
             $src_conn->exec("DROP TABLE IF EXISTS $src_formatted_instruction");
@@ -1215,11 +1216,13 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $nb_to_update = 0;
             $nb_updated = 0;
 
+            $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) FROM $dest_compteur")->fetch()[0];
+
             if ($display_dest_requests) echo "<div class=\"pre\">";
 
             $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_compteur WHERE CPT_TABLE = 'dossier_instruction'")->fetch();
             if ($verif_query[0] === "0") {
-                $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0];
+                $last_cpt_ref += 1;
                 $dest_compteur_values = [$last_cpt_ref, "'dossier_instruction'", "(SELECT MAX(DI_REF) + 1 FROM $dest_instruction)", "'$dest_dcreat'", "'$dest_ucreat'"];
                 $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
                 execute_query($insert_into_query, $nb_updated, $nb_to_update);
@@ -1230,7 +1233,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_compteur WHERE CPT_TABLE = 'dossier_instruction_evenement'")->fetch();
             if ($verif_query[0] === "0") {
-                $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0];
+                $last_cpt_ref += 1;
                 $dest_compteur_values = [$last_cpt_ref, "'dossier_instruction_evenement'", "(SELECT MAX(DIE_REF) + 1 FROM $dest_instruction_evenement)", "'$dest_dcreat'", "'$dest_ucreat'"];
                 $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
                 execute_query($insert_into_query, $nb_updated, $nb_to_update);
@@ -1241,7 +1244,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_compteur WHERE CPT_TABLE = 'dossier_document'")->fetch();
             if ($verif_query[0] === "0") {
-                $last_cpt_ref = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0];
+                $last_cpt_ref += 1;
                 $dest_compteur_values = [$last_cpt_ref, "'dossier_document'", "(SELECT MAX(DD_REF) + 1 FROM $dest_dossier_document)", "'$dest_dcreat'", "'$dest_ucreat'"];
                 $insert_into_query = "INSERT INTO $dest_compteur (" . implode(", ", $dest_compteur_cols) . ") VALUES (" . implode(", ", $dest_compteur_values) . ")";
                 execute_query($insert_into_query, $nb_updated, $nb_to_update);
@@ -1249,7 +1252,6 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(DD_REF) + 1 FROM $dest_dossier_document) WHERE CPT_TABLE = 'dossier_document'";
                 execute_query($update_query, $nb_updated, $nb_to_update);
             }
-
             
             if ($display_dest_requests) echo "</div>";
 

@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS `reprise_placier`
+CREATE TABLE IF NOT EXISTS `reprise`
 (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `token` varchar(250) DEFAULT NULL COMMENT 'Première ligne des données du fichier des exploitants',
@@ -619,6 +619,107 @@ CREATE TABLE IF NOT EXISTS `dest_societe_marche`
     SMA_NUMERO_CONTRAT           INT
 );
 
+CREATE TABLE IF NOT EXISTS `dest_exercice_comptable`
+(
+    EC_REF      INT,
+    EC_NOM      VARCHAR(250),
+    EC_DATE     DATE,
+    EC_ACTUEL   INT,
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250),
+    EC_CPTLIGNE_ONYX_NUMBER INT
+);
+
+CREATE TABLE IF NOT EXISTS `dest_facture`
+(
+    FAC_REF     INT,
+    RAS_REF     INT,
+    EXP_REF     INT,
+    TFA_REF     INT,
+    ACT_REF     INT,
+    UTI_REF     INT,
+    MAT_REF     INT,
+    ORE_REF     INT,
+    FAC_FAC_REF INT,
+    EC_REF      INT,
+    FAC_NUM     VARCHAR(250),
+    FAC_DATE    DATE,
+    FAC_SOMME_TTC   FLOAT,
+    FAC_SOMME_TVA   FLOAT,
+    FAC_SOMME_HT    FLOAT,
+    FAC_VALIDE  INT,
+    FAC_VISIBLE INT,
+    FAC_DATE_IMPRESSION DATE,
+    FAC_BK_LOGO VARCHAR(250),
+    FAC_BK_GESTIONTVA   VARCHAR(250),
+    FAC_RELANCE_DATE    DATE,
+    FAC_PERIODE INT,
+    FAC_CAUSE_SUPP  VARCHAR(250),
+    FAC_EXPORT  DATE,
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250),
+    FAC_EXPORT_NUMERO   VARCHAR(250),
+    ROP_REF     INT,
+    FAC_NUM_ROLMRE VARCHAR(250),
+    FAC_BK_TYPE_BORDEREAU   VARCHAR(250),
+    EMP_REF     INT,
+    FAC_CA_ANNULATION INT,
+    FAC_CA_FICHIER VARCHAR(250),
+    FAC_CA_DATE DATE,
+    FAC_BK_TITRE    INT,
+    FAC_EXPORT_FINSAT   VARCHAR(250),
+    PES_REF INT,
+    ECO_REF INT
+);
+
+CREATE TABLE IF NOT EXISTS `dest_article_facture`
+(
+    ART_REF     INT,
+    FAC_REF     INT,
+    MAR_REF     INT,
+    AFA_DATE    DATE,
+    AFA_QUANTITE    FLOAT,
+    AFA_PRIX_TTC    FLOAT,
+    AFA_PRIX_HT     FLOAT,
+    AFA_TAUX_TVA    FLOAT,
+    AFA_ABONNE      INT,
+    AFA_ORDRE       INT,
+    AFA_MULTIPLICATEUR  INT,
+    AFA_TYPE_TARIFICATION   VARCHAR(250),
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250),
+    AFA_QUANTITE_ARRONDIE   INT,
+    AFA_BK_QUANTITE_ARRONDIE_LIB    VARCHAR(250),
+    ONL_REF     INT,
+    AFA_BK_TOTAL_HT     FLOAT,
+    AFA_BK_TOTAL_TVA    FLOAT,
+    AFA_BK_TOTAL_TTC    FLOAT
+);
+
+CREATE TABLE IF NOT EXISTS `dest_article_facture_langue`
+(
+    FAC_REF     INT,
+    ART_REF     INT,
+    AFA_DATE    DATE,
+    LAN_REF     INT,
+    AFA_LIBELLE     VARCHAR(250),
+    AFA_QUANTITE    VARCHAR(250),
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250)
+);
+
+CREATE TABLE IF NOT EXISTS `dest_abonnement`
+(
+    EXP_REF     INT,
+    ABO_DATE_DEB    DATE,
+    FAC_REF     INT,
+    ABO_DATE_FIN    DATE,
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250),
+    ABO_REF     INT,
+    ABO_TYPE    VARCHAR(250)
+);
+
 CREATE TABLE IF NOT EXISTS `dest_activitecommerciale`
 (
     ACO_REF     INT,
@@ -678,6 +779,11 @@ CREATE TABLE IF NOT EXISTS `dest_societe_propriete_valeur`
 -- DELETE FROM dest_article_langue;
 -- DELETE FROM dest_exploitant;
 -- DELETE FROM dest_societe_marche;
+-- DELETE FROM dest_exercice_comptable;
+-- DELETE FROM dest_facture;
+-- DELETE FROM dest_article_facture;
+-- DELETE FROM dest_article_facture_langue;
+-- DELETE FROM dest_abonnement;
 -- DELETE FROM dest_activitecommerciale;
 -- DELETE FROM dest_activitecommerciale_langue;
 -- DELETE FROM dest_societe_propriete;
