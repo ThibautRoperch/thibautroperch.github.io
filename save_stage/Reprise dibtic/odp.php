@@ -1253,6 +1253,10 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 execute_query($update_query, $nb_updated, $nb_to_update);
             }
             
+            $nb_compteurs = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0]; // compteur du compteur
+            $update_query = "UPDATE $dest_compteur SET CPT_VAL = $nb_compteurs WHERE CPT_TABLE = 'compteur'";
+            execute_query($update_query, $nb_updated, $nb_to_update);
+            
             if ($display_dest_requests) echo "</div>";
 
             summarize_queries($nb_updated, $nb_to_update, $nb_errors, [], $nb_warnings);

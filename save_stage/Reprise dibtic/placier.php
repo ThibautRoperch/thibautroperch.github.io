@@ -52,17 +52,18 @@ $timestamp = date("Y-m-d H:i:s", time());
 $directory_name = "./dibtic_placier";
 
 // Résumé du contenu des fichiers sources (dibtic)
-$expected_content = ["marchés", "articles", "exploitants"];
+$expected_content = ["marchés", "articles", "exploitants", /*"présences"*/];
 
 // Noms possibles des fichiers sources (dibtic)
-$keywords_files = ["marche/marché", "classe/article/tarif", "exploitant/assujet"];
+$keywords_files = ["marche/marché", "classe/article/tarif", "exploitant/assujet", "presence"];
 
 // Données extraites des fichiers sources (dibtic)
 $extracted_files_content = [
     "Libellé et jour(s) de chaque marché.",
     "Les articles qui ont le même nom seront fusionnés s'ils sont complémentaires au niveau du tarif (passagers et abonnés), ignorés sinon. Un <tt>X</tt> dans la colonne <tt>abo</tt> indique que le tarif est un tarif d'abonnés. Les codes PDA des tarifs passagers doivent être renseignés dans une colonne <tt>code_pda</tt>. Des colonnes <tt>date_debut</tt> et <tt>date_fin</tt> peuvent être ajoutées afin d'expliciter la période de validité de l'article (sur l'année en cours par défaut). Une colonne <tt>marches</tt> peut être ajoutée pour spécifier le(s) code(s) marché (en les séparant par une virgule) associé(s) à l'article (par défaut, les articles sont ajoutés aux marchés appartenant à leur groupe <tt>numc</tt>).",
-    "Code de l’exploitant, raison sociale, nom/prénom, adresse, numéro de tel, mail, activité, abonnements aux marchés associés à l’exploitant, pièces justificatives avec date d'échéance. Les exploitants sans nom ou possédant une date de suppression non vide ne seront pas repris."
-    ];
+    "Code de l’exploitant, raison sociale, nom/prénom, adresse, numéro de tel, mail, activité, abonnements aux marchés associés à l’exploitant, pièces justificatives avec date d'échéance. Les exploitants sans nom ou possédant une date de suppression non vide ne seront pas repris.",
+    "Présences des exploitants sur leur emplacement"
+];
 
 // Nom du fichier de sortie contenant les requêtes SQL à envoyer (GEODP v1)
 $output_filename = "output.sql"; // Si un fichier avec le même nom existe déjà, il sera écrasé
@@ -107,6 +108,8 @@ $dest_article_facture_lang = "dest_article_facture_langue";
 $dest_abonnement = "dest_abonnement";
 $dest_piece_val = "dest_societe_propriete_valeur";
 $dest_compteur = "dest_compteur";
+$dest_rassemblement = "dest_rassemblement";
+$dest_presence = "dest_presence";
 
 if (!$test_mode) {
     $dest_utilisateur = "UTILISATEUR";
@@ -131,6 +134,8 @@ if (!$test_mode) {
     $dest_abonnement = "ABONNEMENT";
     $dest_piece_val = "SOCIETE_PROPRIETE_VALEUR";
     $dest_compteur = "COMPTEUR";
+    $dest_rassemblement = "RASSEMBLEMENT";
+    $dest_presence = "PRESENCE";
 }
 
 // Valeurs des champs DCREAT et UCREAT utilisées dans les requêtes SQL
@@ -141,7 +146,7 @@ $dest_ucreat = "ILTR";
 $erase_destination_tables = (!$test_mode && isset($_POST["erase_destination_tables"])) ? true_false($_POST["erase_destination_tables"]) : true; // true | false
 
 // Mettre à vrai pour afficher les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
-$display_dest_requests = true; // true | false
+$display_dest_requests = false; // true | false
 
 // Mettre à vrai pour exécuter les requêtes SQL relatives aux tables de destination, mettre à faux sinon (dans tous les cas, le fichier $output_filename est généré)
 $exec_dest_requests = true; // true | false
@@ -591,7 +596,6 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo "<li><a href=\"#erase\">Vidage des tables de destination</a>";
                         echo "<ol>";
                             echo "<li><a href=\"#erase_exploitants\">Pièces justificatives Valeur / Abonnements / Société Marché / Exploitants</a></li>";
-                            echo "<li><a href=\"#erase_comptable\">Exercice Comptable</a></li>";
                             echo "<li><a href=\"#erase_pices\">Pièces justificatives Langue / Pièces justificatives</a></li>";
                             echo "<li><a href=\"#erase_activites_comm\">Activités commerciales Langue / Activités commerciales</a></li>";
                             echo "<li><a href=\"#erase_articles\">Articles Langue / Articles</a></li>";
@@ -606,8 +610,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         echo "<li><a href=\"#dest_articles\">Articles / Articles Langue</a></li>";
                         echo "<li><a href=\"#dest_activites_comm\">Activités commerciales / Activités commerciales Langue</a></li>";
                         echo "<li><a href=\"#dest_pieces\">Pièces justificatives / Pièces justificatives Langue</a></li>";
-                        echo "<li><a href=\"#comptable\">Exercice Comptable</a></li>";
                         echo "<li><a href=\"#dest_exploitants\">Exploitants / Société Marché / Abonnements / Pièces justificatives Valeur</a></li>";
+                        echo "<li><a href=\"#dest_presences\">Rassemblements / Présences</a></li>";
                         echo "<li><a href=\"#dest_compteurs\">Compteurs</a></li>";
                     echo "</ol>";
                 echo "</li>";
@@ -619,7 +623,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             echo "<summary id=\"summary\">";
                 echo "<h1>$nom_reprise</h1>";
-                echo "<p id=\"nb_errors\"></p>";
+                echo "<p id=\"nb_errors\">Reprise en cours</p>";
                 echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Articles</th><th>Exploitants</th></tr></table>";
                 echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
@@ -757,6 +761,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $src_marche = $src_tables["marchés"];
             $src_article = $src_tables["articles"];
             $src_exploitant = $src_tables["exploitants"];
+            // $src_presence = $src_tables["présences"]; // TODO
 
             // Récupération des colonnes des classes d'articles (elles commencent par "classe" et sont peut-être suivies par un entier)
             $src_exploitant_classe_cols = [];
@@ -793,18 +798,20 @@ if (isset($_FILES) && count($_FILES) > 0) {
             if ($erase_destination_tables) {
                 echo "<h1 id=\"erase\">Vidage des tables de destination</h1>";
 
-                echo "<h2 id=\"erase_exploitants\">Pièces justificatives Valeur / Abonnements / Articles Factures / Société Marché / Exploitants<span><tt>$dest_piece_val</tt> / <tt>$dest_abonnement</tt> / <tt>$dest_article_facture</tt> / <tt>$dest_societe_marche</tt> / <tt>$dest_exploitant</tt></span></h2>";
+                echo "<h2 id=\"erase_presences\">Présences / Rassemblements<span><tt>$dest_presence</tt> / <tt>$dest_rassemblement</tt></span></h2>";
+                
+                $dest_conn->exec("DELETE FROM $dest_presence");
+                $dest_conn->exec("DELETE FROM $dest_rassemblement");
+
+                echo "<h2 id=\"erase_exploitants\">Pièces justificatives Valeur / Abonnements / Société Marché / Exploitants<span><tt>$dest_piece_val</tt> / <tt>$dest_abonnement</tt> / <tt>$dest_article_facture</tt> / <tt>$dest_societe_marche</tt> / <tt>$dest_exploitant</tt></span></h2>";
 
                 $dest_conn->exec("DELETE FROM $dest_piece_val");
                 $dest_conn->exec("DELETE FROM $dest_abonnement");
+                $dest_conn->exec("DELETE FROM $dest_article_facture_lang");
                 $dest_conn->exec("DELETE FROM $dest_article_facture");
                 $dest_conn->exec("DELETE FROM $dest_facture");
                 $dest_conn->exec("DELETE FROM $dest_societe_marche");
                 $dest_conn->exec("DELETE FROM $dest_exploitant");
-
-                echo "<h2 id=\"erase_comptable\">Exercice Comptable<span><tt>$dest_comptable</tt></span></h2>";
-                
-                $dest_conn->exec("DELETE FROM $dest_comptable");
 
                 echo "<h2 id=\"erase_pieces\">Pièces justificatives Langue / Pièces justificatives<span><tt>$dest_piece_lang</tt> / <tt>$dest_piece</tt></span></h2>";
 
@@ -847,9 +854,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
             
             $dest_societe_marche_cols = ["EXP_REF", "MAR_REF", "ACO_REF", "SMA_TITULAIRE", "SMA_ABONNE", "DCREAT", "UCREAT"];
 
-            $dest_exercice_comptable_cols = ["EC_REF", "EC_NOM", "EC_DATE", "DCREAT", "UCREAT"];
             $dest_facture_cols = ["FAC_REF", "EXP_REF", "TFA_REF", "ACT_REF", "UTI_REF", "EC_REF", "FAC_NUM", "FAC_DATE", "FAC_SOMME_TTC", "FAC_SOMME_TVA", "FAC_SOMME_HT", "FAC_VALIDE", "FAC_VISIBLE", "DCREAT", "UCREAT"];
-            $dest_article_facture_cols = ["ART_REF", "FAC_REF", "MAR_REF", "AFA_DATE", "AFA_QUANTITE", "AFA_PRIX_TTC", "AFA_PRIX_HT", "AFA_TAUX_TVA", "DCREAT", "UCREAT"];
+            $dest_article_facture_cols = ["ART_REF", "FAC_REF", "MAR_REF", "AFA_DATE", "AFA_QUANTITE", "AFA_PRIX_TTC", "AFA_PRIX_HT", "AFA_TAUX_TVA", "AFA_MULTIPLICATEUR", "DCREAT", "UCREAT", "AFA_BK_TOTAL_HT", "AFA_BK_TOTAL_TVA", "AFA_BK_TOTAL_TTC"];
             $dest_article_facture_lang_cols = ["FAC_REF", "ART_REF", "AFA_DATE", "LAN_REF", "AFA_LIBELLE", "DCREAT", "UCREAT"];
             $dest_abonnement_cols = ["EXP_REF", "ABO_DATE_DEB", "FAC_REF", "ABO_DATE_FIN", "DCREAT", "UCREAT", "ABO_REF", "ABO_TYPE"];
 
@@ -886,6 +892,13 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 return;
             }
             $act_ref = $req_act_ref_lang["ACT_REF"];
+
+            $req_ec_ref = $dest_conn->query(build_query("SELECT EC_REF FROM $dest_exercice_comptable", "EC_ACTUEL = 1", "EC_REF DESC", "1"))->fetch();
+            if ($req_ec_ref == null) {
+                echo "<p class=\"danger\">Impossible de continuer car il n'y a pas d'exercice comptable en cours dans la table $dest_exercice_comptable</p>";
+                return;
+            }
+            $ec_ref = $req_ec_ref["EC_REF"];
 
             // Utilisateur
 
@@ -1053,7 +1066,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     if ($old_miss_abo && $src_art_abo || $old_miss_non_abo && !$src_art_abo) {
                         // Le nouvel article est complémentaire du premier -> Update de chaque article
 
-                        $warning_message = "Au moins article (autant d'articles du même nom que de marchés associés à ces articles) appelé " . $row["nom"] . " est déjà présent dans la table $dest_marche pour le groupe $src_art_numc mais le nouvel article est complémentaire au niveau des tarifs, ils sont donc fusionnés";
+                        $warning_message = "Au moins un article (autant d'articles du même nom que de marchés associés à ces articles) appelé " . $row["nom"] . " est déjà présent dans la table $dest_marche pour le groupe $src_art_numc mais le nouvel article est complémentaire au niveau des tarifs, ils sont donc fusionnés";
                         if ($old_miss_abo && $src_art_abo) $warning_message .= " (les articles du même nom et du même groupe n'ont pas de tarif d'abonnés et le nouveau est un tarif d'abonnés)";
                         if ($old_miss_non_abo && !$src_art_abo) $warning_message .= " (les articles du même nom et du même groupe n'ont pas de tarif de passagers et le nouveau est un tarif de passagers)";
                         array_push($warnings, $warning_message);
@@ -1257,18 +1270,44 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $nb_articles = $dest_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0] - $nb_articles;
             $mysql_conn->exec("UPDATE $reprise_table SET articles_dest = $nb_articles WHERE id = $reprise_id");
 
-            // Activités
+            // Activités commerciales
 
             echo "<h2 id=\"dest_activites_comm\">Activités commerciales / Activités commerciales Langue<span><tt>$dest_activite_commerciale</tt> / <tt>$dest_activite_commerciale_lang</tt></span></h2>";
             fwrite($output_file, "\n-- Activités commerciales / Activités commerciales Langue\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
+
+            $default_activitescomm = ["VENDEUR MATELAS", "VENDEUR DE NAPPES", "POTERIE", "VENTE OEUFS FROMAGE CHEVRE", "PRET A PORTER", "PRODUIT D'INDE", "VENTE FROMAGES FRAIS-SALAISONS", "VENDEUR CHAUSSURES", "VENTE CHAUSSONS EN CUIR", "TRAITEUR", "VENDEUR BIJOUX", "ROTISSEUR", "VENTE DE BOXERS", "VENTE POUPEES EN TISSUS", "TRAITEUR ASIATIQUE", "VENDEUR MIEL", "VENDEUR SERVIETTES PLAGES", "VENTE PRODUITS REGIONAUX", "VENTE PAIN/PATISSERIE/", "VENDEUR HUILE/OLIVE", "VENTE AIL ECHALOTTE", "VENTE TABLEAUX EN VELOURS", "VENDEUR DE SAUCISSON", "VENTE MONTRE H/F/E", "FRUITS-LEGUMES", "POISSONNERIE", "FRUITS DESHYDRATES/OLIVES", "MAROQUINERIE", "COSMETIQUES", "PLATS CUISINES", "VENDEUR SUSHI", "CERAMIQUE", "BOUCHER", "VENTES USTENSILES CUISINE", "LUNETTES", "VENDEUR FIGUES-ABRICOT", "VENDEUR CASSETTES", "FLEURISTE", "VENDEUR PRODUITS ENTRETIEN", "CHAPELLERIE", "DEMONSTRATEURS", "CHAPEAUX ET GAVROCHES", "VETEMENTS EN COTON", "PRODUCTEUR OEUFS", "PRODUCTEUR FRUITS-LEGUMES", "PRODUCTEUR FROMAGE", "VETEMENTS GRANDE TAILLE", "BOULANGERIE-PATISSERIE", "PRODUCTEUR VINS", "CHARCUTERIE", "SAVON ARTISANAL", "CREATEUR DE BIJOUX", "PRODUCTEUR OEUFS FROMAGE", "VENDEUR OLIVE-ANCHOIS-TAPENADE", "FABRICATION BRACELET CUIR", "VENDEUR LIVRES", "VENDEUR EPICES-PLANTES AROMATI", "BIJOUX EN SILICONE", "VENDEUR DE SACS", "THEATRE DE GUIGNOL", "CIRQUE", "PLATS THAILANDAIS", "BONBON-NOUGATS-PRALINES", "THE-BANANES SECHEES", "VENTE DE PRODUITS POUR ANIMAUX", "VENTE DE FRIANDS", "VENTE DE MELONS", "PANCAKES"];
             
             $req_last_aco_ref = $dest_conn->query(build_query("SELECT ACO_REF FROM $dest_activite_commerciale", "", "ACO_REF DESC", "1"))->fetch();
             $last_aco_ref = ($req_last_aco_ref == null) ? 0 : $req_last_aco_ref["ACO_REF"];
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
+
+            // Activités commerciales par défaut de dibtic
+            foreach ($default_activitescomm as $aco_nom) {
+                $aco_nom = addslashes(strtoupper($aco_nom));
+                $req_aco = $dest_conn->query(build_query("SELECT COUNT(*) FROM $dest_activite_commerciale_lang", "ACO_NOM = '$aco_nom'", "", ""))->fetch();
+                if ($req_aco[0] === "0") {
+                    $last_aco_ref += 1;
+
+                    // Activité commerciale
+                    $dest_activite_commerciale_values = [$last_aco_ref, $uti_ref, "'fff'", "'$dest_dcreat'", "'$dest_ucreat'"];
+                    
+                    $insert_into_query = "INSERT INTO $dest_activite_commerciale (" . implode(", ", $dest_activite_commerciale_cols) . ") VALUES (" . implode(", ", $dest_activite_commerciale_values) . ")";
+                    execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                    // Activité commerciale Langue
+
+                    $dest_activite_commerciale_lang_values = [$last_aco_ref, 1, "'$aco_nom'", "'$dest_dcreat'", "'$dest_ucreat'"];
+
+                    $insert_into_query = "INSERT INTO $dest_activite_commerciale_lang (" . implode(", ", $dest_activite_commerciale_lang_cols) . ") VALUES (" . implode(", ", $dest_activite_commerciale_lang_values) . ")";
+                    execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                }
+            }
+
+            // Activités commerciales des exploitants
             foreach ($src_conn->query("SELECT type FROM $src_exploitant WHERE type != ''") as $row) {
                 // Parmi les exploitants qui ont une activité renseignée, l'ajouter à la table des activités si elle n'y est pas déjà
                 $req_aco = $dest_conn->query(build_query("SELECT COUNT(*) FROM $dest_activite_commerciale_lang", "ACO_NOM = '".addslashes(strtoupper($row["type"]))."'", "", ""))->fetch();
@@ -1303,7 +1342,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     $insert_into_query = "INSERT INTO $dest_activite_commerciale (" . implode(", ", $dest_activite_commerciale_cols) . ") VALUES (" . implode(", ", $dest_activite_commerciale_values) . ")";
                     execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
-                    // Activité langue
+                    // Activité commerciale Langue
 
                     $dest_activite_commerciale_lang_values = [$last_aco_ref, 1, "'".addslashes($row["type"])."'", "'$dest_dcreat'", "'$dest_ucreat'"];
 
@@ -1311,6 +1350,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
                 } // Fin "si l'activité n'existe pas déjà"
             }
+
             if ($display_dest_requests) echo "</div>";
 
             summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
@@ -1398,34 +1438,10 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
 
-            // Exercice Comptable
-                        
-            echo "<h2 id=\"dest_comptable\">Exercice Comptable<span><tt>$dest_exercice_comptable</tt></span></h2>";
-            fwrite($output_file, "\n-- Exercice Comptable\n\n");
+            // Exploitants / Société Marché / Abonnements / Pièces justificatives
 
-            $nb_to_insert = 0;
-            $nb_inserted = 0;
-
-            $req_last_ec_ref = $dest_conn->query(build_query("SELECT EC_REF FROM $dest_exercice_comptable", "", "EC_REF DESC", "1"))->fetch();
-            $last_ec_ref = ($req_last_ec_ref == null) ? 0 : $req_last_ec_ref["EC_REF"];
-
-            if ($display_dest_requests) echo "<div class=\"pre\">";
-
-            $last_ec_ref += 1;
-            
-            $dest_exercice_comptable_values = [$last_ec_ref, "'reprise dibtic'", "'$dest_dcreat'", "'$dest_dcreat'", "'$dest_ucreat'"];
-
-            $insert_into_query = "INSERT INTO $dest_exercice_comptable (" . implode(", ", $dest_exercice_comptable_cols) . ") VALUES (" . implode(", ", $dest_exercice_comptable_values) . ")";
-            execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
-
-            if ($display_dest_requests) echo "</div>";
-
-            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, [], $nb_warnings);
-
-            // Exploitants / Société Marché / Articles Factures / Abonnements / Pièces justificatives
-
-            echo "<h2 id=\"dest_exploitants\">Exploitants / Société Marché / Articles Factures / Abonnements / Pièces justificatives Valeur<span><tt>$dest_exploitant</tt> / <tt>$dest_societe_marche</tt> /  <tt>$dest_article_facture</tt> /  <tt>$dest_abonnement</tt> / <tt>$dest_piece_val</tt></span></h2>";
-            fwrite($output_file, "\n-- Exploitants / Société Marché / Articles Factures / Abonnements / Pièces justificatives Valeur\n\n");
+            echo "<h2 id=\"dest_exploitants\">Exploitants / Société Marché / Abonnements / Pièces justificatives Valeur<span><tt>$dest_exploitant</tt> / <tt>$dest_societe_marche</tt> /  <tt>$dest_article_facture</tt> /  <tt>$dest_abonnement</tt> / <tt>$dest_piece_val</tt></span></h2>";
+            fwrite($output_file, "\n-- Exploitants / Société Marché / Abonnements / Pièces justificatives Valeur\n\n");
 
             $nb_to_insert = 0;
             $nb_inserted = 0;
@@ -1594,7 +1610,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
                                                     $verif_query = $dest_conn->query("SELECT COUNT(*) FROM $dest_societe_marche WHERE EXP_REF = $last_exp_ref AND MAR_REF = $mar_ref")->fetch();
                                                     if ($verif_query[0] !== "0") {
-                                                        array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code ouvert le $day n'est pas inséré pour la raison suivante :<br>Cet abonnement est déjà présent dans la table $dest_societe_marche");
+                                                        // array_push($warnings, "L'abonnement de l'exploitant " . $row["nom_deb"] . " au marché $marche_code ouvert le $day n'est pas inséré pour la raison suivante :<br>Cet abonnement est déjà présent dans la table $dest_societe_marche");
                                                     } else {
                                                         $insert_into_query = "INSERT INTO $dest_societe_marche (" . implode(", ", $dest_societe_marche_cols) . ") VALUES (" . implode(", ", $dest_societe_marche_values) . ")";
                                                         execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
@@ -1620,9 +1636,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 $last_fac_ref = ($req_last_fac_ref == null) ? 0 : $req_last_fac_ref["FAC_REF"];
 
                 $last_fac_ref += 1;
-                $fac_num = date("Y-m-d", $dest_dcreat) . "-$last_fac_ref";
+                $fac_num = date("Y-m-d", strtotime($dest_dcreat)) . "-$last_fac_ref";
 
-                $dest_facture_values = [$last_fac_ref, $last_exp_ref, 5, $act_ref, $uti_ref, $last_ec_ref, "'$fac_num'", "'$dest_dcreat'", 0, 0, 0, 1, 1, "'$dest_dcreat'", "'$dest_ucreat'"];
+                $dest_facture_values = [$last_fac_ref, $last_exp_ref, 5, $act_ref, $uti_ref, $ec_ref, "'$fac_num'", "'$dest_dcreat'", 0, 0, 0, 1, 1, "'$dest_dcreat'", "'$dest_ucreat'"];
 
                 $insert_into_query = "INSERT INTO $dest_facture (" . implode(", ", $dest_facture_cols) . ") VALUES (" . implode(", ", $dest_facture_values) . ")";
                 execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
@@ -1630,8 +1646,8 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 // Liens avec les articles (abonnements - uniquement les articles de type tarif abonné)
 
                 $fac_somme_ttc = 0;
-                $fac_somme_tva = 0;
                 $fac_somme_ht = 0;
+                $art_facture_added_to_facture = 0;
 
                 foreach ($src_exploitant_classe_cols as $src_exploitant_classe_col) {
                     // Associer les exploitants avec leurs articles : prendre les articles du fichier des exploitants, trouver l'ART_REF correspondant et insérer une facture, un article facture puis un abonnement
@@ -1656,52 +1672,84 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         if ($src_art_numc && $src_art_code) {
                             $req_article = $src_conn->query("SELECT nom FROM $src_article WHERE numc = $src_art_numc AND code = $src_art_code")->fetch();
                             if ($req_article === null) {
-                                array_push($warnings, $header_err_message . "L'article $src_art_numc-$src_art_code n'existe pas dans le fichier des articles " . $source_files["articles"]);
+                                array_push($warnings, $header_err_message . "L'article '$src_art_numc-$src_art_code' n'existe pas dans le fichier des articles " . $source_files["articles"]);
                             } else {
                                 $art_nom = $req_article["nom"];
                                 $art_ref = $dest_conn->query("SELECT ART_REF FROM $dest_article_lang WHERE ART_NOM = '$art_nom'")->fetch()[0];
+
+                                $header_err_message = "L'abonnement de l'exploitant " . $row["nom_deb"] . " à l'article $art_nom n'est pas inséré pour la raison suivante :<br>";
 
                                 $matches = [];
                                 preg_match('/[0-9]+/', $src_exploitant_classe_col, $matches);
                                 $num_mar = isset($matches[0]) ? $matches[0] : ""; // pour les abonnements, la première colonne s'appelle juste 'm', comme pour les classes
                                 $num_abo = isset($matches[0]) ? $matches[0] : "1"; // pour les abonnements, la première colonne s'appelle 'abo1'
+                                $num_day = isset($matches[0]) ? $matches[0] : "1"; // pour les jours, la première colonne s'appelle '`prefixe_du_jour`1'
                                 $num_qt = isset($matches[0]) ? $matches[0] : ""; // pour les quantités, la première colonne s'appelle juste 'metr'
-                                $num_ttc = isset($matches[0]) ? $matches[0] : "1"; // pour les prix TTC, la première colonne s'appelle ??
-                                $num_ht = isset($matches[0]) ? $matches[0] : "1"; // pour les prix HT, la première colonne s'appelle ??
-                                $num_tva = isset($matches[0]) ? $matches[0] : "1"; // pour les taux TVA, la première colonne s'appelle ??
+                                $num_mult = isset($matches[0]) ? $matches[0] : ""; // pour les multiplicateurs, la première colonne s'appelle juste 'expo'
 
+                                $mar_code = $row["m$num_mar"];
+                                $req_groupe_marche = $src_conn->query("SELECT groupe FROM $src_marche WHERE code = '$mar_code'")->fetch();
                                 $art_abo = $row["abo$num_abo"];
-                                $mar_ref = $row["m$num_mar"];
-                                $afa_quantite = $row["mert$num_qt"];
-                                $afa_prix_ttc = $row[""]; // TODO total ? prix ?
-                                $afa_prix_ht = $row[""];
-                                $afa_taux_tva = $row[""];
 
-                                // Insérer la suite si et seulement si l'article est pour les abonnées
-                                if ($art_abo === "1") {
-                                    // Article Facture
+                                // Insérer la suite si et seulement si l'article est pour les abonnées (1) et dans le même groupe que le marché qui lui est associé via l'exploitant
+                                if ($art_abo === "1" && $req_groupe_marche !== null && $req_groupe_marche["groupe"] === $src_art_numc) {                                    
+                                    // Un article par marché, un marché étant défini par son code et son jour (autant de marché que de jours où il ouvre s'il n'ouvre pas toute la semaine)
+                                    // Pour chaque colonne de jour 'l`i`/ma`i`/...', regarder si la cellule contient un 1 (abonnement) ou un 0 (non abonnement) au marché de la colonne 'm`i`'
+                                    // Récupérer le MAR_REF du marché correspondant et insérer l'abonnement pour ce marché (un abo pour un marché, un marché étant pour un code et jour)    
+                                    $prefixes_days = ["l", "ma", "me", "je", "v", "s", "d"];
+                                    $mar_ref_done = []; // Contrôler les MAR_REF déjà faits, car un même marché peut revenir plusieurs fois pour des jours d'ouverture différents s'il ouvre toute la semaine (MAR_JOUR IS NULL)
 
-                                    $dest_article_facture_values = [$art_ref, $last_fac_ref, $mar_ref, "'$dest_dcreat'", $afa_quantite, $afa_prix_ttc, $afa_prix_ht, $afa_taux_tva, "'$dest_dcreat'", "'$dest_ucreat'"];
+                                    foreach ($prefixes_days as $prefix_day) {
+                                        if ($row["$prefix_day$num_day"] === "1") {
+                                            $day = $usual_days[array_search($prefix_day, $prefixes_days)];
+                                            $req_mar_ref = $dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$mar_code' AND MAR_JOUR = '$day' OR MAR_CODE = '$mar_code' AND MAR_JOUR IS NULL", "", ""))->fetch()[0];
 
-                                    $insert_into_query = "INSERT INTO $dest_article_facture (" . implode(", ", $dest_article_facture_cols) . ") VALUES (" . implode(", ", $dest_article_facture_values) . ")";
-                                    execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                                            if ($req_mar_ref !== null && !in_array($mar_ref, $mar_ref_done)) {
+                                                $mar_ref = $req_mar_ref[0];
+                                                array_push($mar_ref_done, $mar_ref);
 
-                                    $fac_somme_ttc += $afa_prix_ttc;
-                                    $fac_somme_tva += $afa_taux_tva;
-                                    $fac_somme_ht += $afa_prix_ht;
+                                                $afa_quantite = $row["metr$num_qt"];
+                                                $afa_multiplicateur = $row["expo$num_mult"];
 
-                                    // Article Facture Langue
+                                                // La quantité peut être égale à 0 lorsque l'abonnement a été supprimé, ne rien faire dans ce cas
+                                                if ($afa_quantite !== "0") {
+                                                    $art_nom = $dest_conn->query(build_query("SELECT ART_NOM FROM $dest_article_lang", "ART_REF = '$art_ref'", "", ""))->fetch()[0];
+                                                    $art_ttc_abo = $dest_conn->query("SELECT ART_ABO_PRIX_TTC FROM $dest_article WHERE ART_REF = '$art_ref'")->fetch()[0];
 
-                                    // TODO
-                                    // Avant, faire le tableau qui contient le nom des colonnes de la table art_facture_lang et le delete de cette table
+                                                    // Insérer la suite si et seulement si le tarif est un tarif d'abonnés
+                                                    if ($art_ttc_abo !== "0") {
+                                                        // Article Facture
 
-                                    // Abonnement
+                                                        $afa_multiplicateur = ($afa_multiplicateur === "0") ? 1 : $afa_multiplicateur;
+                                                        $afa_prix_ttc = $art_ttc_abo * $afa_quantite * $afa_multiplicateur;
+                                                        
+                                                        $dest_article_facture_values = [$art_ref, $last_fac_ref, $mar_ref, "'$dest_dcreat'", $afa_quantite, $art_ttc_abo, $art_ttc_abo, 0, $afa_multiplicateur, "'$dest_dcreat'", "'$dest_ucreat'", $afa_prix_ttc, 0, $afa_prix_ttc];
 
-                                    $dest_abonnement_values = ["", "'$dest_dcreat'", "'$dest_ucreat'"];
+                                                        $insert_into_query = "INSERT INTO $dest_article_facture (" . implode(", ", $dest_article_facture_cols) . ") VALUES (" . implode(", ", $dest_article_facture_values) . ")";
+                                                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
 
-                                    $insert_into_query = "INSERT INTO $dest_abonnement (" . implode(", ", $dest_abonnement_cols) . ") VALUES (" . implode(", ", $dest_abonnement_values) . ")";
-                                    execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
-                                } // Fin "si l'article est pour les abonnées"
+                                                        $fac_somme_ttc += $afa_prix_ttc;
+                                                        $art_facture_added_to_facture += 1;
+
+                                                        // Article Facture Langue
+
+                                                        $dest_article_facture_lang_values = [$last_fac_ref, $art_ref, "'$dest_dcreat'", 1, "'$art_nom'", "'$dest_dcreat'", "'$dest_ucreat'"];
+
+                                                        $insert_into_query = "INSERT INTO $dest_article_facture_lang (" . implode(", ", $dest_article_facture_lang_cols) . ") VALUES (" . implode(", ", $dest_article_facture_lang_values) . ")";
+                                                        execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+
+                                                        // Abonnement
+
+                                                        // $dest_abonnement_values = ["", "'$dest_dcreat'", "'$dest_ucreat'"];
+
+                                                        // $insert_into_query = "INSERT INTO $dest_abonnement (" . implode(", ", $dest_abonnement_cols) . ") VALUES (" . implode(", ", $dest_abonnement_values) . ")";
+                                                        // execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
+                                                    }
+                                                } // Fin "si la quantité est différente de 0"
+                                            } // Fin "si le marché existe et n'a pas été déjà traité"
+                                        } // Fin "si l'exploitant est abonné au marché via l'article"
+                                    } // Fin "pour chaque jour de la semaine"
+                                } // Fin "si l'article est pour les abonnées et dans le groupe du marché associé"
                             } // Fin "si l'article existe dans la table de destination"
                         }
                     } else {
@@ -1709,10 +1757,15 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     }
                 } // Fin "liens articles exploitant"
 
-                // Actualiser le total de la facture
+                // Actualiser le total de la facture s'il y a eu au moins un article facture ajouté à la facture, la supprimer sinon
+                if ($art_facture_added_to_facture > 0) {
+                    $update_query = "UPDATE $dest_facture SET FAC_SOMME_TTC = $fac_somme_ttc, FAC_SOMME_HT = $fac_somme_ttc WHERE FAC_REF = $last_fac_ref";
+                    execute_query($update_query, $nb_inserted, $nb_to_insert);
+                } else {
+                    $delete_query = "DELETE FROM $dest_facture WHERE FAC_REF = $last_fac_ref";
+                    execute_query($delete_query, $nb_inserted, $nb_to_insert);
+                }
 
-                // TODO update where fac_ref = $last_fac_ref : fac_somme_ttc, fac_somme_tva, fac_somme_ht
-                
                 // Pièces justificatives valeur
 
                 foreach ($src_exploitant_piece_cols as $src_exploitant_piece_col) { // pour chaque colonne de pièce justificative possible, récupère la date d'échéance
@@ -1753,6 +1806,45 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $nb_exploitants = $dest_conn->query("SELECT COUNT(*) FROM $dest_exploitant")->fetch()[0] - $nb_exploitants;
             $mysql_conn->exec("UPDATE $reprise_table SET exploitants_dest = $nb_exploitants WHERE id = $reprise_id");
 
+            // Rassemblements / Présences
+
+            echo "<h2 id=\"dest_compteurs\">Rassemblements / Présences<span><tt>$dest_rassemblement</tt> / <tt>$dest_presence</tt></span></h2>";
+            fwrite($output_file, "\n-- Rassemblements / Présences\n\n");
+
+            $nb_to_insert = 0;
+            $nb_inserted = 0;
+            $warnings = [];
+            
+            $req_last_ras_ref = $dest_conn->query(build_query("SELECT RAS_REF FROM $dest_rassemblement", "", "RAS_REF DESC", "1"))->fetch();
+            $last_ras_ref = ($req_last_ras_ref == null) ? 0 : $req_last_ras_ref["RAS_REF"];
+
+            // TODO
+            // INSERER LES TABLES DANS reprise_dibtic_placier.sql
+            // Créer un rassemblement poru chaque marché avant d'ajouter les présences pour chaque exploitant
+            // Parcourir la table source des présences
+            //   Pour chaque présence : lire le code du marché, récuérer le MAR_REF a partir du code, récupérer le RAS_REF de ce marché et de cette date
+
+            $nb_presences = $dest_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0];
+            
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT * FROM $src_article WHERE nom != ''") as $row) {
+                // warning si le mot "present", ... est inconnu du switch case si yen a un
+
+                // switch (strtoupper($)) {
+                //     case "PRESENT":
+                //         break;
+                //     case "ABSENT":
+                //     case "ABSENCE JUSTIFIEE":
+                // }
+            }
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_inserted, $nb_to_insert, $nb_errors, $warnings, $nb_warnings);
+
+            $nb_presences = $dest_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0] - $nb_presences;
+            $mysql_conn->exec("UPDATE $reprise_table SET presences_dest = $nb_presences WHERE id = $reprise_id"); // TODO ajouter la colonne presences_dest dans la table 'reprise' et dans reprisebplaiceir.sql
+            // TODO ajouter dans le script et dans le tableau de init la colonne des présences
+
             // Compteurs
 
             echo "<h2 id=\"dest_compteurs\">Compteurs<span><tt>$dest_compteur</tt></span></h2>";
@@ -1776,6 +1868,13 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(ART_REF) + 1 FROM $dest_article) WHERE CPT_TABLE = 'article'";
                 execute_query($update_query, $nb_updated, $nb_to_update);
             }
+
+            $update_query = "UPDATE $dest_compteur SET CPT_VAL = (SELECT MAX(FAC_REF) + 1 FROM $dest_facture) WHERE CPT_TABLE = 'facture'";
+            execute_query($update_query, $nb_updated, $nb_to_update);
+            
+            $nb_compteurs = $dest_conn->query("SELECT MAX(CPT_REF) + 1 FROM $dest_compteur")->fetch()[0]; // compteur du compteur
+            $update_query = "UPDATE $dest_compteur SET CPT_VAL = $nb_compteurs WHERE CPT_TABLE = 'compteur'";
+            execute_query($update_query, $nb_updated, $nb_to_update);
 
             if ($display_dest_requests) echo "</div>";
 

@@ -627,8 +627,9 @@ CREATE TABLE IF NOT EXISTS `dest_exercice_comptable`
     EC_ACTUEL   INT,
     DCREAT      DATE,
     UCREAT      VARCHAR(250),
-    EC_CPTLIGNE_ONYX_NUMBER INT
+    EC_CPTLIGNE_ONYX INT
 );
+INSERT INTO dest_exercice_comptable (EC_REF,EC_NOM,EC_DATE,EC_ACTUEL,DCREAT,UCREAT,EC_CPTLIGNE_ONYX) VALUES ('1','2018','18/01/01','1',CURDATE(),'iltr','0');
 
 CREATE TABLE IF NOT EXISTS `dest_facture`
 (
@@ -772,6 +773,16 @@ CREATE TABLE IF NOT EXISTS `dest_societe_propriete_valeur`
     UCREAT VARCHAR(250)
 );
 
+CREATE TABLE IF NOT EXISTS `dest_rassemblement`
+(
+
+);
+
+CREATE TABLE IF NOT EXISTS `dest_presence`
+(
+
+);
+
 
 -- DELETE FROM dest_marche;
 -- DELETE FROM dest_marche_langue;
@@ -789,3 +800,5 @@ CREATE TABLE IF NOT EXISTS `dest_societe_propriete_valeur`
 -- DELETE FROM dest_societe_propriete;
 -- DELETE FROM dest_societe_propriete_langue;
 -- DELETE FROM dest_societe_propriete_valeur;
+-- DELETE FROM dest_rassemblement;
+-- DELETE FROM dest_presence;

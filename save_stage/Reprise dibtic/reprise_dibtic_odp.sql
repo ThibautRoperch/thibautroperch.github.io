@@ -296,6 +296,7 @@ CREATE TABLE IF NOT EXISTS `dest_compteur`
     DCREAT            DATE,
     UCREAT            VARCHAR(250)
 );
+INSERT INTO dest_compteur (CPT_REF,CPT_TABLE,CPT_VAL,DCREAT,UCREAT) values ('1','compteur','32',CURDATE(),'ILTR');
 
 -- DELETE FROM dest_exploitant;
 -- DELETE FROM dest_domaine_langue;
