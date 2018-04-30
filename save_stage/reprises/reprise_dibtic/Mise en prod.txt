@@ -1,8 +1,9 @@
 
 Fichiers à mettre en prod :
 
-css/*
-js/*
+../css/*
+../js/*
+spreadsheet/*
 index.html
 placier.php     # pour reprise Placier
 odp.php         # pour reprise ODP

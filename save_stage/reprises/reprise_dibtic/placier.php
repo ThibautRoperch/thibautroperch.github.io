@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Reprise Placier</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="../css/style.css">
 </head>
 
 <?php
@@ -16,7 +16,7 @@ $title = "Reprise dibtic vers GEODP v1<br>Placier";
 // Sortie : Fichier SQL contenant les requêtes SQL à envoyer dans la base de données GEODP v1
 
 /**
- * VERSION 2.0 - 25/04/2018
+ * VERSION 2.0 - 30/04/2018
  * 
  * Marchés      Ils sont tous ajoutés en conservant leur code, identifiant unique dans dibtic.
  * Articles     Tous les articles sont ajoutés, mêmes si non utilisés.
@@ -26,6 +26,7 @@ $title = "Reprise dibtic vers GEODP v1<br>Placier";
  *              Elles sont obtenue dans le fichier des exploitants, il n'y a plus de fichier des activités.
  * Exploitants  Le fichier qui met en relation les abonnements aux marchés et aux articles,
  *              avec possibilité de conflits à contrôler (ex. : un exploitant abonné à un marché à un jour, or ledit marché n'ouvre pas ledit jour d'après le fichier des marchés).
+ * Présences    Les présences aux rassemblements sont lues dans le fichier qui comporte les présences et les tickets
  * 
  * Gestion de la multi utilisation du script
  * Glisser-déposer des fichiers sources dibtic
@@ -35,8 +36,8 @@ $title = "Reprise dibtic vers GEODP v1<br>Placier";
 
 
 // Ouvrir cette page avec le paramètre 'analyze=1' pour effectuer des tests en local, l'ouvrir normalement en situation réelle
-$analyse_mode = (isset($_GET["analyze"]) && $_GET["analyze"] === "1");
-$test_mode = ($analyse_mode && isset($_POST["login"]) && isset($_POST["login"]) !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
+$analyze_mode = (isset($_GET["analyze"]) && $_GET["analyze"] === "1");
+$test_mode = ($analyze_mode && isset($_POST["login"]) && $_POST["login"] !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
 
 $php_required_version = "7.1.9";
 
@@ -52,7 +53,7 @@ $timestamp = date("Y-m-d H:i:s", time());
 $directory_name = "./dibtic_placier";
 
 // Résumé du contenu des fichiers sources (dibtic)
-$expected_content = ["marchés", "articles", "exploitants", /*"présences"*/];
+$expected_content = ["marchés", "articles", "exploitants"/*, "présences"*/];
 
 // Noms possibles des fichiers sources (dibtic)
 $keywords_files = ["marche/marché", "classe/article/tarif", "exploitant/assujet", "presence"];
@@ -177,7 +178,7 @@ $oracle_service = "xe"; // orcl | xe
 $oracle_login = $test_mode ? "geodpthibaut" : $_POST["login"];
 $oracle_password = $test_mode ? "geodpthibaut" : $_POST["password"];
 
-if (!$test_mode && $analyse_mode) {
+if (!$test_mode && $analyze_mode) {
     $oracle_conn = new PDO("oci:dbname=(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP) (Host = $oracle_host) (Port = $oracle_port))) (CONNECT_DATA = (SERVICE_NAME = ".$oracle_service.")));charset=UTF8", $oracle_login, $oracle_password);
 }
 
@@ -186,7 +187,7 @@ if (!$test_mode && $analyse_mode) {
  *    CHOIX CONNEXION    *
  *************************/
 
-if ($analyse_mode) {
+if ($analyze_mode) {
     $src_conn = $mysql_conn;
     $dest_conn = $test_mode ? $mysql_conn : $oracle_conn;
 }
@@ -458,7 +459,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
 ?>
 
-<body <?php echo (!$analyse_mode) ? "class=\"droparea\"" : ""; ?>>
+<body <?php echo (!$analyze_mode) ? "class=\"droparea\"" : ""; ?>>
     
     <?php
     
@@ -466,7 +467,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
          *        ACCUEIL        *
          *************************/
         
-        if (!$analyse_mode) {
+        if (!$analyze_mode) {
 
             echo "<init>";
             echo "<h1>$title</h1>";
@@ -495,7 +496,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 echo "<h2>Paramètres du client (pour reprise sur serveur uniquement)</h2>";
 
                     echo "<field><label for=\"servor\">Serveur de connexion Oracle</label><input id=\"servor\" type=\"disabled\" value=\"$oracle_host:$oracle_port/$oracle_service\" disabled /></field>";
-                    echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_password(this)\" type=\"text\" placeholder=\"geodpville\" required /></field>";
+                    echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_typing(this, 'password')\" type=\"text\" placeholder=\"geodpville\" required /></field>";
                     echo "<field><label for=\"password\">Mot de passe de connexion Oracle</label><input id=\"password\" name=\"password\" type=\"password\"/><span onmousedown=\"show_password(true)\" onmouseup=\"show_password(false) \">&#128065;</span></field>";
                     echo "<field><label for=\"type\">Type de client</label><input id=\"type\" name=\"type\" type=\"text\" placeholder=\"A définir\"/></field>";
                     echo "<field><label for=\"erase_destination_tables\">Vider les tables de destination en amont</label>";
@@ -565,7 +566,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
          *        ANALYSE        *
          *************************/
 
-        if ($analyse_mode) {
+        if ($analyze_mode) {
 
             $nom_reprise = (!$test_mode && $client_name === "") ? $oracle_login : $client_name;
             $mysql_conn->exec("INSERT INTO $reprise_table (nom, etat) VALUES ('$nom_reprise', 1)");
@@ -615,7 +616,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         echo "<li><a href=\"#dest_compteurs\">Compteurs</a></li>";
                     echo "</ol>";
                 echo "</li>";
-            echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
+                echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
             echo "</ol>";
             echo "</aside>";
 
@@ -625,7 +626,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 echo "<h1>$nom_reprise</h1>";
                 echo "<p id=\"nb_errors\">Reprise en cours</p>";
                 echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Articles</th><th>Exploitants</th></tr></table>";
-                echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
+                echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//$oracle_host/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
 
             $nb_errors = 0;
@@ -1572,13 +1573,16 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                 if (isset($row["abo$num_abo"])) {
                                     $prefixes_days = ["l", "ma", "me", "je", "v", "s", "d"];
                                     $type_abo = $row["abo$num_abo"];
-                                    
+
                                     // Si l'exploitant est abonné à ce marché, regarder les jours où il y est abonné, et insérer un abonnement en conséquence
-                                    if ($type_abo !== "0") {
+                                    // RECTIFICATION Dès qu'un marché est associé à un epxloitant, il est considéré comme au moins passager sur ce marché. Les colonnes 'abo' ne concernent que les types d'abonnements.
+                                    // if ($type_abo !== "0") {
                                         $sma_titulaire = 0;
                                         $sma_abonne = 0;
 
                                         switch ($type_abo) {
+                                            case "0":
+                                                break;
                                             case "1":
                                                 $sma_abonne = 1;
                                                 break;
@@ -1596,7 +1600,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                         // Pour chaque colonne de jour 'l`i`/ma`i`/...', regarder si la cellule contient un 1 (abonnement) ou un 0 (non abonnement) au marché de la colonne 'm`i`'
                                         // Récupérer le MAR_REF du marché correspondant et insérer l'abonnement pour ce marché (un abo pour un marché, un marché étant pour un code et jour)
                                         foreach ($prefixes_days as $prefix_day) {
-                                            if ($row["$prefix_day$num_day"] === "1") {
+                                            // if ($row["$prefix_day$num_day"] === "1") {
                                                 $day = $usual_days[array_search($prefix_day, $prefixes_days)];
 
                                                 $req_mar_ref = $dest_conn->query(build_query("SELECT MAR_REF FROM $dest_marche", "MAR_CODE = '$marche_code' AND MAR_JOUR = '$day' OR MAR_CODE = '$marche_code' AND MAR_JOUR IS NULL", "", ""))->fetch();
@@ -1616,9 +1620,9 @@ if (isset($_FILES) && count($_FILES) > 0) {
                                                         execute_query($insert_into_query, $nb_inserted, $nb_to_insert);
                                                     }
                                                 }
-                                            }
+                                            // } // Fin "si l'exploitant est abonné"
                                         }
-                                    }
+                                    // } Fin "si l'exploitant a un abonnement différent de 0"
                                 } else {
                                     array_push($warnings, $header_err_message . "La colonne 'abo$num_abo' n'existe pas dans le fichier des exploitants " . $source_files["exploitants"]);
                                 }
@@ -1808,7 +1812,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
             // Rassemblements / Présences
 
-            echo "<h2 id=\"dest_compteurs\">Rassemblements / Présences<span><tt>$dest_rassemblement</tt> / <tt>$dest_presence</tt></span></h2>";
+            echo "<h2 id=\"dest_presences\">Rassemblements / Présences<span><tt>$dest_rassemblement</tt> / <tt>$dest_presence</tt></span></h2>";
             fwrite($output_file, "\n-- Rassemblements / Présences\n\n");
 
             $nb_to_insert = 0;
@@ -1818,16 +1822,17 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $req_last_ras_ref = $dest_conn->query(build_query("SELECT RAS_REF FROM $dest_rassemblement", "", "RAS_REF DESC", "1"))->fetch();
             $last_ras_ref = ($req_last_ras_ref == null) ? 0 : $req_last_ras_ref["RAS_REF"];
 
-            // TODO
-            // INSERER LES TABLES DANS reprise_dibtic_placier.sql
-            // Créer un rassemblement poru chaque marché avant d'ajouter les présences pour chaque exploitant
-            // Parcourir la table source des présences
-            //   Pour chaque présence : lire le code du marché, récuérer le MAR_REF a partir du code, récupérer le RAS_REF de ce marché et de cette date
+            // Créer un rassemblement pour chaque marché avant d'ajouter les présences des exploitants
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($dest_conn->query("SELECT * FROM $dest_marche") as $row) {
+                // TODO créer un rassemblement
+            }
 
             $nb_presences = $dest_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0];
             
-            if ($display_dest_requests) echo "<div class=\"pre\">";
-            foreach ($src_conn->query("SELECT * FROM $src_article WHERE nom != ''") as $row) {
+            // Parcourir la table source des présences
+            //   Pour chaque présence : lire le code du marché, récupérer le MAR_REF a partir du code, récupérer le RAS_REF de ce marché et de cette date
+/*            foreach ($src_conn->query("SELECT * FROM $src_presence WHERE Date1 != ''") as $row) {
                 // warning si le mot "present", ... est inconnu du switch case si yen a un
 
                 // switch (strtoupper($)) {
@@ -1844,7 +1849,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
             $nb_presences = $dest_conn->query("SELECT COUNT(*) FROM $dest_article")->fetch()[0] - $nb_presences;
             $mysql_conn->exec("UPDATE $reprise_table SET presences_dest = $nb_presences WHERE id = $reprise_id"); // TODO ajouter la colonne presences_dest dans la table 'reprise' et dans reprisebplaiceir.sql
             // TODO ajouter dans le script et dans le tableau de init la colonne des présences
-
+*/
             // Compteurs
 
             echo "<h2 id=\"dest_compteurs\">Compteurs<span><tt>$dest_compteur</tt></span></h2>";
@@ -1921,6 +1926,6 @@ var script_file_name = "<?php echo $script_file_name; ?>";
 
 </script>
 
-<script src="js/script.js"></script>
+<script src="../js/script.js"></script>
 
 </html>

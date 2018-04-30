@@ -1,8 +1,8 @@
 
 // Accueil
 
-function autocomplete_password(user_input) {
-    document.querySelector("#password").value = user_input.value;
+function autocomplete_typing(input, target_id) {
+    document.querySelector("#" + target_id).value = input.value;
 }
 
 function show_password(show) {
@@ -29,6 +29,31 @@ function hide_message() {
     document.querySelector("layer").className = "";
 }
 
+function test_connection(button, event, conn) {
+    event.preventDefault();
+
+    var prefixe = (conn === "oracle") ? "src_" : "dest_";
+    var host = document.querySelector("#" + prefixe + "host").value;
+    var port = document.querySelector("#" + prefixe + "port").value;
+    var database = document.querySelector("#" + prefixe + "database").value;
+    var user = document.querySelector("#" + prefixe + "user").value;
+    var password = document.querySelector("#" + prefixe + "password").value;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "../test_conn.php?conn=" + conn + "&host=" + host + "&port=" + port + "&database=" + database + "&user=" + user + "&password=" + password, true);
+    xhr.onload = function() {
+        var message = button.innerHTML + "<br><hr><br>";
+        if (xhr.response === "") {
+            message += "<ok></ok> Connexion vérifiée";
+        } else {
+            message += "<nok></nok> " + xhr.response;
+        }
+        message += "<buttons><a class=\"button\" onclick=\"hide_message()\" href=\"#\">Fermer</a></buttons>";
+        display_message(message, true);
+    };
+    xhr.send();
+}
+
 // https://script-tutorials.developpez.com/tutoriels/html5/drag-drop-file-upload-html5/
 var droparea = document.querySelector(".droparea");
 if (droparea) {
@@ -47,7 +72,7 @@ function drag_over(event) { // survol
 
 var form_data = new FormData();
 
-function drop(event) { // glisser deposer
+function drop(event) { // glisser déposer
     event.stopPropagation();
     event.preventDefault();
 

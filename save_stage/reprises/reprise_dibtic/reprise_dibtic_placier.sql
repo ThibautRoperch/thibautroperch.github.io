@@ -775,12 +775,24 @@ CREATE TABLE IF NOT EXISTS `dest_societe_propriete_valeur`
 
 CREATE TABLE IF NOT EXISTS `dest_rassemblement`
 (
-
+    RAS_REF     INT,
+    MAR_REF     INT,
+    RAS_DATE    DATE,
+    RAS_COMMENTAIRE VARCHAR(250),
+    RAS_ETAT    INT,
+    RAS_VERSEMENT   INT,
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250)
 );
 
 CREATE TABLE IF NOT EXISTS `dest_presence`
 (
-
+    EXP_REF     INT,
+    RAS_REF     INT,
+    DCREAT      DATE,
+    UCREAT      VARCHAR(250),
+    PRE_PRESENT INT,
+    PRE_PRESENT_PLACE   INT
 );
 
 

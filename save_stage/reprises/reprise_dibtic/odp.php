@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Reprise ODP</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="../css/style.css">
 </head>
 
 <?php
@@ -25,8 +25,8 @@ $title = "Reprise dibtic vers GEODP v1<br>ODP NICE";
 
 
 // Ouvrir cette page avec le paramètre 'analyze=1' pour effectuer des tests en local, l'ouvrir normalement en situation réelle
-$analyse_mode = (isset($_GET["analyze"]) && $_GET["analyze"] === "1");
-$test_mode = ($analyse_mode && isset($_POST["login"]) && isset($_POST["login"]) !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
+$analyze_mode = (isset($_GET["analyze"]) && $_GET["analyze"] === "1");
+$test_mode = ($analyze_mode && isset($_POST["login"]) && $_POST["login"] !== "" && isset($_POST["password"])) ? false : true; // en test la destination est MySQL, en situatiçon réelle la destination est Oracle
 
 $php_required_version = "7.1.9";
 
@@ -140,7 +140,7 @@ $oracle_service = "xe"; // orcl | xe
 $oracle_login = $test_mode ? "geodpthibaut" : $_POST["login"];
 $oracle_password = $test_mode ? "geodpthibaut" : $_POST["password"];
 
-if (!$test_mode && $analyse_mode) {
+if (!$test_mode && $analyze_mode) {
     $oracle_conn = new PDO("oci:dbname=(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP) (Host = $oracle_host) (Port = $oracle_port))) (CONNECT_DATA = (SERVICE_NAME = ".$oracle_service.")));charset=UTF8", $oracle_login, $oracle_password);
 }
 
@@ -149,7 +149,7 @@ if (!$test_mode && $analyse_mode) {
  *    CHOIX CONNEXION    *
  *************************/
 
-if ($analyse_mode) {
+if ($analyze_mode) {
     $src_conn = $mysql_conn;
     $dest_conn = $test_mode ? $mysql_conn : $oracle_conn;
 }
@@ -422,7 +422,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
 
 ?>
 
-<body <?php echo (!$analyse_mode) ? "class=\"droparea\"" : ""; ?>>
+<body <?php echo (!$analyze_mode) ? "class=\"droparea\"" : ""; ?>>
     
     <?php
     
@@ -430,12 +430,12 @@ if (isset($_FILES) && count($_FILES) > 0) {
          *        ACCUEIL        *
          *************************/
         
-        if (!$analyse_mode) {
+        if (!$analyze_mode) {
 
             echo "<init>";
             echo "<h1>$title</h1>";
 
-            echo "<form action=\"$script_file_name?analyze=1\" method=\"POST\">";
+            echo "<form action=\"$script_file_name?analyze=1\" method=\"POST\" onsubmit=\"loading()\">";
 
                 echo "<h2>Fichiers dibtic à reprendre</h2>";
 
@@ -457,7 +457,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 echo "<h2>Paramètres du client (pour reprise sur serveur uniquement)</h2>";
 
                     echo "<field><label for=\"servor\">Serveur de connexion Oracle</label><input id=\"servor\" type=\"disabled\" value=\"$oracle_host:$oracle_port/$oracle_service\" disabled /></field>";
-                    echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_password(this)\" type=\"text\" placeholder=\"geodpville\" required /></field>";
+                    echo "<field><label for=\"login\">Identifiant de connexion Oracle</label><input id=\"login\" name=\"login\" onchange=\"autocomplete_typing(this, 'password')\" type=\"text\" placeholder=\"geodpville\" required /></field>";
                     echo "<field><label for=\"password\">Mot de passe de connexion Oracle</label><input id=\"password\" name=\"password\" type=\"password\"/><span onmousedown=\"show_password(true)\" onmouseup=\"show_password(false) \">&#128065;</span></field>";
                     echo "<field><label for=\"type\">Type de client</label><input id=\"type\" name=\"type\" type=\"text\" placeholder=\"A définir\"/></field>";
                     echo "<field><label for=\"erase_destination_tables\">Vider les tables de destination en amont</label>";
@@ -467,7 +467,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                     echo "</field>";
 
                     echo "<field>";
-                        echo "<input type=\"submit\" onclick=\"loading()\" value=\"Effectuer la reprise\" $button_disabled />";
+                        echo "<input type=\"submit\" value=\"Effectuer la reprise\" $button_disabled />";
                     echo "</field>";
                 
                 echo "<h2>Autres paramètres</h2>";
@@ -527,7 +527,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
          *        ANALYSE        *
          *************************/
 
-        if ($analyse_mode) {
+        if ($analyze_mode) {
 
             $nom_reprise = (!$test_mode && $client_name === "") ? $oracle_login : $client_name;
             $mysql_conn->exec("INSERT INTO $reprise_table (nom, etat) VALUES ('$nom_reprise', 1)");
@@ -567,7 +567,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                         echo "<li><a href=\"#dest_instructions\">Instructions / Instructions Évènements / Dossier Document</a></li>";
                     echo "</ol>";
                 echo "</li>";
-            echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
+                echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
             echo "</ol>";
             echo "</aside>";
 
@@ -577,7 +577,7 @@ if (isset($_FILES) && count($_FILES) > 0) {
                 echo "<h1>$nom_reprise</h1>";
                 echo "<p id=\"nb_errors\"></p>";
                 echo "<table id=\"nb_content\"><tr><th>Instructions</th></tr></table>";
-                echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//ares/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
+                echo $test_mode ? "<div><a href=\"$script_file_name\">Retour à l'accueil</a></div>" : "<div><a target=\"_blank\" href=\"//$oracle_host/geodp.".substr($oracle_login, strlen("geodp"))."\">ares/geodp.".substr($oracle_login, strlen("geodp"))."</a></div>";
             echo "</summary>";
 
             $nb_errors = 0;
@@ -1298,6 +1298,6 @@ var script_file_name = "<?php echo $script_file_name; ?>";
 
 </script>
 
-<script src="js/script.js"></script>
+<script src="../js/script.js"></script>
 
 </html>

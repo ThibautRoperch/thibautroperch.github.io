@@ -15,6 +15,12 @@ body > * {
     flex-direction: column;
 }
 
+*.centered {
+    flex: 0.8;
+    margin: 0 auto;
+    text-align: center;
+}
+
 /* Titres */
 
 /*h1 {
@@ -218,8 +224,8 @@ section {
 }
 
 section.row {
-    padding: 3% 0;
     flex-direction: row;
+    padding: 0;
 }
 
 section > * {
@@ -231,7 +237,7 @@ section > * {
 article.square {
     display: flex;
     flex-direction: column;
-    margin: 0 22%;
+    margin: 3% 22%;
 }
 
 article.square + article.square {
@@ -240,6 +246,17 @@ article.square + article.square {
 
 article.square > * {
     flex: 1;
+}
+
+article.form {
+    margin-bottom: 30px;
+    padding: 15px 20px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+article.form + article.form {
+    margin-left: 30px;
 }
 
 /* Summary */
@@ -323,19 +340,22 @@ form field > * {
     padding: 5px 10px;
 }
 
-form field  label {
+form field label {
     padding-left: 0;
 }
 
-form field input, form field select {
-    text-align: right;
+form input, form select {
     border: 1px solid rgba(0, 0, 0, 0.4);
     border-radius: 3px;
     transition: all .1s linear;
 }
 
-form field input:focus, form field select:focus {
+form input:focus, form select:focus {
     border-color: orange;
+}
+
+form field input, form field select {
+    text-align: right;
 }
 
 form field > * {
@@ -351,6 +371,18 @@ form field span {
 form field ok, form field nok {
     flex: 0;
 }
+
+form input.centered {
+    margin: 10px auto 15px auto;
+    padding: 10px 20px;
+}
+
+form a.centered, button.centered {
+    display: block;
+    margin-top: 25px;
+    opacity: 0.85;
+}
+
 
 /* Calque */
 
