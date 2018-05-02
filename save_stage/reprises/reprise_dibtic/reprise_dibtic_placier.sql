@@ -10,9 +10,11 @@ CREATE TABLE IF NOT EXISTS `reprise`
   `marches_src` int(11) NOT NULL DEFAULT '0',
   `articles_src` int(11) NOT NULL DEFAULT '0',
   `exploitants_src` int(11) NOT NULL DEFAULT '0',
+  `presences_src` int(11) NOT NULL DEFAULT '0',
   `marches_dest` int(11) NOT NULL DEFAULT '0',
   `articles_dest` int(11) NOT NULL DEFAULT '0',
   `exploitants_dest` int(11) NOT NULL DEFAULT '0',
+  `presences_dest` int(11) NOT NULL DEFAULT '0',
   `conflits` int(11) NOT NULL DEFAULT '0',
   `erreurs` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)

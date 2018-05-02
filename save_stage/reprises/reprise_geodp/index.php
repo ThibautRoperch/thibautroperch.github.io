@@ -76,7 +76,6 @@ $dest_domaine = "geodp_domain";
 $dest_marche = "geodp_event";
 
 $dest_tarif = "geodp_price";
-// $dest_tarif = "geodp_price";
 
 $dest_activite = "geodp_commercial_activity";
 
@@ -312,7 +311,9 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
             echo "<h1 id=\"transfert\">Transfert des données</h1>";
 
             $marche_cols = ["id_domain", "name", "id_user_create", "date_create"];
-            
+            $tarif_cols = ["id_product", "id_calcul_mode", "name", "id_user_create", "date_create"];
+// TODO les cols de tarif
+
             $today = date("d/m/y", time());
             $user_id = pg_fetch_object(pg_query("SELECT id FROM $dest_utilisateur WHERE last_name LIKE 'ILTR' AND first_name LIKE 'Iltr'"))->id;
             $domain_id = pg_fetch_object(pg_query("SELECT id FROM $dest_domaine WHERE name LIKE 'Placier' AND del = false"))->id;
@@ -321,7 +322,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
             
             // Marchés
 
-            echo "<h2 id=\"marches\">Marchés</h2>";
+            echo "<h2 id=\"marches\">Marchés<span><tt>$dest_marche</tt></span></h2>";
 
             $src_nb_content["marchés"] = 0;
             $dest_nb_content["marchés"] = 0;
@@ -362,8 +363,6 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
             if ($display_dest_requests) echo "<div class=\"pre\">";
             foreach ($src_conn->query("SELECT MAR_REF FROM $src_article WHERE DCREAT > '$dates_max_birth'") as $row) {
                 $src_nb_content["tarifs"] += 1;
-
-                $tarif_cols = ["id_domain", "name", "id_user_create", "date_create"];
 
                 // $name = $src_conn->query("SELECT MAR_NOM FROM $src_marche_lang WHERE MAR_REF = " . $row["MAR_REF"])->fetch()[0];
 
