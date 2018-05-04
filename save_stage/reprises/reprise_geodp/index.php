@@ -41,14 +41,13 @@ $src_marche_lang = "MARCHE_LANGUE";
 $src_article = "ARTICLE";
 $src_article_lang = "ARTICLE_LANGUE";
 
-$src_activite_commerciale = "ACTIVITECOMMERCIALE";
 $src_activite_commerciale_lang = "ACTIVITECOMMERCIALE_LANGUE";
+
+$src_exploitant = "EXPLOITANT";
 
 $src_piece = "SOCIETE_PROPRIETE";
 $src_piece_val = "SOCIETE_PROPRIETE_VALEUR";
 $src_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
-
-$src_exploitant = "EXPLOITANT";
 
 $src_facture = "FACTURE";
 $src_article_facture = "ARTICLE_FACTURE";
@@ -73,17 +72,25 @@ $src_nb_content = []; // auto-computed
 $dest_utilisateur = "geodp_user";
 $dest_domaine = "geodp_domain";
 
-$dest_marche = "geodp_event";
+$dest_charging_mode = "geodp_charging_mode";
+$dest_jour = "geodp_day";
+$dest_attendance = "geodp_type_attendance";
 
+$dest_marche = "geodp_event";
+$dest_marche_jour = "geodp_event_day";
+
+$dest_article = "geodp_product";
+$dest_calcul_base = "geodp_calcul_base";
+$dest_management_calcul = "geodp_management_calcul";
+$dest_calcul_mode = "geodp_calcul_mode";
+$dest_vat = "geodp_vat";
 $dest_tarif = "geodp_price";
+$dest_tarif_detail = "geodp_price_detail";
+$dest_tarif_attendance = "geodp_price_type_attendance";
 
 $dest_activite = "geodp_commercial_activity";
 
-// $dest_piece = "SOCIETE_PROPRIETE";
-// $dest_piece_val = "SOCIETE_PROPRIETE_VALEUR";
-// $dest_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
-
-$dest_exploitant = "geodp_companies";
+$dest_commercant = "geodp_company";
 
 $dest_facture = "geodp_invoice";
 
@@ -97,6 +104,7 @@ $dest_conn = pg_connect("host=$dest_host port=$dest_port dbname=$dest_database u
 
 $dest_nb_content = []; // auto-computed
 
+$pgsql_date_format = "Y-m-d H:i:s";
 
 /*************************
  *        OPTIONS        *
@@ -104,6 +112,9 @@ $dest_nb_content = []; // auto-computed
 
 // Date de création maximum des données à transférer
 $dates_max_birth = date("d/m/y", strtotime("-6 months")); // avec '6' l'âge max des données en mois
+
+// Mettre à vrai pour supprimer les données insérées ces dernières 24 heures dans les tables de destination avant l'insertion des nouvelles, mettre à faux sinon
+$clean_destination_tables = true; // true | false
 
 // Mettre à vrai pour supprimer les données des tables de destination avant l'insertion des nouvelles, mettre à faux sinon
 $erase_destination_tables = (isset($_POST["erase_destination_tables"])) ? true_false($_POST["erase_destination_tables"]) : false; // true | false
@@ -133,13 +144,26 @@ function ok_nok($bool) {
     return $bool ? "<ok></ok>" : "<nok></nok>";
 }
 
-function insert_into($table, $cols, $values, &$nb_executed, &$nb_to_execute) {
+function insert_into($table, $cols, $values, &$nb_executed, &$nb_to_execute) { // Pour $dest_conn uniquement !
+    global $dest_conn;
+
     $query = "INSERT INTO $table (" . implode(", ", $cols) . ") VALUES (" . implode(", ", $values) . ")";
     execute_query($query, $nb_executed, $nb_to_execute);
+
+    $where_content = "";
+    for ($i = 0; $i < count($cols); ++$i) {
+        $where_content .= ($where_content === "") ? "" : " AND ";
+        $where_content .= $cols[$i] . " = " . $values[$i];
+    }
+    $where_content = str_replace("\\'", "''", $where_content);
+    $last_inserted_id = pg_fetch_object(pg_query("SELECT id FROM $table WHERE $where_content AND del = false ORDER BY date_create DESC"))->id;
+    return $last_inserted_id;
 }
 
-function execute_query($query, &$nb_executed, &$nb_to_execute) {
+function execute_query($query, &$nb_executed, &$nb_to_execute) { // Pour $dest_conn uniquement !
     global $display_dest_requests, $exec_dest_requests, $dest_conn, $output_file;
+
+    $query = str_replace("\\'", "''", $query);
 
     if ($display_dest_requests) echo "$query<br>";
 
@@ -151,15 +175,20 @@ function execute_query($query, &$nb_executed, &$nb_to_execute) {
         if ($req_res === false) {
             echo "<p class=\"danger\">".$dest_conn->errorInfo()[2]."</p>";
         } else {
+            ++$nb_executed;
             if ($req_res === 0) {
                 echo "<p class=\"warning\">0 lignes affectées par la requête</p>";
             }
-            ++$nb_executed;
         }
     }
 }
 
-function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
+function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings, &$nb_warnings) {
+    foreach ($warnings as $warning) {
+        echo "<p class=\"warning\">$warning</p>";
+    }
+    $nb_warnings += count($warnings);
+
     $success_s = ($nb_executed == 0 || $nb_executed > 1) ? "s" : "";
     $exec_s = ($nb_to_execute == 0 || $nb_to_execute > 1) ? "s" : "";
 
@@ -257,11 +286,32 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
                 echo "<h2>$nom_reprise</h2>";
                 echo "<li><a href=\"#summary\">Résumé</a></li>";
                 echo "<li><a href=\"#parameters\">Paramètres</a>";
+                if ($clean_destination_tables) {
+                    echo "<li><a href=\"#clean\">Nettoyage des tables de destination</a>";
+                        echo "<ol>";
+                            echo "<li><a href=\"#clean_tarifs\">Tarifs</a></li>";
+                            echo "<li><a href=\"#clean_marches\">Marchés</a></li>";
+                            echo "<li><a href=\"#clean_commercant\">Commerçants</a></li>";
+                            echo "<li><a href=\"#clean_activites_commerciales\">Activités commerciales</a></li>";
+                            echo "</ol>";
+                    echo "</li>";
+                }
+                if ($erase_destination_tables) {
+                    echo "<li><a href=\"#erase\">Vidage des tables de destination</a>";
+                        echo "<ol>";
+                            echo "<li><a href=\"#erase_tarifs\">Tarifs</a></li>";
+                            echo "<li><a href=\"#erase_marches\">Marchés</a></li>";
+                            echo "<li><a href=\"#erase_commercant\">Commerçants</a></li>";
+                            echo "<li><a href=\"#erase_activites_commerciales\">Activités commerciales</a></li>";
+                        echo "</ol>";
+                    echo "</li>";
+                }
                 echo "<li><a href=\"#transfert\">Transfert des données</a>";
                     echo "<ol>";
                         echo "<li><a href=\"#marches\">Marchés</a></li>";
                         echo "<li><a href=\"#tarifs\">Tarifs</a></li>";
-                        echo "<li><a href=\"#exploitants\">Exploitants</a></li>";
+                        echo "<li><a href=\"#activites_commerciales\">Activités commerciales</a></li>";
+                        echo "<li><a href=\"#commercants\">Commerçants</a></li>";
                     echo "</ol>";
                 echo "</li>";
                 echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
@@ -273,7 +323,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
             echo "<summary id=\"summary\">";
                 echo "<h1>$nom_reprise</h1>";
                 echo "<p id=\"nb_errors\">Reprise en cours</p>";
-                echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Exploitants</th></tr></table>";
+                echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Tarifs</th><th>Activités</th><th>Commerçants</th></tr></table>";
                 echo "<div><a target=\"_blank\" href=\"//$dest_host:$dest_port\">$dest_host:$dest_port</a></div>";
             echo "</summary>";
 
@@ -305,24 +355,89 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
                 echo "<field><label>Exécuter les requêtes</label><input type=\"disabled\" value=\"".yes_no($exec_dest_requests)."\" disabled /></field>";
                 echo "<field><label>Fichier de sortie</label><input type=\"disabled\" value=\"$output_filename\" disabled /></field>";
             echo "</form>";
+            
+            $today = date($pgsql_date_format, time());
+            $lasts_24_hours = date($pgsql_date_format, strtotime("-1 day"));
+
+            //// Nettoyage des tables de destination
+
+            if ($clean_destination_tables) {
+                echo "<h1 id=\"clean\">Nettoyage des tables de destination</h1>";
+                
+                echo "<h2 id=\"clean_tarifs\">Tarifs<span><tt>$dest_tarif_detail</tt> / <tt>$dest_tarif</tt> / <tt>$dest_article</tt></span></h2>";
+
+                pg_query("DELETE FROM $dest_tarif_detail WHERE date_create > '$lasts_24_hours'");
+                pg_query("DELETE FROM $dest_tarif WHERE date_create > '$lasts_24_hours'");
+                pg_query("DELETE FROM $dest_article WHERE date_create > '$lasts_24_hours'");
+
+                echo "<h2 id=\"clean_marches\">Marchés<span><tt>$dest_marche_jour</tt> / <tt>$dest_marche</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_marche_jour WHERE date_create > '$lasts_24_hours'");
+                pg_query("DELETE FROM $dest_marche WHERE date_create > '$lasts_24_hours'");
+
+                echo "<h2 id=\"clean_commercants\">Commerçants<span><tt>$dest_commercant</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_commercant WHERE date_create > '$lasts_24_hours'");
+
+                echo "<h2 id=\"clean_activites_commerciales\">Activités commerciales<span><tt>$dest_activite</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_activite WHERE date_create > '$lasts_24_hours'");
+            }
+
+            //// Vidage des tables de destination
+
+            if ($erase_destination_tables) {
+                echo "<h1 id=\"erase\">Vidage des tables de destination</h1>";
+                
+                echo "<h2 id=\"erase_tarifs\">Tarifs<span><tt>$dest_tarif_detail</tt> / <tt>$dest_tarif</tt> / <tt>$dest_article</tt></span></h2>";
+
+                pg_query("DELETE FROM $dest_tarif_detail");
+                pg_query("DELETE FROM $dest_tarif");
+                pg_query("DELETE FROM $dest_article");
+
+                echo "<h2 id=\"erase_marches\">Marchés<span><tt>$dest_marche_jour</tt> / <tt>$dest_marche</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_marche_jour");
+                pg_query("DELETE FROM $dest_marche");
+
+                echo "<h2 id=\"erase_commercants\">Commerçants<span><tt>$dest_commercant</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_commercant");
+
+                echo "<h2 id=\"erase_activites_commerciales\">Activités commerciales<span><tt>$dest_activite</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_activite");
+            }
 
             //// Transfert des données
 
             echo "<h1 id=\"transfert\">Transfert des données</h1>";
 
-            $marche_cols = ["id_domain", "name", "id_user_create", "date_create"];
-            $tarif_cols = ["id_product", "id_calcul_mode", "name", "id_user_create", "date_create"];
-// TODO les cols de tarif
+            $marche_cols = ["id_domain", "id_charging_mode", "name", "id_user_create", "date_create"];
+            $marche_jour_cols = ["id_day", "id_event", "id_user_create", "date_create"];
+            
+            $calcul_base_cols = ["id_type_domain", "code", "name", "calcul", "calcul_name", "id_user_create", "date_create"];
+            $calcul_base_fields_cols = ["id_calcul_base", "name", "id_user_create", "date_create"];
+            $management_calcul_cols = ["id_type_domain", "name", "code", "id_user_create", "date_create"];
+            $article_cols = ["id_domain", "id_calcul_base", "id_management_calcul", "id_event", "code", "name", "invoice_name", "unit", "id_user_create", "date_create"];
+            $tarif_cols = ["id_product", "id_calcul_mode", "id_charging_mode", "id_vat", "name", "excluded_taxes", "id_user_create", "date_create"];
+            $tarif_detail_cols = ["id_price", "date_start", "date_end", "unit_price", "id_user_create", "date_create"];
+            $tarif_attendance_cols = ["id_price", "id_type_attendance", "id_user_create", "date_create"];
 
-            $today = date("d/m/y", time());
+            $activite_cols = ["name", "id_user_create", "date_create"];
+            $commercant_cols = ["TODO", "id_user_create", "date_create"];
+            
             $user_id = pg_fetch_object(pg_query("SELECT id FROM $dest_utilisateur WHERE last_name LIKE 'ILTR' AND first_name LIKE 'Iltr'"))->id;
-            $domain_id = pg_fetch_object(pg_query("SELECT id FROM $dest_domaine WHERE name LIKE 'Placier' AND del = false"))->id;
+            $domain = pg_fetch_object(pg_query("SELECT id, id_type_domain FROM $dest_domaine WHERE name LIKE 'Placier' AND del = false"));
+            $domain_id = $domain->id;
+            $type_domain_id = $domain->id_type_domain;
 
             $nb_errors = 0;
+            $nb_warnings = 0;
             
             // Marchés
 
-            echo "<h2 id=\"marches\">Marchés<span><tt>$dest_marche</tt></span></h2>";
+            echo "<h2 id=\"marches\">Marchés<span><tt>$dest_marche</tt> / <tt>$dest_marche_jour</tt></span></h2>";
 
             $src_nb_content["marchés"] = 0;
             $dest_nb_content["marchés"] = 0;
@@ -333,49 +448,310 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
             $nb_marches = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_marche"))->count;
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
-            foreach ($src_conn->query("SELECT MAR_REF FROM $src_marche WHERE DCREAT > '$dates_max_birth'") as $row) {
+            foreach ($src_conn->query("SELECT UNIQUE MAR_NOM, MAR_REF FROM $src_marche_lang WHERE DCREAT > '$dates_max_birth'") as $row) {
                 $src_nb_content["marchés"] += 1;
 
-                $name = $src_conn->query("SELECT MAR_NOM FROM $src_marche_lang WHERE MAR_REF = " . $row["MAR_REF"])->fetch()[0];
+                // Event
 
-                $values = ["'$domain_id'", "'$name'", "'$user_id'", "'$today'"];
-                // insert_into($dest_marche, $marche_cols, $values, $nb_to_execute, $nb_executed);
+                $charging_mode = pg_fetch_object(pg_query("SELECT id FROM $dest_charging_mode WHERE code = 'WEEK' AND del = false"))->id;
+                $name = addslashes(ucwords(strtolower($row["MAR_NOM"])));
+
+                $values = ["'$domain_id'", "'$charging_mode'", "'$name'", "'$user_id'", "'$today'"];
+                $event_id = insert_into($dest_marche, $marche_cols, $values, $nb_to_execute, $nb_executed);
+
+                // Event day
+                
+                foreach($src_conn->query("SELECT MAR_JOUR FROM $src_marche WHERE MAR_REF = " . $row["MAR_REF"]) as $marche) {
+                    if (!$marche["MAR_JOUR"]) {
+                        $req_days = pg_query("SELECT id FROM $dest_jour");
+                        while ($day = pg_fetch_object($req_days)) {
+                            $values = ["'".$day->id."'", "'$event_id'", "'$user_id'", "'$today'"];
+                            insert_into($dest_marche_jour, $marche_jour_cols, $values, $nb_to_execute, $nb_executed);
+                        }
+                    } else {
+                        $mar_day = "_" . substr($marche["MAR_JOUR"], 1);
+                        
+                        $day = pg_fetch_object(pg_query("SELECT id FROM $dest_jour WHERE name LIKE '$mar_day'"))->id;
+                        
+                        $values = ["'$day'", "'$event_id'", "'$user_id'", "'$today'"];
+                        insert_into($dest_marche_jour, $marche_jour_cols, $values, $nb_to_execute, $nb_executed);
+                    }
+                }
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_executed, $nb_to_execute, $nb_errors);
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, [], $nb_warnings);
 
             $nb_marches = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_marche"))->count - $nb_marches;
             $dest_nb_content["marchés"] = $nb_marches;
 
             // Tarifs
 
-            echo "<h2 id=\"tarifs\">Tarifs</h2>";
+            echo "<h2 id=\"tarifs\">Tarifs<span><tt>$dest_article</tt> / <tt>$dest_tarif</tt> / <tt>$dest_tarif_detail</tt></span></h2>";
 
             $src_nb_content["tarifs"] = 0;
             $dest_nb_content["tarifs"] = 0;
 
             $nb_to_execute = 0;
             $nb_executed = 0;
+            $warnings = [];
 
             $nb_tarifs = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_tarif"))->count;
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
-            foreach ($src_conn->query("SELECT MAR_REF FROM $src_article WHERE DCREAT > '$dates_max_birth'") as $row) {
+            foreach ($src_conn->query("SELECT UNIQUE ART_NOM, art.*, artl.*, marl.MAR_NOM FROM $src_article art, $src_article_lang artl, $src_marche_lang marl WHERE art.DCREAT > '$dates_max_birth' AND art.ART_REF = artl.ART_REF AND ART_VISIBLE = 1 AND marl.MAR_REF = art.MAR_REF") as $row) {
                 $src_nb_content["tarifs"] += 1;
 
-                // $name = $src_conn->query("SELECT MAR_NOM FROM $src_marche_lang WHERE MAR_REF = " . $row["MAR_REF"])->fetch()[0];
+                $name = addslashes(ucfirst(strtolower($row["ART_NOM"])));
+                $code = $row["ART_CODE"];
+                $unit = $row["ART_UNITE"];
+                $mar_nom = addslashes(ucwords(strtolower($row["MAR_NOM"])));
 
-                $values = ["'$domain_id'", "'$name'", "'$user_id'", "'$today'"];
-                // insert_into($dest_tarif, $tarif_cols, $values, $nb_to_execute, $nb_executed);
+                // Product
+
+                $code_unit = "";
+                $code_type = "";
+                switch (strtoupper($unit)) {
+                    case "M":
+                        $code_unit = "LINE";
+                        $code_type = "PA";
+                        break;
+                    case "ML":
+                        $code_unit = "LINE";
+                        $code_type = "PA";
+                        break;
+                    case "M2":
+                        $code_unit = "SURF";
+                        $code_type = "PA";
+                        break;
+                    case "M3":
+                        $code_unit = "VOLU";
+                        $code_type = "PA";
+                        break;
+                    case "FORFAIT":
+                        $code_unit = "QUAN";
+                        $code_type = "PACK";
+                        break;
+                    case "GRATUIT":
+                        $code_unit = "QUAN";
+                        $code_type = "PACK";
+                        break;
+                    default:
+                        $code_unit = "LINE";
+                        $code_type = "PA";
+                        array_push($warnings, "L'unité $unit est inconnue, il faut trouver une équivalence GEODP v1 - GEODP v2");
+                        break;
+                }
+
+                $req_calcul_base = pg_query("SELECT id FROM $dest_calcul_base WHERE id_type_domain = '$type_domain_id' AND code = '$code_unit' AND del = false");
+                $calcul_base = NULL;
+                if (pg_num_rows($req_calcul_base) > 0) {
+                    $calcul_base = pg_fetch_object($req_calcul_base)->id;
+                } else {
+                    // Calcul base
+
+                    $name_unit = "";
+                    switch ($code_unit) {
+                        case "LINE":
+                            $name_unit = "Linéaire";
+                            break;
+                        case "SURF":
+                            $name_unit = "Surface";
+                            break;
+                        case "QUAN":
+                            $name_unit = "Quantité";
+                            break;
+                        case "VOLU":
+                            $name_unit = "Volume";
+                            break;
+                        default:
+                            $name_unit = "Linéaire";
+                            break;
+                    }
+
+                    $values = ["'$type_domain_id'", "'$code_unit'", "'$name_unit'", "NULL", "NULL", "'$user_id'", "'$today'"];
+                    $calcul_base = insert_into($dest_calcul_base, $calcul_base_cols, $values, $nb_to_execute, $nb_executed);
+                    
+                    // Calcul base field
+
+                    $values = ["'$calcul_base'", "'Longueur'", "'$user_id'", "'$today'"];
+                    $longueur = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+
+                    $values = ["'$calcul_base'", "'Largeur'", "'$user_id'", "'$today'"];
+                    $largeur = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+
+                    $values = ["'$calcul_base'", "'Hauteur'", "'$user_id'", "'$today'"];
+                    $hauteur = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+
+                    $values = ["'$calcul_base'", "'Quantité'", "'$user_id'", "'$today'"];
+                    $quantite = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+                    
+                    // Calcul base
+
+                    $calcul = "";
+                    $calcul_name = "";
+                    switch ($code_unit) {
+                        case "LINE":
+                            $calcul_name = "[[Longueur]]";
+                            $calcul = "[[$longueur]]";
+                            break;
+                        case "SURF":
+                            $calcul_name = "[[Longueur]] * [[Largeur]]";
+                            $calcul = "[[$longueur]] * [[$largeur]]";
+                            break;
+                        case "QUAN":
+                            $calcul_name = "[[Quantité]]";
+                            $calcul = "[[$quantite]]";
+                            break;
+                        case "VOLU":
+                            $calcul_name = "[[Longueur]] * [[Largeur]] * [[Hauteur]]";
+                            $calcul = "[[$longueur]] * [[$largeur]] * [[$hauteur]]";
+                            break;
+                        default:
+                            $calcul_name = "[[Longueur]]";
+                            $calcul = "[[$longueur]]";
+                            break;
+                    }
+
+                    $update_query = "UPDATE $dest_calcul_base SET calcul = '$calcul', calcul_name = '$calcul_name' WHERE id = '$calcul_base'";
+                    execute_query($update_query, $nb_to_execute, $nb_executed);
+                } // Fin "si calcul base n'existe pas"
+
+                $req_management_calcul = pg_query("SELECT id FROM $dest_management_calcul WHERE id_type_domain = '$type_domain_id' AND code = '$code_type' AND del = false");
+                $management_calcul = NULL;
+                if (pg_num_rows($req_management_calcul) > 0) {
+                    $management_calcul = pg_fetch_object($req_management_calcul)->id;
+                } else {
+                    // Management calcul
+
+                    $name_management = "";
+                    switch ($code_type) {
+                        case "PA":
+                            $name_management = "Article";
+                            break;
+                        case "PACK":
+                            $name_management = "Forfait";
+                            break;
+                        default:
+                            $name_management = "Forfait";
+                            break;
+                    }
+
+                    $values = ["'$type_domain_id'", "'$name_management'", "'$code_type'", "'$user_id'", "'$today'"];
+                    $management_calcul = insert_into($dest_management_calcul, $management_calcul_cols, $values, $nb_to_execute, $nb_executed);
+                } // Fin "si management calcul n'existe pas"
+                
+                $event = pg_fetch_object(pg_query("SELECT id FROM $dest_marche WHERE name = '$mar_nom' AND del = false ORDER BY date_create DESC"))->id; // Peu précis ; risque de tomber sur un marché non désiré
+
+                $values = ["'$domain_id'", "'$calcul_base'", "'$management_calcul'", "'$event'", "'$code'", "'$name'", "'$name'", "'$unit'", "'$user_id'", "'$today'"];
+                $product = insert_into($dest_article, $article_cols, $values, $nb_to_execute, $nb_executed);
+
+                // Price
+
+                $calcul_mode = pg_fetch_object(pg_query("SELECT id FROM $dest_calcul_mode WHERE code = 'PACK' AND del = false"))->id;
+                $charging_mode = pg_fetch_object(pg_query("SELECT id FROM $dest_charging_mode WHERE code = 'PACK' AND del = false"))->id;
+                $vat = pg_fetch_object(pg_query("SELECT id FROM $dest_vat WHERE name LIKE '_aux _ormal' AND del = false"))->id;
+
+                $values = ["'$product'", "'$calcul_mode'", "'$charging_mode'", "'$vat'", "'$name'", "false", "'$user_id'", "'$today'"];
+                $price = insert_into($dest_tarif, $tarif_cols, $values, $nb_to_execute, $nb_executed);
+
+                // Price détail
+
+                $date_start = $row["ART_VALIDE_DEPUIS"];
+                $date_end = $row["ART_VALIDE_JUSQUA"];
+                $art_ttc = floatval($row["ART_PRIX_TTC"]);
+                $art_ttc_abo = floatval($row["ART_ABO_PRIX_TTC"]);
+
+                $tarif_abonne = ($art_ttc_abo !== 0); // tarif abo si prix abo != 0
+                $tarif_non_abonne = ($art_ttc !== 0 || !$tarif_abonne); // tarif non abo si prix non abo != 0 ou si pas tarif abo (tarif non abo à 0 euros possible)
+
+                if ($tarif_abonne) { // Insérer un tarif abo
+                    $values = ["'$price'", "'$date_start'", "'$date_end'", $art_ttc_abo, "'$user_id'", "'$today'"];
+                    insert_into($dest_tarif_detail, $tarif_detail_cols, $values, $nb_to_execute, $nb_executed);
+                }
+
+                if ($tarif_non_abonne) { // Insérer un autre tarif
+                    $values = ["'$price'", "'$date_start'", "'$date_end'", $art_ttc, "'$user_id'", "'$today'"];
+                    insert_into($dest_tarif_detail, $tarif_detail_cols, $values, $nb_to_execute, $nb_executed);
+                }
+
+                // Price attendance (fréquentation)
+
+                if ($tarif_abonne) {
+                    $values = ["'$price'", "''", "'$user_id'", "'$today'"];
+                    // insert_into($dest_tarif_attendance, $tarif_attendance_cols, $values, $nb_to_execute, $nb_executed);
+                }
+
+                if ($tarif_non_abonne) {
+                    $values = ["'$price'", "''", "'$user_id'", "'$today'"];
+                    // insert_into($dest_tarif_attendance, $tarif_attendance_cols, $values, $nb_to_execute, $nb_executed);
+                }
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_executed, $nb_to_execute, $nb_errors);
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, $warnings, $nb_warnings);
 
-            $nb_marches = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_tarif"))->count - $nb_tarifs;
-            $dest_nb_content["tarifs"] = $nb_marches;
+            $nb_tarifs = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_tarif"))->count - $nb_tarifs;
+            $dest_nb_content["tarifs"] = $nb_tarifs;
+            
+            // Activités commerciales
 
+            echo "<h2 id=\"activites_commerciales\">Activités commerciales<span><tt>$dest_activite</tt></span></h2>";
+
+            $src_nb_content["activités_commerciales"] = 0;
+            $dest_nb_content["activités_commerciales"] = 0;
+
+            $nb_to_execute = 0;
+            $nb_executed = 0;
+
+            $nb_activites_commerciales = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_activite"))->count;
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT ACO_NOM FROM $src_activite_commerciale_lang WHERE DCREAT > '$dates_max_birth'") as $row) {
+                $src_nb_content["activités_commerciales"] += 1;
+
+                $name = addslashes(ucfirst(strtolower($row["ACO_NOM"])));
+
+                $values = ["'$name'", "'$user_id'", "'$today'"];
+                insert_into($dest_activite, $activite_cols, $values, $nb_to_execute, $nb_executed);
+            }
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, [], $nb_warnings);
+
+            $nb_activites_commerciales = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_activite"))->count - $nb_activites_commerciales;
+            $dest_nb_content["activités_commerciales"] = $nb_activites_commerciales;
+
+            // Commerçants
+
+            echo "<h2 id=\"commercants\">Commerçants<span><tt>$dest_commercant</tt></span></h2>";
+
+            $src_nb_content["commerçants"] = 0;
+            $dest_nb_content["commerçants"] = 0;
+
+            $nb_to_execute = 0;
+            $nb_executed = 0;
+            $warnings = [];
+
+            $nb_commercants = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_commercant"))->count;
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT exp.*, acol.ACO_NOM FROM $src_exploitant exp, $src_activite_commerciale_lang acol WHERE exp.DCREAT > '$dates_max_birth' AND exp.EXP_VISIBLE = 1 AND acol.ACO_REF = exp.ACO_REF") as $row) {
+                $src_nb_content["commerçants"] += 1;
+
+                $aco_nom = addslashes(ucfirst(strtolower($row["ACO_NOM"])));
+
+                $activite = pg_fetch_object(pg_query("SELECT id FROM $dest_marche WHERE name = '$aco_nom' AND del = false ORDER BY date_create DESC"))->id; // Peu précis ; risque de tomber sur une activité non désirée
+            }
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, $warnings, $nb_warnings);
+
+            $nb_commercants = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_commercant"))->count - $nb_commercants;
+            $dest_nb_content["commerçants"] = $nb_commercants;
+            
+            
+            echo "</section>";
 
             ?>
 
@@ -393,8 +769,12 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors) {
                     var nb_marches_dest = parseInt(<?php echo $dest_nb_content["marchés"]; ?>);
                     var nb_tarifs_src = parseInt(<?php echo $src_nb_content["tarifs"]; ?>);
                     var nb_tarifs_dest = parseInt(<?php echo $dest_nb_content["tarifs"]; ?>);
+                    var nb_activites_src = parseInt(<?php echo $src_nb_content["activités_commerciales"]; ?>);
+                    var nb_activites_dest = parseInt(<?php echo $dest_nb_content["activités_commerciales"]; ?>);
+                    var nb_commercants_src = parseInt(<?php echo $src_nb_content["commerçants"]; ?>);
+                    var nb_commercants_dest = parseInt(<?php echo $dest_nb_content["commerçants"]; ?>);
 
-                    dom_nb_content.innerHTML += "<tr><td>" + nb_marches_dest + "/" + nb_marches_src + "</td><td>" + nb_tarif_dest + "/" + nb_tarifs_src + "</td></tr>";
+                    dom_nb_content.innerHTML += "<tr><td>" + nb_marches_dest + "/" + nb_marches_src + "</td><td>" + nb_tarifs_dest + "/" + nb_tarifs_src + "</td><td>" + nb_activites_dest + "/" + nb_activites_src + "</td><td>" + nb_commercants_dest + "/" + nb_commercants_src + "</td></tr>";
             </script>
 
             <?php
