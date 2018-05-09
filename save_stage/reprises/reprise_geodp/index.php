@@ -35,6 +35,8 @@ date_default_timezone_set("Europe/Paris");
  *    BDD SOURCE (v1)    *
  *************************/
 
+$src_activite = "ACTIVITE";
+
 $src_marche = "MARCHE";
 $src_marche_lang = "MARCHE_LANGUE";
 
@@ -51,8 +53,7 @@ $src_piece_val = "SOCIETE_PROPRIETE_VALEUR";
 $src_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
 
 $src_facture = "FACTURE";
-$src_article_facture = "ARTICLE_FACTURE";
-$src_article_facture_lang = "ARTICLE_FACTURE_LANGUE";
+$src_facture = "TYPE_FACTURE";
 
 $src_host = (isset($_POST["src_host"]) && $_POST["src_host"] !== "") ? $_POST["src_host"] : "ares"; // zeus | ares
 $src_port = "1521";
@@ -95,6 +96,9 @@ $dest_civility = "geodp_civility";
 $dest_address = "geodp_address";
 $dest_commercant = "geodp_company";
 
+$dest_supporting_document = "geodp_supporting_document";
+$dest_piece = "geodp_company_supporting_document";
+
 $dest_facture = "geodp_invoice";
 
 $dest_host = (isset($_POST["dest_host"]) && $_POST["dest_host"] !== "") ? $_POST["dest_host"] : "192.168.1.36";
@@ -104,10 +108,12 @@ $dest_user = (isset($_POST["dest_user"]) && $_POST["dest_user"] !== "") ? $_POST
 $dest_password = (isset($_POST["dest_password"]) && $_POST["dest_password"] !== "") ? $_POST["dest_password"] : $dest_user;
 
 $dest_conn = pg_connect("host=$dest_host port=$dest_port dbname=$dest_database user=$dest_user password=$dest_password");
+pg_set_client_encoding($dest_conn, "UTF-8");
 
 $dest_nb_content = []; // auto-computed
 
 $pgsql_date_format = "Y-m-d H:i:s";
+
 
 /*************************
  *        OPTIONS        *
@@ -304,6 +310,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                         echo "<ol>";
                             echo "<li><a href=\"#clean_tarifs\">Tarifs</a></li>";
                             echo "<li><a href=\"#clean_marches\">Marchés</a></li>";
+                            echo "<li><a href=\"#clean_pieces\">Pièces justificatives</a></li>";
                             echo "<li><a href=\"#clean_commercant\">Commerçants</a></li>";
                             echo "<li><a href=\"#clean_activites_commerciales\">Activités commerciales</a></li>";
                             echo "</ol>";
@@ -314,6 +321,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                         echo "<ol>";
                             echo "<li><a href=\"#erase_tarifs\">Tarifs</a></li>";
                             echo "<li><a href=\"#erase_marches\">Marchés</a></li>";
+                            echo "<li><a href=\"#erase_pieces\">Pièces justificatives</a></li>";
                             echo "<li><a href=\"#erase_commercant\">Commerçants</a></li>";
                             echo "<li><a href=\"#erase_activites_commerciales\">Activités commerciales</a></li>";
                         echo "</ol>";
@@ -325,7 +333,8 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                         echo "<li><a href=\"#tarifs\">Tarifs</a></li>";
                         echo "<li><a href=\"#activites_commerciales\">Activités commerciales</a></li>";
                         echo "<li><a href=\"#commercants\">Commerçants</a></li>";
-                    echo "</ol>";
+                        echo "<li><a href=\"#pieces\">Pièces justificatives</a></li>";
+                        echo "</ol>";
                 echo "</li>";
                 echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
             echo "</ol>";
@@ -336,7 +345,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             echo "<summary id=\"summary\">";
                 echo "<h1>$nom_reprise</h1>";
                 echo "<p id=\"nb_errors\">Reprise en cours</p>";
-                echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Tarifs</th><th>Activités</th><th>Commerçants</th></tr></table>";
+                echo "<table id=\"nb_content\"><tr><th>Marchés</th><th>Tarifs</th><th>Activités</th><th>Commerçants</th><th>Pièces</th><th>Factures</th></tr></table>";
                 echo "<div><a target=\"_blank\" href=\"//$dest_host:$dest_port\">$dest_host:$dest_port</a></div>";
             echo "</summary>";
 
@@ -389,6 +398,11 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                 pg_query("DELETE FROM $dest_marche_jour WHERE date_create > '$lasts_72_hours'");
                 pg_query("DELETE FROM $dest_marche WHERE date_create > '$lasts_72_hours'");
 
+                echo "<h2 id=\"clean_pieces\">Pièces justificatives<span><tt>$dest_piece</tt> / <tt>$dest_supporting_document</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_piece WHERE date_create > '$lasts_72_hours'");
+                pg_query("DELETE FROM $dest_supporting_document WHERE date_create > '$lasts_72_hours'");
+
                 echo "<h2 id=\"clean_commercants\">Commerçants<span><tt>$dest_commercant</tt> / <tt>$dest_address</tt></span></h2>";
                 
                 pg_query("DELETE FROM $dest_commercant WHERE date_create > '$lasts_72_hours'");
@@ -415,6 +429,11 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                 
                 pg_query("DELETE FROM $dest_marche_jour");
                 pg_query("DELETE FROM $dest_marche");
+
+                echo "<h2 id=\"erase_pieces\">Pièces justificatives<span><tt>$dest_piece</tt> / <tt>$dest_supporting_document</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_piece");
+                pg_query("DELETE FROM $dest_supporting_document");
 
                 echo "<h2 id=\"erase_commercants\">Commerçants<span><tt>$dest_commercant</tt> / <tt>$dest_address</tt></span></h2>";
                 
@@ -444,13 +463,20 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             $activite_cols = ["name", "id_user_create", "date_create"];
 
             $address_cols = ["street_number_alphanumeric", "address", "postal_code", "city", "id_user_create", "date_create"];
-            $commercant_cols = ["id_domain", "id_civility", "id_commercial_activity", "id_address", "first_name", "last_name", "business_name", "sign_board", "siret", "accounting_code", "ape", "phone_number", "mobile_phone", "email", "iban", "bic", "complement_name", "photo", "id_user_create", "date_create"];
+            $commercant_cols = ["id_domain", "id_civility", "id_commercial_activity", "id_address", "first_name", "last_name", "business_name", "sign_board", "siret", "accounting_code", "ape", "phone_number", "mobile_phone", "email", "iban", "bic", "complement_name", "id_user_create", "date_create"];
             if ($dest_database === "TRO") $commercant_cols[array_search("siret", $commercant_cols)] = "siren";
+
+            $supporting_document_cols = ["id_domain", "name", "alert", "id_user_create", "date_create"];
+            $piece_cols = ["id_company", "id_supporting_document", "date_start", "date_end", "value", "id_user_create", "date_create"];
+
+            $facture_cols = ["id_domain", "id_accounting_year", "id_type_invoice", "id_company", "number", "total_ati", "total_et", "total_vat", "total_tax", "date_start", "date_generate", "bk_company_first_name", "bk_company_last_name", "bk_company_business_name", "bk_company_complement_name", "bk_company_civility_name", "bk_company_address_street_number_alphanumeric", "bk_company_address", "bk_company_address_complement", "bk_company_postal_code", "bk_company_city", "bk_company_accounting_code", "bk_company_siret", "bk_company_iban", "bk_company_bic", "bk_company_sepa_number_rum", "bk_domain_name", "id_user_create", "date_create"];
+            $facture_article_cols = ["id_invoice", "id_product", "date_start", "quantity", "unit_price", "multiplier", "total", "total_ati", "total_et", "total_vat", "total_tax", "bk_calcul_base_code", "bk_calcul_base_name", "bk_calcul_base_calcul", "bk_calcul_base_calcul_name", "bk_product_code", "bk_product_name", "bk_product_invoice_name", "bk_product_unit", "bk_product_description", "id_user_create", "date_create"];
 
             $user_id = pg_fetch_object(pg_query("SELECT id FROM $dest_utilisateur WHERE last_name LIKE 'ILTR' AND first_name LIKE 'Iltr'"))->id;
             $domain = pg_fetch_object(pg_query("SELECT id, id_type_domain FROM $dest_domaine WHERE name LIKE 'Placier' AND del = false"));
             $domain_id = $domain->id;
             $type_domain_id = $domain->id_type_domain;
+            $act_ref = $src_conn->query("SELECT ACT_REF FROM $src_activite WHERE ACT_MODULE LIKE 'placier'")->fetch()[0];
 
             $nb_errors = 0;
             $nb_warnings = 0;
@@ -766,15 +792,35 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             $nb_executed = 0;
             $warnings = [];
 
+            $assoc_exploitant_company = [];
+
             $nb_commercants = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_commercant"))->count;
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
-            foreach ($src_conn->query("SELECT exp.*, acol.ACO_NOM FROM $src_exploitant exp, $src_activite_commerciale_lang acol WHERE exp.DCREAT > '$dates_max_birth' AND exp.EXP_VISIBLE = 1 AND acol.ACO_REF = exp.ACO_REF") as $row) {
+            foreach ($src_conn->query("SELECT * FROM $src_exploitant WHERE DCREAT > '$dates_max_birth' AND EXP_VISIBLE = 1") as $row) {
                 $src_nb_content["commerçants"] += 1;
+                
+                $aco_ref = $row["ACO_REF"];
+                $aco_nom = NULL;
+                if ($aco_ref) {
+                    $req_aco_nom = $src_conn->query("SELECT ACO_NOM FROM $src_activite_commerciale_lang WHERE ACO_REF = $aco_ref")->fetch();
+                    $aco_nom = addslashes(ucfirst(strtolower($req_aco_nom[0])));
+                }
 
-                $aco_nom = addslashes(ucfirst(strtolower($row["ACO_NOM"])));
                 $civ_ref = $row["CIV_REF"];
-                // $first_name = $row[""];
+                $first_name = $row["EXP_PRENOM_PERS_PHYSIQUE"];
+                $last_name = $row["EXP_NOM_PERS_PHYSIQUE"];
+                $business_name = $row["EXP_RAISON_SOCIALE"];
+                $sign_board = $row["EXP_ENSEIGNE"];
+                $siret = $row["EXP_SIRET"];
+                $accounting_code = $row["EXP_CODE_COMPTABLE"];
+                $ape = $row["EXP_APE"];
+                $phone_number = $row["EXP_TELEPHONE"];
+                $mobile_phone = $row["EXP_PORTABLE"];
+                $email = $row["EXP_EMAIL"];
+                $iban = $row["EXP_IBAN"];
+                $bic = $row["EXP_BIC"];
+                $complement_name = $row["EXP_COMPLEMENTADRESSE"];
                 
                 $civility = NULL;
                 if ($civ_ref) {
@@ -793,6 +839,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                             break;
                         default:
                             $name_civility = NULL;
+                            array_push($warnings, "La civilité $civ_val est inconnue, il faut trouver une équivalence GEODP v1 - GEODP v2");
                             break;
                     }
 
@@ -801,8 +848,11 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                     }
                 }
 
-                $activity = pg_fetch_object(pg_query("SELECT id FROM $dest_activite WHERE name = '$aco_nom' AND del = false ORDER BY date_create DESC"))->id; // Peu précis ; risque de tomber sur une activité non désirée
-                
+                $activity = NULL;
+                if ($aco_nom) {
+                    $activity = pg_fetch_object(pg_query("SELECT id FROM $dest_activite WHERE name = '$aco_nom' AND del = false ORDER BY date_create DESC"))->id; // Peu précis ; risque de tomber sur une activité non désirée
+                }
+
                 $address = NULL;
                 {
                     // Address
@@ -816,8 +866,10 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                     $address = insert_into($dest_address, $address_cols, $values, $nb_to_execute, $nb_executed);
                 }
 
-                $values = ["'$domain_id'", addslashes_nullify($civility), "'$activity'", "'$address'", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "''", "'$user_id'", "'$today'"];
-                // insert_into($dest_commercant, $commercant_cols, $values, $nb_to_execute, $nb_executed);
+                $values = ["'$domain_id'", addslashes_nullify($civility), addslashes_nullify($activity), "'$address'", addslashes_nullify($first_name), addslashes_nullify($last_name), addslashes_nullify($business_name), addslashes_nullify($sign_board), addslashes_nullify($siret), addslashes_nullify($accounting_code), addslashes_nullify($ape), addslashes_nullify($phone_number), addslashes_nullify($mobile_phone), addslashes_nullify($email), addslashes_nullify($iban), addslashes_nullify($bic), addslashes_nullify($complement_name), "'$user_id'", "'$today'"];
+                $commercant = insert_into($dest_commercant, $commercant_cols, $values, $nb_to_execute, $nb_executed);
+
+                $assoc_exploitant_company[$row["EXP_REF"]] = $commercant;
             }
             if ($display_dest_requests) echo "</div>";
 
@@ -826,6 +878,75 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             $nb_commercants = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_commercant"))->count - $nb_commercants;
             $dest_nb_content["commerçants"] = $nb_commercants;
             
+            // Pièces justificatives
+
+            echo "<h2 id=\"pieces\">Pièces justificatives<span><tt>$dest_supporting_document</tt> / <tt>$dest_piece</tt></span></h2>";
+
+            $src_nb_content["pièces"] = 0;
+            $dest_nb_content["pièces"] = 0;
+
+            $nb_to_execute = 0;
+            $nb_executed = 0;
+
+            $nb_pieces = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_piece"))->count;
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT pv.*, PROP_NOM FROM $src_piece p, $src_piece_val pv, $src_piece_lang pl WHERE pv.DCREAT > '$dates_max_birth' AND ACT_REF = $act_ref AND p.PROP_REF = pv.PROP_REF AND pv.PROP_REF = pl.PROP_REF") as $row) {
+                $src_nb_content["pièces"] += 1;
+                
+                $exp_ref = $row["EXP_REF"];
+                $name = addslashes($row["PROP_NOM"]);
+
+                $req_supporting_document = pg_query("SELECT id FROM $dest_supporting_document WHERE name = '$name' AND del = false");
+                $supporting_document = NULL;
+                if (pg_num_rows($req_supporting_document) > 0) {
+                    $supporting_document = pg_fetch_object($req_supporting_document)->id;
+                } else {
+                    // Supporting document
+
+                    $values = ["'$domain_id'", "'$name'", "true", "'$user_id'", "'$today'"];
+                    $supporting_document = insert_into($dest_supporting_document, $supporting_document_cols, $values, $nb_to_execute, $nb_executed);
+                }
+
+                $date_start = $row["PROP_DATE"];
+                $date_end = $row["PROP_DATE_VALIDITE"];
+                $value = $row["PROP_VALEUR"];
+                
+                $values = ["'" . $assoc_exploitant_company[$exp_ref] . "'", "'$supporting_document'", addslashes_nullify($date_start), addslashes_nullify($date_end), addslashes_nullify($value), "'$user_id'", "'$today'"];
+                insert_into($dest_piece, $piece_cols, $values, $nb_to_execute, $nb_executed);
+            }
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, [], $nb_warnings);
+
+            $nb_pieces = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_piece"))->count - $nb_pieces;
+            $dest_nb_content["pièces"] = $nb_pieces;
+
+            // Factures
+
+            echo "<h2 id=\"factures\">Factures<span><tt>$dest_facture</tt></span></h2>";
+
+            $src_nb_content["factures"] = 0;
+            $dest_nb_content["factures"] = 0;
+
+            $nb_to_execute = 0;
+            $nb_executed = 0;
+
+            $nb_factures = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_facture"))->count;
+
+            if ($display_dest_requests) echo "<div class=\"pre\">";
+            foreach ($src_conn->query("SELECT* FROM $src_facture WHERE FAC_VISIBLE = 1") as $row) {
+                $src_nb_content["factures"] += 1;
+
+                // TODO insérer dans invoice et dans invoice product
+            }
+            if ($display_dest_requests) echo "</div>";
+
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, [], $nb_warnings);
+
+            $nb_factures = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_facture"))->count - $nb_factures;
+            $dest_nb_content["factures"] = $nb_factures;
+
             
             echo "</section>";
 
@@ -849,8 +970,10 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                     var nb_activites_dest = parseInt(<?php echo $dest_nb_content["activités_commerciales"]; ?>);
                     var nb_commercants_src = parseInt(<?php echo $src_nb_content["commerçants"]; ?>);
                     var nb_commercants_dest = parseInt(<?php echo $dest_nb_content["commerçants"]; ?>);
+                    var nb_pieces_src = parseInt(<?php echo $src_nb_content["pièces"]; ?>);
+                    var nb_pieces_dest = parseInt(<?php echo $dest_nb_content["pièces"]; ?>);
 
-                    dom_nb_content.innerHTML += "<tr><td>" + nb_marches_dest + "/" + nb_marches_src + "</td><td>" + nb_tarifs_dest + "/" + nb_tarifs_src + "</td><td>" + nb_activites_dest + "/" + nb_activites_src + "</td><td>" + nb_commercants_dest + "/" + nb_commercants_src + "</td></tr>";
+                    dom_nb_content.innerHTML += "<tr><td>" + nb_marches_dest + "/" + nb_marches_src + "</td><td>" + nb_tarifs_dest + "/" + nb_tarifs_src + "</td><td>" + nb_activites_dest + "/" + nb_activites_src + "</td><td>" + nb_commercants_dest + "/" + nb_commercants_src + "</td><td>" + nb_pieces_dest + "/" + nb_pieces_src + "</td></tr>";
             </script>
 
             <?php
