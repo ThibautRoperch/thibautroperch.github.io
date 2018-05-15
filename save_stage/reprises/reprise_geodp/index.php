@@ -53,7 +53,8 @@ $src_piece_val = "SOCIETE_PROPRIETE_VALEUR";
 $src_piece_lang = "SOCIETE_PROPRIETE_LANGUE";
 
 $src_facture = "FACTURE";
-$src_facture = "TYPE_FACTURE";
+$src_article_facture = "FACTURE";
+$src_type_facture = "TYPE_FACTURE";
 
 $src_host = (isset($_POST["src_host"]) && $_POST["src_host"] !== "") ? $_POST["src_host"] : "ares"; // zeus | ares
 $src_port = "1521";
@@ -99,7 +100,10 @@ $dest_commercant = "geodp_company";
 $dest_supporting_document = "geodp_supporting_document";
 $dest_piece = "geodp_company_supporting_document";
 
+$dest_accounting_year = "geodp_accounting_year";
+$dest_facture_type = "geodp_type_invoice";
 $dest_facture = "geodp_invoice";
+$dest_facture_article = "geodp_invoice_product";
 
 $dest_host = (isset($_POST["dest_host"]) && $_POST["dest_host"] !== "") ? $_POST["dest_host"] : "192.168.1.36";
 $dest_port = (isset($_POST["dest_port"]) && $_POST["dest_port"] !== "") ? $_POST["dest_port"] : "6543";
@@ -161,6 +165,16 @@ function addslashes_nullify($string) {
     } else {
         return "'".addslashes($string)."'";
     }
+}
+
+function get_year($string) {
+    preg_match("/^[0-9]{2}.[0-9]{2}.([0-9]{2,4})$/", $string, $matches);
+
+    if (isset($matches[0])) {
+        return "20" . $matches[1];
+    }
+
+    return NULL;
 }
 
 function insert_into($table, $cols, $values, &$nb_executed, &$nb_to_execute) { // Pour $dest_conn uniquement !
@@ -310,6 +324,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                         echo "<ol>";
                             echo "<li><a href=\"#clean_tarifs\">Tarifs</a></li>";
                             echo "<li><a href=\"#clean_marches\">Marchés</a></li>";
+                            echo "<li><a href=\"#clean_factures\">Factures</a></li>";
                             echo "<li><a href=\"#clean_pieces\">Pièces justificatives</a></li>";
                             echo "<li><a href=\"#clean_commercant\">Commerçants</a></li>";
                             echo "<li><a href=\"#clean_activites_commerciales\">Activités commerciales</a></li>";
@@ -321,6 +336,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                         echo "<ol>";
                             echo "<li><a href=\"#erase_tarifs\">Tarifs</a></li>";
                             echo "<li><a href=\"#erase_marches\">Marchés</a></li>";
+                            echo "<li><a href=\"#erase_factures\">Factures</a></li>";
                             echo "<li><a href=\"#erase_pieces\">Pièces justificatives</a></li>";
                             echo "<li><a href=\"#erase_commercant\">Commerçants</a></li>";
                             echo "<li><a href=\"#erase_activites_commerciales\">Activités commerciales</a></li>";
@@ -334,7 +350,8 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                         echo "<li><a href=\"#activites_commerciales\">Activités commerciales</a></li>";
                         echo "<li><a href=\"#commercants\">Commerçants</a></li>";
                         echo "<li><a href=\"#pieces\">Pièces justificatives</a></li>";
-                        echo "</ol>";
+                        echo "<li><a href=\"#factures\">Factures</a></li>";
+                    echo "</ol>";
                 echo "</li>";
                 echo "<li><a href=\"$script_file_name\">Retour à l'accueil</a></li>";
             echo "</ol>";
@@ -397,6 +414,11 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                 
                 pg_query("DELETE FROM $dest_marche_jour WHERE date_create > '$lasts_72_hours'");
                 pg_query("DELETE FROM $dest_marche WHERE date_create > '$lasts_72_hours'");
+
+                echo "<h2 id=\"clean_factures\">Factures<span><tt>$dest_facture_article</tt> / <tt>$dest_facture</tt></span></h2>";
+                
+                pg_query("DELETE FROM $dest_facture_article WHERE date_create > '$lasts_72_hours'");
+                pg_query("DELETE FROM $dest_facture WHERE date_create > '$lasts_72_hours'");
 
                 echo "<h2 id=\"clean_pieces\">Pièces justificatives<span><tt>$dest_piece</tt> / <tt>$dest_supporting_document</tt></span></h2>";
                 
@@ -469,11 +491,12 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             $supporting_document_cols = ["id_domain", "name", "alert", "id_user_create", "date_create"];
             $piece_cols = ["id_company", "id_supporting_document", "date_start", "date_end", "value", "id_user_create", "date_create"];
 
-            $facture_cols = ["id_domain", "id_accounting_year", "id_type_invoice", "id_company", "number", "total_ati", "total_et", "total_vat", "total_tax", "date_start", "date_generate", "bk_company_first_name", "bk_company_last_name", "bk_company_business_name", "bk_company_complement_name", "bk_company_civility_name", "bk_company_address_street_number_alphanumeric", "bk_company_address", "bk_company_address_complement", "bk_company_postal_code", "bk_company_city", "bk_company_accounting_code", "bk_company_siret", "bk_company_iban", "bk_company_bic", "bk_company_sepa_number_rum", "bk_domain_name", "id_user_create", "date_create"];
+            $accounting_year_cols = ["name", "date_start", "date_end", "id_user_create", "date_create"];
+            $facture_cols = ["id_domain", "id_accounting_year", "id_type_invoice", "id_company", "number", "total_ati", "total_et", "total_vat", "total_tax", "date_start", "date_generate", "bk_company_first_name", "bk_company_last_name", "bk_company_business_name", "bk_company_complement_name", "bk_company_civility_name", "bk_company_address_street_number_alphanumeric", "bk_company_address", "bk_company_address_complement", "bk_company_postal_code", "bk_company_city", "bk_company_accounting_code", "bk_company_siret", "bk_company_iban", "bk_company_bic", "bk_company_sepa_number_rum", "bk_domain_name", "bk_domain_invoice_name", "bk_domain_invoice_multiplier_name", "bk_domain_invoice_quantity_name", "bk_domain_invoice_multi_case", "bk_domain_invoice_single", "bk_domain_invoice_prorata", "bk_domain_invoice_minimum_excise_duty", "bk_domain_invoice_minimum_chargeable", "bk_domain_case_product_detail_default_chargeable", "bk_domain_account_code", "id_user_create", "date_create"];
             $facture_article_cols = ["id_invoice", "id_product", "date_start", "quantity", "unit_price", "multiplier", "total", "total_ati", "total_et", "total_vat", "total_tax", "bk_calcul_base_code", "bk_calcul_base_name", "bk_calcul_base_calcul", "bk_calcul_base_calcul_name", "bk_product_code", "bk_product_name", "bk_product_invoice_name", "bk_product_unit", "bk_product_description", "id_user_create", "date_create"];
 
             $user_id = pg_fetch_object(pg_query("SELECT id FROM $dest_utilisateur WHERE last_name LIKE 'ILTR' AND first_name LIKE 'Iltr'"))->id;
-            $domain = pg_fetch_object(pg_query("SELECT id, id_type_domain FROM $dest_domaine WHERE name LIKE 'Placier' AND del = false"));
+            $domain = pg_fetch_object(pg_query("SELECT * FROM $dest_domaine WHERE name LIKE 'Placier' AND del = false"));
             $domain_id = $domain->id;
             $type_domain_id = $domain->id_type_domain;
             $act_ref = $src_conn->query("SELECT ACT_REF FROM $src_activite WHERE ACT_MODULE LIKE 'placier'")->fetch()[0];
@@ -924,25 +947,95 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
 
             // Factures
 
-            echo "<h2 id=\"factures\">Factures<span><tt>$dest_facture</tt></span></h2>";
+            echo "<h2 id=\"factures\">Factures<span><tt>$dest_facture</tt> / <tt>$dest_facture_article</tt></span></h2>";
 
             $src_nb_content["factures"] = 0;
             $dest_nb_content["factures"] = 0;
 
             $nb_to_execute = 0;
             $nb_executed = 0;
+            $warnings = [];
 
             $nb_factures = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_facture"))->count;
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
-            foreach ($src_conn->query("SELECT* FROM $src_facture WHERE FAC_VISIBLE = 1") as $row) {
+            foreach ($src_conn->query("SELECT * FROM $src_facture WHERE FAC_VISIBLE = 1") as $row) {
                 $src_nb_content["factures"] += 1;
 
-                // TODO insérer dans invoice et dans invoice product
+                $fac_year = get_year($row["FAC_DATE"]);
+                $req_accounting_year = pg_query("SELECT id FROM $dest_accounting_year WHERE name = '$fac_year' AND del = false");
+                $accounting_year = NULL;
+                if (pg_num_rows($req_accounting_year) > 0) {
+                    $accounting_year = pg_fetch_object($req_accounting_year)->id;
+                } else {
+                    // Accounting year
+
+                    $date_start = strtotime("first day of january $fac_year");
+                    $date_end = strtotime("last day of december $fac_year");
+
+                    $values = ["'$fac_year'", "'$date_start'", "'$date_end'", "'$user_id'", "'$today'"];
+                    $accounting_year = insert_into($dest_accounting_year, $accounting_year_cols, $values, $nb_to_execute, $nb_executed);
+                }
+
+                $fac_type = $src_conn->query("SELECT TFA_CODE_ALPHA FROM $src_type_facture WHERE TFA_REF = " . $row["TFA_REF"])->fetch()[0];
+                $code_type_invoice = NULL;
+                switch ($fac_type) {
+                    case "TIC":
+                        $code_type_invoice = "TICK";
+                        break;
+                    case "FAC":
+                        $code_type_invoice = "INVO";
+                        break;
+                    case "DEV":
+                        $code_type_invoice = "QUOT";
+                        break;
+                    case "ABO":
+                        $code_type_invoice = "SUBS";
+                        break;
+                    default:
+                        $code_type_invoice = "INVO";
+                        array_push($warnings, "Le type de facture $fac_type est inconnu, il faut trouver une équivalence GEODP v1 - GEODP v2");
+                        break;
+                }
+                $type_invoice = pg_fetch_object(pg_query("SELECT id FROM $dest_facture_type WHERE code = '$code_type_invoice' AND visible = true AND del = false"))->id;
+
+                $company = $assoc_exploitant_company[$row["EXP_REF"]];
+
+                $number = $fac_type . "FAC_NUM";
+
+                $company_obj = pg_fetch_object(pg_query("SELECT * FROM $dest_commercant WHERE id = '$company'"));
+
+                $civility_obj = NULL;
+                if ($company_obj->id_civility) {
+                    $civility_obj = pg_fetch_object(pg_query("SELECT * FROM $dest_civility WHERE id = '" . $company_obj->id_civility . "'"));
+                }
+                $civility_name = ($civility_obj) ? $civility_obj->name : NULL;
+
+                $address_obj = NULL;
+                if ($company_obj->id_address) {
+                    $address_obj = pg_fetch_object(pg_query("SELECT * FROM $dest_address WHERE id = '" . $company_obj->id_address . "'"));
+                }
+                $street_number_alphanumeric = ($address_obj) ? $address_obj->street_number_alphanumeric : NULL;
+                $address = ($address_obj) ? $address_obj->address : NULL;
+                $address_complement = ($address_obj) ? $address_obj->address_complement : NULL;
+                $postal_code = ($address_obj) ? $address_obj->postal_code : NULL;
+                $city = ($address_obj) ? $address_obj->city : NULL;
+
+                $sirent = ($dest_database === "TRO") ? addslashes_nullify($company_obj->siren) : addslashes_nullify($company_obj->siret);
+
+                $values = ["'$domain_id'", "'$accounting_year'", "'$type_invoice'", "'$company'", "'$number'", $row["FAC_SOMME_TTC"], $row["FAC_SOMME_HT"], $row["FAC_SOMME_TVA"], 0, addslashes_nullify($row["FAC_DATE"]), addslashes_nullify($row["FAC_DATE_IMPRESSION"]), addslashes_nullify($company_obj->first_name), addslashes_nullify($company_obj->last_name), addslashes_nullify($company_obj->business_name), addslashes_nullify($company_obj->complement_name), addslashes_nullify($civility_name), addslashes_nullify($street_number_alphanumeric), addslashes_nullify($address), addslashes_nullify($address_complement), addslashes_nullify($postal_code), addslashes_nullify($city), addslashes_nullify($company_obj->accounting_code), "'$sirent'", addslashes_nullify($company_obj->iban), addslashes_nullify($company_obj->bic), addslashes_nullify($company_obj->sepa_number_rum), addslashes_nullify($domain->name), addslashes_nullify($domain->invoice_name), addslashes_nullify($domain->invoice_multiplier_name), addslashes_nullify($domain->invoice_quantity_name), addslashes_nullify($domain->invoice_multi_case), addslashes_nullify($domain->invoice_single), addslashes_nullify($domain->invoice_prorata), addslashes_nullify($domain->invoice_minimum_excise_duty), addslashes_nullify($domain->invoice_minimum_chargeable), addslashes_nullify($domain->case_product_detail_default_chargeable), addslashes_nullify($domain->account_code), "'$user_id'", "'$today'"];
+                insert_into($dest_facture, $facture_cols, $values, $nb_to_execute, $nb_executed);
+
+                foreach ($src_conn->query("SELECT * FROM $src_article_facture WHERE FAC_REF = " . $row["FAC_REF"]) as $artefact) {
+                    // Invoice product
+
+                    $values = [$artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], "'$user_id'", "'$today'"];
+                    // insert_into($dest_facture_article, $facture_article_cols, $values, $nb_to_execute, $nb_executed);
+                }
             }
             if ($display_dest_requests) echo "</div>";
 
-            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, [], $nb_warnings);
+            summarize_queries($nb_executed, $nb_to_execute, $nb_errors, $warnings, $nb_warnings);
 
             $nb_factures = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_facture"))->count - $nb_factures;
             $dest_nb_content["factures"] = $nb_factures;
