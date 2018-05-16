@@ -1,0 +1,169 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+body > * {
+    flex: 1;
+}
+
+/* Navs */
+
+nav {
+    display: flex;
+}
+
+nav a {
+    text-decoration: none;
+}
+
+/* Header and his nav */
+
+header {
+    background: #373277;
+    border-bottom: 5px solid rgb(100, 100, 100);
+}
+
+header nav {
+    flex-direction: row;
+    padding-left: 20%;
+}
+
+header nav a {
+    padding: 20px 30px;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: #343131;
+}
+
+header nav a:hover, header nav a.active {
+    background: white;
+}
+
+/* Content */
+
+content {
+    display: flex;
+    flex-direction: row;
+}
+
+content > * {
+    flex: 1;
+}
+
+/* Content aside and his nav */
+
+content aside {
+    display: flex;
+    flex: 0.3;
+    background: #343131;
+}
+
+content aside div {
+    flex: 1;
+}
+
+content aside nav {
+    flex-direction: column;
+}
+
+content aside nav a {
+    color: rgba(255, 255, 255, 0.7);
+    padding: 15px 40px;
+}
+
+content aside nav a:hover, content aside nav a.active {
+    background: white;
+    color: #343131;
+}
+
+/* Section */
+
+
+/* Footer */
+
+footer {
+    flex: 0;
+    background: orange;
+}
+
+/* Form */
+
+form.big {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: #2A2A2E; /* <=> form.big input:focus box-shadow */
+}
+
+form.big > * {
+    width: 30%;
+    margin: 0 auto;
+    padding: 10px 15px; /* <=> suggestions ul margin (*-1) */
+    font-size: 23px;
+}
+
+form.big input {
+    margin-top: 40vh;
+    margin-bottom: 10px;
+    color: rgb(200, 200, 200);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    transition: all .3s ease-out;
+}
+
+form.big input:focus {
+    box-shadow:
+        0 0 0 30px #2A2A2E, /* <=> form.big background */
+        0 0 0 30px rgba(0, 0, 0, 0.4);
+}
+
+suggestions {
+    padding: 0;
+    font-size: 85%;
+    color: rgb(70, 70, 70);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.2);
+    transition: all .2s ease-out;
+}
+
+suggestions.apparent {
+    opacity: 1;
+}
+
+suggestions.hidden {
+    opacity: 0;
+}
+
+suggestions p {
+    padding: 8px 0;
+    text-align: center;
+}
+
+suggestions ul {
+    margin: -10px -15px; /* <=> form.big > * padding (*-1) */
+    list-style: none;
+    max-height: 30vh;
+    overflow: auto;
+}
+
+suggestions ul li {
+    padding: 13px 15px;
+    cursor: pointer;
+}
+
+suggestions ul li:hover {
+    background: rgba(255, 255, 255, 0.8);
+}

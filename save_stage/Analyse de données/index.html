@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Recherche de ville</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+
+<body>
+    <form class="big" onsubmit="submit_form(event)" action="index.html" method="POST">
+        <input id="ville" class="dynamic" onkeyup="typing_city()" type="text" placeholder="Ville" autocomplete="off" />
+        <suggestions class="hidden"></suggestions>
+    </form>
+
+    <!-- <a href="placier.html?angers">aaa</a> -->
+</body>
+
+</html>
+
+<script src="js/ajax.js"></script>
+
+<script>
+
+var ville_input = document.querySelector("#ville");
+var suggestions = document.querySelector("suggestions");
+var search_num = 0;
+
+function typing_city() {
+    ++search_num;
+
+    var city = ville_input.value;
+
+    if (city.length >= 2) {
+        clean_suggestions();
+        write_suggestions("Recherche « " + city + " » en cours");
+
+        if (city.length >= 2) {
+            ajax("http://localhost:8080/analyse_donnees/villes.php?serveur=ZEUS&ressource=iis-root&lettre=Z&filtre=" + city, search_city, search_num);
+        }
+    } else {
+        hide_suggestions();
+    }
+}
+
+function search_city(json, local_search_num) {
+    if (local_search_num === search_num) {
+        json = JSON.parse(json);
+
+        clean_suggestions();
+        
+        if (json.records.nbdd > 0) {
+            var ul = document.createElement("ul");
+            suggestions.appendChild(ul);
+
+            for (ville in json.records) {
+                if (json.records[ville] === "true") {
+                    var li = document.createElement("li");
+                    li.addEventListener("click", function() { autocomplete_with(this); });
+                    li.innerHTML = ville.toUpperCase();
+                    ul.appendChild(li);
+                }
+            }
+        } else {
+            write_suggestions("Aucune ville trouvée");
+        }
+    }
+}
+
+function clean_suggestions() {
+    while (suggestions.hasChildNodes()) suggestions.removeChild(suggestions.lastChild);
+}
+
+function hide_suggestions() {
+    suggestions.className = "hidden";
+}
+
+function write_suggestions(message) {
+    var p = document.createElement("p");
+    p.innerHTML = message;
+    suggestions.appendChild(p);
+
+    suggestions.className = "apparent";
+}
+
+function autocomplete_with(suggestion) {
+    ville_input.value = suggestion.innerHTML;
+    submit_form(null);
+    hide_suggestions();
+}
+
+function submit_form(event) {
+    if (event) event.preventDefault();
+    var onkeyup_ville_input = ville_input.onkeyup;
+    ville_input.onkeyup = "";
+
+    ajax("http://localhost:8080/analyse_donnees/ville_existe.php?ville=" + ville_input.value, check_city, onkeyup_ville_input);
+}
+
+function check_city(json, onkeyup_ville_input) {
+    json = JSON.parse(json);
+
+    if (json.records === "true") {
+        document.location.href = "placier.html?" + ville_input.value;
+    } else {
+        // Essayer de prendre le premier résultat de la liste des suggestions et réessayer la vérfication
+        // S'il n'y en a pas, redonner la main à l'utilisateur
+        var ul = suggestions.querySelector("ul");
+        if (ul && ul.hasChildNodes()) {
+            console.log("pas de res");
+            autocomplete_with(ul.firstChild);
+            clean_suggestions(); // pour éviter une boucle si le premier résultat n'est pas vérifié non plus
+        } else {
+            ville_input.onkeyup = onkeyup_ville_input;
+        }
+    }
+}
+
+</script>
