@@ -14,7 +14,7 @@ $title = "Reprise v1 vers v2<br>Placier";
 // Transfert les données Placier des table GEODP v1 vers les tables GEODP v2
 
 /**
- * VERSION 1.0 - 30/04/2018
+ * VERSION 1.0 - 18/05/2018
  * 
  * @author Thibaut ROPERCH
  */
@@ -84,6 +84,7 @@ $dest_marche_jour = "geodp_event_day";
 
 $dest_article = "geodp_product";
 $dest_calcul_base = "geodp_calcul_base";
+$dest_calcul_base_field = "geodp_calcul_base_field";
 $dest_management_calcul = "geodp_management_calcul";
 $dest_calcul_mode = "geodp_calcul_mode";
 $dest_vat = "geodp_vat";
@@ -189,6 +190,7 @@ function insert_into($table, $cols, $values, &$nb_executed, &$nb_to_execute) { /
         $where_content .= ($values[$i] === "NULL") ? $cols[$i] . " IS " . $values[$i] : $cols[$i] . " = " . $values[$i];
     }
     $where_content = str_replace("\\'", "''", $where_content);
+
     $last_inserted_id = pg_fetch_object(pg_query("SELECT id FROM $table WHERE $where_content AND del = false ORDER BY date_create DESC"))->id;
     return $last_inserted_id;
 }
@@ -475,7 +477,7 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             $marche_jour_cols = ["id_day", "id_event", "id_user_create", "date_create"];
             
             $calcul_base_cols = ["id_type_domain", "code", "name", "calcul", "calcul_name", "id_user_create", "date_create"];
-            $calcul_base_fields_cols = ["id_calcul_base", "name", "id_user_create", "date_create"];
+            $calcul_base_field_cols = ["id_calcul_base", "name", "id_user_create", "date_create"];
             $management_calcul_cols = ["id_type_domain", "name", "code", "id_user_create", "date_create"];
             $article_cols = ["id_domain", "id_calcul_base", "id_management_calcul", "id_event", "code", "name", "invoice_name", "unit", "id_user_create", "date_create"];
             $tarif_cols = ["id_product", "id_calcul_mode", "id_charging_mode", "id_vat", "name", "excluded_taxes", "id_user_create", "date_create"];
@@ -565,6 +567,8 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
             $nb_executed = 0;
             $warnings = [];
 
+            $assoc_article_product = [];
+            
             $nb_tarifs = pg_fetch_object(pg_query("SELECT COUNT(*) FROM $dest_tarif"))->count;
 
             if ($display_dest_requests) echo "<div class=\"pre\">";
@@ -644,16 +648,16 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                     // Calcul base field
 
                     $values = ["'$calcul_base'", "'Longueur'", "'$user_id'", "'$today'"];
-                    $longueur = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+                    $longueur = insert_into($dest_calcul_base_field, $calcul_base_field_cols, $values, $nb_to_execute, $nb_executed);
 
                     $values = ["'$calcul_base'", "'Largeur'", "'$user_id'", "'$today'"];
-                    $largeur = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+                    $largeur = insert_into($dest_calcul_base_field, $calcul_base_field_cols, $values, $nb_to_execute, $nb_executed);
 
                     $values = ["'$calcul_base'", "'Hauteur'", "'$user_id'", "'$today'"];
-                    $hauteur = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+                    $hauteur = insert_into($dest_calcul_base_field, $calcul_base_field_cols, $values, $nb_to_execute, $nb_executed);
 
                     $values = ["'$calcul_base'", "'Quantité'", "'$user_id'", "'$today'"];
-                    $quantite = insert_into($calcul_base_fields, $calcul_base_fields_cols, $values, $nb_to_execute, $nb_executed);
+                    $quantite = insert_into($dest_calcul_base_field, $calcul_base_field_cols, $values, $nb_to_execute, $nb_executed);
                     
                     // Calcul base
 
@@ -715,6 +719,8 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
                 $values = ["'$domain_id'", "'$calcul_base'", "'$management_calcul'", "'$event'", "'$code'", "'$name'", "'$name'", "'$unit'", "'$user_id'", "'$today'"];
                 $product = insert_into($dest_article, $article_cols, $values, $nb_to_execute, $nb_executed);
 
+                $assoc_article_product[$row["ART_REF"]] = $product;
+                
                 // Price (nom du tarif, un price par type de tarif)
 
                 $calcul_mode = pg_fetch_object(pg_query("SELECT id FROM $dest_calcul_mode WHERE code = 'PACK' AND del = false"))->id;
@@ -1001,7 +1007,11 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
 
                 $company = $assoc_exploitant_company[$row["EXP_REF"]];
 
-                $number = $fac_type . "FAC_NUM";
+                $number = $fac_type . $row["FAC_NUM"];
+
+                $somme_ttc = str_replace(",", ".", $row["FAC_SOMME_TTC"]);
+                $somme_ht = str_replace(",", ".", $row["FAC_SOMME_HT"]);
+                $somme_tva = str_replace(",", ".", $row["FAC_SOMME_TVA"]);
 
                 $company_obj = pg_fetch_object(pg_query("SELECT * FROM $dest_commercant WHERE id = '$company'"));
 
@@ -1023,14 +1033,20 @@ function summarize_queries($nb_executed, $nb_to_execute, &$nb_errors, $warnings,
 
                 $sirent = ($dest_database === "TRO") ? addslashes_nullify($company_obj->siren) : addslashes_nullify($company_obj->siret);
 
-                $values = ["'$domain_id'", "'$accounting_year'", "'$type_invoice'", "'$company'", "'$number'", $row["FAC_SOMME_TTC"], $row["FAC_SOMME_HT"], $row["FAC_SOMME_TVA"], 0, addslashes_nullify($row["FAC_DATE"]), addslashes_nullify($row["FAC_DATE_IMPRESSION"]), addslashes_nullify($company_obj->first_name), addslashes_nullify($company_obj->last_name), addslashes_nullify($company_obj->business_name), addslashes_nullify($company_obj->complement_name), addslashes_nullify($civility_name), addslashes_nullify($street_number_alphanumeric), addslashes_nullify($address), addslashes_nullify($address_complement), addslashes_nullify($postal_code), addslashes_nullify($city), addslashes_nullify($company_obj->accounting_code), "'$sirent'", addslashes_nullify($company_obj->iban), addslashes_nullify($company_obj->bic), addslashes_nullify($company_obj->sepa_number_rum), addslashes_nullify($domain->name), addslashes_nullify($domain->invoice_name), addslashes_nullify($domain->invoice_multiplier_name), addslashes_nullify($domain->invoice_quantity_name), addslashes_nullify($domain->invoice_multi_case), addslashes_nullify($domain->invoice_single), addslashes_nullify($domain->invoice_prorata), addslashes_nullify($domain->invoice_minimum_excise_duty), addslashes_nullify($domain->invoice_minimum_chargeable), addslashes_nullify($domain->case_product_detail_default_chargeable), addslashes_nullify($domain->account_code), "'$user_id'", "'$today'"];
-                insert_into($dest_facture, $facture_cols, $values, $nb_to_execute, $nb_executed);
+                $values = ["'$domain_id'", "'$accounting_year'", "'$type_invoice'", "'$company'", "'$number'", "'$somme_ttc'", "'$somme_ht'", "'$somme_tva'", '0', addslashes_nullify($row["FAC_DATE"]), addslashes_nullify($row["FAC_DATE_IMPRESSION"]), addslashes_nullify($company_obj->first_name), addslashes_nullify($company_obj->last_name), addslashes_nullify($company_obj->business_name), addslashes_nullify($company_obj->complement_name), addslashes_nullify($civility_name), addslashes_nullify($street_number_alphanumeric), addslashes_nullify($address), addslashes_nullify($address_complement), addslashes_nullify($postal_code), addslashes_nullify($city), addslashes_nullify($company_obj->accounting_code), "'$sirent'", addslashes_nullify($company_obj->iban), addslashes_nullify($company_obj->bic), addslashes_nullify($company_obj->sepa_number_rum), addslashes_nullify($domain->name), addslashes_nullify($domain->invoice_name), addslashes_nullify($domain->invoice_multiplier_name), addslashes_nullify($domain->invoice_quantity_name), addslashes_nullify($domain->invoice_multi_case), addslashes_nullify($domain->invoice_single), addslashes_nullify($domain->invoice_prorata), addslashes_nullify($domain->invoice_minimum_excise_duty), addslashes_nullify($domain->invoice_minimum_chargeable), addslashes_nullify($domain->case_product_detail_default_chargeable), addslashes_nullify($domain->account_code), "'$user_id'", "'$today'"];
+                $invoice = insert_into($dest_facture, $facture_cols, $values, $nb_to_execute, $nb_executed);
 
                 foreach ($src_conn->query("SELECT * FROM $src_article_facture WHERE FAC_REF = " . $row["FAC_REF"]) as $artefact) {
                     // Invoice product
 
-                    $values = [$artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], $artefact[""], "'$user_id'", "'$today'"];
-                    // insert_into($dest_facture_article, $facture_article_cols, $values, $nb_to_execute, $nb_executed);
+                    $product = $assoc_article_product[$artefact["ART_REF"]];
+
+                    $product_obj = pg_fetch_object(pg_query("SELECT * FROM $dest_article WHERE id = '$product'"));
+                    
+                    $calcul_base_obj = pg_fetch_object(pg_query("SELECT * FROM $dest_calcul_base WHERE id = '" . $product_obj->id_calcul_base . "'"));
+
+                    $values = ["'$invoice'", "'$product'", $artefact["AFA_DATE"], $artefact["AFA_QUANTITE"], $artefact["AFA_PRIX_TTC"], $artefact["AFA_MULTIPLICATEUR"], $artefact["AFA_BK_TOTAL_TTC"], $artefact["AFA_BK_TOTAL_TTC"], $artefact["AFA_BK_TOTAL_HT"], $artefact["AFA_BK_TOTAL_TVA"], $artefact["AFA_BK_TOTAL_TVA"], addslashes_nullify($calcul_base_obj->code), addslashes_nullify($calcul_base_obj->name), addslashes_nullify($calcul_base_obj->calcul), addslashes_nullify($calcul_base_obj->calcul_name), addslashes_nullify($product_obj->code), addslashes_nullify($product_obj->name), addslashes_nullify($product_obj->invoice_name), addslashes_nullify($product_obj->unit), addslashes_nullify($product_obj->description), "'$user_id'", "'$today'"];
+                    insert_into($dest_facture_article, $facture_article_cols, $values, $nb_to_execute, $nb_executed);
                 }
             }
             if ($display_dest_requests) echo "</div>";
