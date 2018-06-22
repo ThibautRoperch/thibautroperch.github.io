@@ -1,0 +1,59 @@
+{
+    "catégories" : {
+        "@" : {
+            "nom": "Clés étrangères",
+            "critères": {
+                "ville": {
+                    "description": "Identifiant de la ville",
+                    "nom": "id_ville",
+                    "type": "ville"
+                }
+            }
+        },
+        "marchés" : {
+            "nom": "Marchés",
+            "critères": {
+                "nombre": {
+                    "description": "Nombre de marchés effectifs",
+                    "nom": "nb_events",
+                    "type": "entier"
+                },
+                "disponibilité": {
+                    "description": "Disponibilité des marchés (nombre de jours où au moins un marché est ouvert dans la semaine)",
+                    "nom": "availability",
+                    "type": "entier"
+                }
+            }
+        },
+        "articles" : {
+            "nom": "Articles/Tarifs",
+            "critères": {
+                "...": {
+                    "description": "...",
+                    "nom": "...",
+                    "type": "..."
+                }
+            }
+        },
+        "conclusion" : {
+            "nom": "Conclusion",
+            "critères": {
+                "revenus année": {
+                    "description": "Revenus générés depuis le début de l'année",
+                    "nom": "year_revenues",
+                    "type": "réel"
+                },
+                "derniers revenus": {
+                    "description": "Revenus générés ces 365 derniers jours",
+                    "nom": "lasts_revenues",
+                    "type": "réel"
+                },
+                "revenus totaux": {
+                    "description": "Revenus totaux générés",
+                    "nom": "total_revenues",
+                    "type": "réel"
+                }
+            }
+        }
+    }
+}
